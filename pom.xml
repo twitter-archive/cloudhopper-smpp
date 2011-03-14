@@ -1,0 +1,105 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                      http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>cloudhopper</groupId>
+  <artifactId>ch-smpp</artifactId>
+  <packaging>jar</packaging>
+  <version>3.0</version>
+  <name>ch-smpp</name>
+
+  <parent>
+    <groupId>cloudhopper</groupId>
+    <artifactId>ch-maven-parent-public</artifactId>
+    <version>1.0</version>
+  </parent>
+
+  <repositories>
+    <repository>
+      <id>cloudhopper-public</id>
+      <name>Cloudhopper Public Maven Repository</name>
+      <layout>default</layout>
+      <url>http://maven.cloudhopper.com/repos/third-party</url>
+    </repository>
+  </repositories>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.mycila.maven-license-plugin</groupId>
+        <artifactId>maven-license-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <!-- compile scope -->
+    <dependency>
+      <groupId>cloudhopper</groupId>
+      <artifactId>ch-commons-charset</artifactId>
+      <version>${ch-commons-charset.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>cloudhopper</groupId>
+      <artifactId>ch-commons-util</artifactId>
+      <version>${ch-commons-util.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.netty</groupId>
+      <artifactId>netty</artifactId>
+      <version>${netty.version}</version>
+    </dependency>
+    <!-- provided scope -->
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>${log4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>${logback.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- runtime scope -->
+    <!-- testing scope -->
+    <dependency>
+      <groupId>cloudhopper</groupId>
+      <artifactId>ch-commons-gsm</artifactId>
+      <version>${ch-commons-gsm.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <properties>
+<!--
+    <ch-commons-charset.version>[1.0,)</ch-commons-charset.version>
+-->
+    <ch-commons-charset.version>1.8</ch-commons-charset.version>
+    <ch-commons-gsm.version>1.5</ch-commons-gsm.version>
+    <ch-commons-util.version>[2.9,)</ch-commons-util.version>
+  </properties>
+
+</project>
+

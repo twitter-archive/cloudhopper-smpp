@@ -1,0 +1,55 @@
+ch-smpp
+
+The ch-smpp library is an extremely efficient, scalable, and flexible Java
+implementation of the Short Messaging Peer to Peer protocol. This library
+supports version 3.3, 3.4, and most of 5.0.  This library uses
+Java non-blocking (NIO) sockets to support thousands of binds using minimal
+resources.
+
+The library has been tested and certified with hundreds of mobile operators
+and suppliers around the world.  It's effective at being flexible with SMPP
+specifications that aren't truly compliant.  The goal of the internal PDU
+parser is to be unbreakable.
+
+Installation
+---------------------------------------------------------------------------------
+
+Binary builds are publicly available at the Cloudhopper Maven repo:
+http://maven.cloudhopper.com/repos/third-party/cloudhopper
+
+Source builds require a parent POM available in a project:
+http://maven.cloudhopper.com/repos/third-party/cloudhopper/ch-maven-parent-public
+
+Contributors
+---------------------------------------------------------------------------------
+
+Joe Lauer
+
+License
+---------------------------------------------------------------------------------
+
+Copyright (C) 2011 Twitter, Inc.
+
+This work is licensed under the Apache License, Version 2.0. See LICENSE for details.
+
+What do we need help with?
+---------------------------------------------------------------------------------
+
+There are always additional non-compliant SMPP implementations that exist out
+in the wild.  Here are a few ways you can help us:
+
+ 1. Find nuances with other vendors, create unit tests, and implement a
+    workaround.
+ 2. Additional demos and simulators
+ 3. More efficient method "expiring" unacknowledged requests (support is
+    experimental for now).
+ 4. Additional utility classes for TLV types
+ 5. Additional real world DeliveryReceipt formats
+ 6. SSL support (see Netty, both client and server side, custom certs)
+
+How does SMPP "windowing" effect performance?
+--------------------------------------------------------------------------------
+
+With windowSize=2 took 36155 ms to process 1000 requests
+With windowSize=10 took 10033 ms to process 1000 requests
+With windowSize=100 took 3248 ms to process 1000 requests

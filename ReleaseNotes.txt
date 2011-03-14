@@ -1,0 +1,70 @@
+Cloudhopper, Inc.
+http://www.cloudhopper.com/
+SMPP Library
+--------------------------------------------------------------------------------
+3.0 - 2011-03-14
+  * Migrated build system from Ant to Maven
+  * Deleted all legacy Ant build files (build.xml, Dependency.txt)
+  * Added Apache license to top of all source files
+  * Moved demo source code from src/demo/java into src/test/java directory and
+    placed in separate "demo" package.
+  * Added "Makefile" with targets that match previous demo ant tasks.
+  * Added support for parsing delivery receipts with timestamps that contain
+    seconds and a 4 digit year.
+  * Added loose parsing of the text of a delivery receipt where the position of
+    a particular field no longer matters.  Made missing field error checking
+    optional.
+  * Added DeliveryReceipt demo.
+
+2.6 - 2011-02-14
+  * Added support for parsing delivery receipts with timestamps that contain
+    seconds.
+
+2.5 - 2010-10-12
+  * Allow sequence number of all 32-bits to be used. Previously, we validated that
+    a sequence number was in the range of 0x00000000 to 0x7FFFFFFF. NOTE: Our
+    outgoing implementation still only uses sequence numbers in the range of
+    0x00000001 to 0x7FFFFFFF.
+
+2.4 - 2010-08-23
+  * Allow sequence number of zero to be used. Previously, we validated that
+    a sequence number was in the range of 0x00000001 to 0x7FFFFFFF.
+  * EXPERIMENTAL: Added ability to expire request PDUs that are not acknowledged.
+
+2.3 - 2010-06-09
+  * Refactored SmppSessionBootstrap to DefaultSmppClient
+  * Added SmppServer and SmppServerSession: support for running an SMPP server
+    and handling new incoming connections and creating the same smpp session
+    object that a client bootstrap can create.
+  * Added SmppUtil methods to work with short messages, esm class, and
+    registered delivery flags.
+  * Added "getInterfaceVersion" to a session that represents the actual protocol
+    version in use between local and remote endpoints.  This is based on the
+    negotiation of protocol versions during the bind process.  Works for both
+    server and client side sessions.
+  * Added processing of "sc_interface_version" optional parameter during client
+    ESME binds for protocol negotiation.
+  * Added "areOptionalParametersSupported" for a session to determine if
+    optional parameters are supported.
+  * Added utility method to convert interface byte values to human readable
+    version strings such as 0x34 to "3.4"
+  * Added DeliveryReceipt utility class for writing and reading delivery receipts
+  * Added additional methods of converting TLVs into bytes, shorts, ints, and longs.
+  * Fixed STDERR logging of exceptions during connects.
+
+2.2 - 2010-03-14
+  * Added TlvUtil class to create various types of TLVs.
+
+2.1 - 2010-02-21
+  * Added a PDU "referenceObject" property to be attached.
+
+2.0 - 2010-02-19
+  * Entirely refactored version
+
+1.1 - 2009-11-03
+  * Fixed bug with optional TLV parsing which assumed an optional TLV had to
+    be 8 or more bytes in order to be correct.  The correct value is actually
+    just 4 bytes or more (2 for header and 2 for length)
+
+1.0 - 2009-11-01
+  * Initial release - used today in all backend systems.
