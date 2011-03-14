@@ -7,7 +7,7 @@
   <groupId>cloudhopper</groupId>
   <artifactId>ch-smpp</artifactId>
   <packaging>jar</packaging>
-  <version>3.0</version>
+  <version>3.1</version>
   <name>ch-smpp</name>
 
   <parent>

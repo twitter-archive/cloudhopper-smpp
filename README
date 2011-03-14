@@ -1,7 +1,7 @@
 ch-smpp
 
 The ch-smpp library is an extremely efficient, scalable, and flexible Java
-implementation of the Short Messaging Peer to Peer protocol. This library
+implementation of the Short Messaging Peer to Peer Protocol (SMPP). This library
 supports version 3.3, 3.4, and most of 5.0.  This library uses
 Java non-blocking (NIO) sockets to support thousands of binds using minimal
 resources.

@@ -2,6 +2,9 @@ Cloudhopper, Inc.
 http://www.cloudhopper.com/
 SMPP Library
 --------------------------------------------------------------------------------
+3.1 - 2011-03-14
+  * Removed debug logging from DeliveryReceipt parser.
+
 3.0 - 2011-03-14
   * Migrated build system from Ant to Maven
   * Deleted all legacy Ant build files (build.xml, Dependency.txt)
