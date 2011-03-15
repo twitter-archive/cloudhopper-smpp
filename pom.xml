@@ -93,12 +93,9 @@
   </dependencies>
 
   <properties>
-<!--
-    <ch-commons-charset.version>[1.0,)</ch-commons-charset.version>
--->
-    <ch-commons-charset.version>1.8</ch-commons-charset.version>
-    <ch-commons-gsm.version>1.5</ch-commons-gsm.version>
-    <ch-commons-util.version>[2.9,)</ch-commons-util.version>
+    <ch-commons-charset.version>[2.0,)</ch-commons-charset.version>
+    <ch-commons-gsm.version>[2.0,)</ch-commons-gsm.version>
+    <ch-commons-util.version>[4.0,)</ch-commons-util.version>
   </properties>
 
 </project>
