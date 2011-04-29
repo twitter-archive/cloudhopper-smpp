@@ -83,6 +83,7 @@ public class DefaultSmppClient implements SmppClient {
         this.clientBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, this.clientConnector);
     }
 
+    @Override
     public void shutdown() {
         // close all channels still open within this session "bootstrap"
         this.channels.close().awaitUninterruptibly();
@@ -134,6 +135,7 @@ public class DefaultSmppClient implements SmppClient {
      * @throws InterruptedException Thrown if the calling thread is interrupted
      *      while we are attempting the bind.
      */
+    @Override
     public SmppSession bind(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, SmppBindException, UnrecoverablePduException, InterruptedException {
         DefaultSmppSession session = null;
         try {

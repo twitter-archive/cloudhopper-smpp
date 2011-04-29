@@ -92,11 +92,13 @@ public class SmppSessionLogger implements ChannelUpstreamHandler, ChannelDownstr
         }
     }
 
+    @Override
     public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
         log(Direction.UP, e);
         ctx.sendUpstream(e);
     }
 
+    @Override
     public void handleDownstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
         log(Direction.DOWN, e);
         ctx.sendDownstream(e);

@@ -37,9 +37,11 @@ import java.net.InetSocketAddress;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
@@ -61,7 +63,7 @@ public class DefaultSmppServer implements SmppServer {
     private final PduTranscoder transcoder;
 
     private ExecutorService bossThreadPool;
-    private NioServerSocketChannelFactory channelFactory;
+    private ChannelFactory channelFactory;
     private ServerBootstrap serverBootstrap;
     private Channel serverChannel;
 
@@ -74,7 +76,7 @@ public class DefaultSmppServer implements SmppServer {
         this(configuration, DaemonExecutors.newCachedDaemonThreadPool(), serverHandler);
     }
 
-    public DefaultSmppServer(SmppServerConfiguration configuration, ExecutorService executors, SmppServerHandler serverHandler) {
+    public DefaultSmppServer(final SmppServerConfiguration configuration, ExecutorService executors, SmppServerHandler serverHandler) {
         this.configuration = configuration;
         // the same group we'll put every server channel
         this.channels = new DefaultChannelGroup();
@@ -99,6 +101,7 @@ public class DefaultSmppServer implements SmppServer {
         return this.transcoder;
     }
 
+    @Override
     public ChannelGroup getChannels() {
         return this.channels;
     }
@@ -111,10 +114,12 @@ public class DefaultSmppServer implements SmppServer {
         return this.bindTimer;
     }
     
+    @Override
     public void start() {
         serverChannel = this.serverBootstrap.bind(new InetSocketAddress(configuration.getPort()));
     }
 
+    @Override
     public void stop() {
         // close all channels still open within this session "bootstrap"
         this.channels.close().awaitUninterruptibly();
@@ -128,7 +133,6 @@ public class DefaultSmppServer implements SmppServer {
     protected Long nextSessionId() {
         return this.sessionIdSequence.getAndIncrement();
     }
-
 
     protected byte autoNegotiateInterfaceVersion(byte requestedInterfaceVersion) {
         if (!this.configuration.isAutoNegotiateInterfaceVersion()) {

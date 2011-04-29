@@ -7,7 +7,7 @@
   <groupId>cloudhopper</groupId>
   <artifactId>ch-smpp</artifactId>
   <packaging>jar</packaging>
-  <version>3.1</version>
+  <version>3.2</version>
   <name>ch-smpp</name>
 
   <parent>
@@ -34,6 +34,10 @@
     </plugins>
   </build>
 
+  <!--
+    I prefer jars managed out of the Cloudhopper Maven Repo with more consistent
+    versioning.  I apologize for not using more common Maven repos
+  -->
   <dependencies>
     <!-- compile scope -->
     <dependency>
@@ -47,7 +51,7 @@
       <version>${ch-commons-util.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.jboss.netty</groupId>
+      <groupId>jboss</groupId>
       <artifactId>netty</artifactId>
       <version>${netty.version}</version>
     </dependency>
@@ -93,6 +97,7 @@
   </dependencies>
 
   <properties>
+    <netty.version>[3.2,)</netty.version>
     <ch-commons-charset.version>[2.0,)</ch-commons-charset.version>
     <ch-commons-gsm.version>[2.0,)</ch-commons-gsm.version>
     <ch-commons-util.version>[4.0,)</ch-commons-util.version>

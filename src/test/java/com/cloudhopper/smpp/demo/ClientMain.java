@@ -52,13 +52,12 @@ public class ClientMain {
         SmppSessionConfiguration config0 = new SmppSessionConfiguration();
         config0.setWindowSize(1);
         config0.setName("Tester.Session.0");
-        config0.setType(SmppBindType.TRANSMITTER);
+        config0.setType(SmppBindType.TRANSCEIVER);
         config0.setHost("127.0.0.1");
-        config0.setPort(8100);
+        config0.setPort(2776);
         config0.setConnectTimeout(10000);
         config0.setSystemId("1234567890");
         config0.setPassword("password");
-
         config0.getLoggingOptions().setLogBytes(true);
 
         SmppSession session0 = null;
@@ -80,7 +79,7 @@ public class ClientMain {
             System.out.println("Press any key to send submit");
             System.in.read();
 
-            int count = 1;
+            int count = 10000;
             long startTime = System.currentTimeMillis();
 
             for (int i = 0; i < count; i++) {

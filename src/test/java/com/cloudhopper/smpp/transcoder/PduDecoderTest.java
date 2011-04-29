@@ -41,6 +41,7 @@ import com.cloudhopper.smpp.pdu.UnbindResp;
 import com.cloudhopper.smpp.tlv.Tlv;
 import org.junit.*;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.buffer.CompositeChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -265,7 +266,7 @@ public class PduDecoderTest {
 
         // add 1 more byte (should finish the byte array off)
         ChannelBuffer buffer0 = BufferHelper.createBuffer("f1");
-        ChannelBuffer buffer1 = new CompositeChannelBuffer(buffer, buffer0);    // merge both buffers...
+        ChannelBuffer buffer1 = ChannelBuffers.wrappedBuffer(buffer, buffer0);    // merge both buffers...
         buffer = buffer1;
 
         pdu0 = (EnquireLinkResp)transcoder.decode(buffer);

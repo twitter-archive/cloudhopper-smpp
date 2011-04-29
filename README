@@ -11,8 +11,9 @@ and suppliers around the world.  It's effective at being flexible with SMPP
 specifications that aren't truly compliant.  The goal of the internal PDU
 parser is to be unbreakable.
 
+
 Installation
----------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Binary builds are publicly available at the Cloudhopper Maven repo:
 http://maven.cloudhopper.com/repos/third-party/cloudhopper
@@ -20,20 +21,42 @@ http://maven.cloudhopper.com/repos/third-party/cloudhopper
 Source builds require a parent POM available in a project:
 http://maven.cloudhopper.com/repos/third-party/cloudhopper/ch-maven-parent-public
 
-Contributors
----------------------------------------------------------------------------------
 
-Joe Lauer
+Demo Code / Tutorials
+--------------------------------------------------------------------------------
+
+For examples on using this library as a client or server, please see:
+   src/test/java/com/cloudhopper/smpp/demo
+
+To run some of the samples, there is a Makefile to automate running some of the
+Maven commands.  On Linux/Mac, you'd run:
+
+   make run-server
+   make run-client
+
+On Windows, you'd run:
+ 
+   nmake run-server
+   nmake run-client
+
+
+Contributors
+--------------------------------------------------------------------------------
+
+Joe Lauer (follow me on twitter http://twitter.com/jjlauer)
+
 
 License
----------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Copyright (C) 2011 Twitter, Inc.
 
-This work is licensed under the Apache License, Version 2.0. See LICENSE for details.
+This work is licensed under the Apache License, Version 2.0. See LICENSE for
+details.
+
 
 What do we need help with?
----------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 There are always additional non-compliant SMPP implementations that exist out
 in the wild.  Here are a few ways you can help us:

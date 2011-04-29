@@ -17,7 +17,7 @@ package com.cloudhopper.smpp.impl;
 import com.cloudhopper.commons.util.windowing.ExpiredRequestListener;
 import com.cloudhopper.commons.util.windowing.MaxWindowSizeTimeoutException;
 import com.cloudhopper.commons.util.windowing.RequestAlreadyExistsException;
-import com.cloudhopper.commons.util.windowing.RequestCancelledException;
+import com.cloudhopper.commons.util.windowing.RequestCanceledException;
 import com.cloudhopper.commons.util.windowing.RequestFuture;
 import com.cloudhopper.commons.util.windowing.ResponseFuture;
 import com.cloudhopper.commons.util.windowing.ResponseTimeoutException;
@@ -50,6 +50,8 @@ import com.cloudhopper.smpp.type.SmppBindException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.SequenceNumber;
 import com.cloudhopper.smpp.util.SmppSessionUtil;
+import java.nio.channels.ClosedChannelException;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -124,14 +126,17 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         this.preparedBindResponse = null;
     }
 
+    @Override
     public SmppBindType getBindType() {
         return this.configuration.getType();
     }
 
+    @Override
     public Type getLocalType() {
         return this.localType;
     }
 
+    @Override
     public Type getRemoteType() {
         if (this.localType == Type.CLIENT) {
             return Type.SERVER;
@@ -145,10 +150,12 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         this.boundTime.set(System.currentTimeMillis());
     }
 
+    @Override
     public long getBoundTime() {
         return this.boundTime.get();
     }
 
+    @Override
     public String getStateName() {
         int s = this.state.get();
         if (s >= 0 || s < STATES.length) {
@@ -162,34 +169,42 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         this.interfaceVersion = value;
     }
 
+    @Override
     public byte getInterfaceVersion() {
         return this.interfaceVersion;
     }
 
+    @Override
     public boolean areOptionalParametersSupported() {
         return (this.interfaceVersion >= SmppConstants.VERSION_3_4);
     }
 
+    @Override
     public boolean isOpen() {
         return (this.state.get() == STATE_OPEN);
     }
 
+    @Override
     public boolean isBinding() {
         return (this.state.get() == STATE_BINDING);
     }
 
+    @Override
     public boolean isBound() {
         return (this.state.get() == STATE_BOUND);
     }
 
+    @Override
     public boolean isUnbinding() {
         return (this.state.get() == STATE_UNBINDING);
     }
 
+    @Override
     public boolean isClosed() {
         return (this.state.get() == STATE_CLOSED);
     }
 
+    @Override
     public SmppSessionConfiguration getConfiguration() {
         return this.configuration;
     }
@@ -206,10 +221,12 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         return this.transcoder;
     }
 
+    @Override
     public Window<Integer,PduRequest,PduResponse> getRequestWindow() {
         return this.requestWindow;
     }
 
+    @Override
     public void serverReady(SmppSessionHandler sessionHandler) {
         // properly setup the session handler (to handle notifications)
         this.sessionHandler = sessionHandler;
@@ -277,6 +294,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
     }
 
+    @Override
     public void unbind(long timeoutInMillis) {
         // is this channel still open?
         if (this.channel.isConnected()) {
@@ -298,6 +316,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         close(timeoutInMillis);
     }
 
+    @Override
     public void close() {
         close(5000);
     }
@@ -316,6 +335,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         this.state.set(STATE_CLOSED);
     }
 
+    @Override
     public EnquireLinkResp enquireLink(EnquireLink request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
         assertValidRequest(request);
         PduResponse response = sendRequestAndGetResponse(request, timeoutInMillis);
@@ -323,6 +343,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         return (EnquireLinkResp)response;
     }
 
+    @Override
     public SubmitSmResp submit(SubmitSm request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
         assertValidRequest(request);
         PduResponse response = sendRequestAndGetResponse(request, timeoutInMillis);
@@ -355,8 +376,14 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             requestFuture.await();
         } catch (ResponseTimeoutException e) {
             throw new SmppTimeoutException(e.getMessage(), e);
-        } catch (RequestCancelledException e) {
-            throw new UnrecoverablePduException(e.getMessage(), e);
+        } catch (RequestCanceledException e) {
+            // the request future may have a cause set that we want to unwrap
+            Throwable cause = requestFuture.getCause();
+            if (cause != null && cause instanceof ClosedChannelException) {
+                throw new SmppChannelException("Channel was closed during bind", cause);
+            } else {
+                throw new UnrecoverablePduException(e.getMessage(), e);
+            }
         }
         if (requestFuture.isSuccess()) {
             return requestFuture.getResponse();
@@ -390,6 +417,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      * @throws InterruptedException
      */
     @SuppressWarnings("unchecked")
+    @Override
     public RequestFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest pdu, long timeoutInMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
         // assign the next PDU sequence # if its not yet assigned
         if (!pdu.hasSequenceNumberAssigned()) {
@@ -439,6 +467,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      * @throws SmppChannelException
      * @throws InterruptedException
      */
+    @Override
     public void sendResponsePdu(PduResponse pdu) throws RecoverablePduException, UnrecoverablePduException, SmppChannelException, InterruptedException {
         // assign the next PDU sequence # if its not yet assigned
         if (!pdu.hasSequenceNumberAssigned()) {
@@ -465,6 +494,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public void firePduReceived(Pdu pdu) {
         if (configuration.getLoggingOptions().isLogPduEnabled()) {
             logger.info("received PDU: {}", pdu);
@@ -515,6 +545,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
     }
 
+    @Override
     public void fireExceptionThrown(Throwable t) {
         if (t instanceof UnrecoverablePduException) {
             this.sessionHandler.fireUnrecoverablePduException((UnrecoverablePduException)t);
@@ -531,11 +562,32 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
     }
 
+    @Override
     public void fireChannelClosed() {
         // if this is a server session, we need to notify the server first
         // NOTE: its important this happens first
         if (this.server != null) {
             this.server.destroySession(serverSessionId, this);
+        }
+        
+        // most of the time when a channel is closed, we don't necessarily want
+        // to do anything special.  however, when we're in the middle of a "BIND"
+        // request and this happens, we need to break anything waiting!
+        if (this.state.get() == STATE_BINDING) {
+            if (this.requestWindow.getPendingSize() > 0) {
+                logger.warn("In process of bind(), but channel closed and requestWindow has pending requests, probably is a BindRequest that needs cancelled");
+                Map<Integer,WindowEntry<Integer,PduRequest,PduResponse>> requests = this.requestWindow.getPendingRequests();
+                for (Integer key : requests.keySet()) {
+                    WindowEntry<Integer,PduRequest,PduResponse> entry = requests.get(key);
+                    if (entry.getRequest() instanceof BaseBind) {
+                        logger.warn("Found a BaseBind request in requestWindow, cancelling it");
+                        try {
+                            this.requestWindow.cancelRequest(key, new ClosedChannelException());
+                        } catch (Exception e) { }
+                        return;
+                    }
+                }
+            }
         }
 
         // we need to check if this "unexpected" or "expected" based on whether
@@ -548,6 +600,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
     }
 
+    @Override
     public void requestExpired(WindowEntry<Integer, PduRequest, PduResponse> entry) {
         this.sessionHandler.firePduRequestExpired(entry.getRequest());
     }

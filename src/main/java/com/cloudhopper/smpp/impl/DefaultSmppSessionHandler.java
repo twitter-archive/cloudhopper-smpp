@@ -20,6 +20,7 @@ import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import java.nio.channels.ClosedChannelException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,43 +42,58 @@ public class DefaultSmppSessionHandler implements SmppSessionHandler {
         this.logger = logger;
     }
 
+    @Override
     public String lookupResultMessage(int commandStatus) {
         return null;
     }
 
+    @Override
     public String lookupTlvTagName(short tag) {
         return null;
     }
 
+    @Override
     public void fireChannelUnexpectedlyClosed() {
         logger.info("Default handling is to discard an unexpected channel closed");
     }
 
+    @Override
     public PduResponse firePduRequestReceived(PduRequest pduRequest) {
         logger.warn("Default handling is to discard unexpected request PDU: {}", pduRequest);
         return null;
     }
 
+    @Override
     public void fireExpectedPduResponseReceived(PduAsyncResponse pduAsyncResponse) {
         logger.warn("Default handling is to discard expected response PDU: {}", pduAsyncResponse);
     }
 
+    @Override
     public void fireUnexpectedPduResponseReceived(PduResponse pduResponse) {
         logger.warn("Default handling is to discard unexpected response PDU: {}", pduResponse);
     }
 
+    @Override
     public void fireUnrecoverablePduException(UnrecoverablePduException e) {
-        logger.warn("Default handling is to discard a unrecoverable exception: {}", e);
+        logger.warn("Default handling is to discard a unrecoverable exception:", e);
     }
 
+    @Override
     public void fireRecoverablePduException(RecoverablePduException e) {
-        logger.warn("Default handling is to discard a recoverable exception: {}", e);
+        logger.warn("Default handling is to discard a recoverable exception:", e);
     }
 
+    @Override
     public void fireUnknownThrowable(Throwable t) {
-        logger.warn("Default handling is to discard an unknown throwable: {}", t);
+        if (t instanceof ClosedChannelException) {
+            logger.warn("Unknown throwable received, but it was a ClosedChannelException, calling fireChannelUnexpectedlyClosed instead");
+            fireChannelUnexpectedlyClosed();
+        } else {
+            logger.warn("Default handling is to discard an unknown throwable:", t);
+        }
     }
 
+    @Override
     public void firePduRequestExpired(PduRequest pduRequest) {
         logger.warn("Default handling is to discard expired request PDU: {}", pduRequest);
     }

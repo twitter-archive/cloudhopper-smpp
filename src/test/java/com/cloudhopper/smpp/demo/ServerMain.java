@@ -36,6 +36,10 @@ public class ServerMain {
     private static final Logger logger = LoggerFactory.getLogger(ServerMain.class);
 
     static public void main(String[] args) throws Exception {
+
+        //ThreadRenamingRunnable.setThreadNameDeterminer(ThreadNameDeterminer.CURRENT);
+        
+        
         SmppServerConfiguration configuration = new SmppServerConfiguration();
         configuration.setPort(2776);
         
@@ -55,20 +59,24 @@ public class ServerMain {
 
     public static class DefaultSmppServerHandler implements SmppServerHandler {
 
+        @Override
         public void sessionBindRequested(Long sessionId, SmppSessionConfiguration sessionConfiguration, final BaseBind bindRequest) throws SmppProcessingException {
 
             // test name change of sessions
-            sessionConfiguration.setName("Application.SMPP." + sessionConfiguration.getSystemId() + "." + sessionConfiguration.getSystemType());
+            // this name actually shows up as thread context....
+            sessionConfiguration.setName("Application.SMPP." + sessionConfiguration.getSystemId());
 
             //throw new SmppProcessingException(SmppConstants.STATUS_BINDFAIL, null);
         }
 
+        @Override
         public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) throws SmppProcessingException {
             logger.info("Session created: {}", session);
             // need to do something it now (flag we're ready)
             session.serverReady(new TestSmppSessionHandler());
         }
 
+        @Override
         public void sessionDestroyed(Long sessionId, SmppServerSession session) {
             logger.info("Session destroyed: {}", session);
         }

@@ -49,10 +49,15 @@ public class DefaultSmppServerTest {
 
     private TestSmppServerHandler serverHandler = new TestSmppServerHandler();
 
-    public DefaultSmppServer createSmppServer() {
+    public SmppServerConfiguration createSmppServerConfiguration() {
         SmppServerConfiguration configuration = new SmppServerConfiguration();
         configuration.setPort(PORT);
         configuration.setSystemId("cloudhopper");
+        return configuration;
+    }
+    
+    public DefaultSmppServer createSmppServer() {
+        SmppServerConfiguration configuration = createSmppServerConfiguration();
         DefaultSmppServer smppServer = new DefaultSmppServer(configuration, serverHandler);
         return smppServer;
     }
@@ -469,6 +474,86 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, session0.isBound());
             Assert.assertEquals(true, session0.isClosed());
+            
+        } finally {
+            server0.stop();
+        }
+    }
+    
+    
+    
+    
+    
+    public static class BlockThreadSmppServerHandler implements SmppServerHandler {
+        @Override
+        public void sessionBindRequested(Long sessionId, SmppSessionConfiguration sessionConfiguration, final BaseBind bindRequest) throws SmppProcessingException {
+            // we want to block processing for a period of time
+            try {
+                Thread.sleep(10000);
+            } catch (Exception e) {
+                // do nothing
+            }
+        }
+
+        @Override
+        public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
+            // do nothing
+        }
+
+        @Override
+        public void sessionDestroyed(Long sessionId, SmppServerSession session) {
+            // do nothing
+        }
+    }
+    
+    @Test
+    public void serverNotEnoughWorkerThreadsCausesBindTimerToCloseChannel() throws Exception {
+        BlockThreadSmppServerHandler serverHandler0 = new BlockThreadSmppServerHandler();
+        SmppServerConfiguration configuration = createSmppServerConfiguration();
+        // permit up to 0.5 seconds to bind
+        configuration.setBindTimeout(500);
+        DefaultSmppServer server0 = new DefaultSmppServer(configuration, serverHandler0);
+        server0.start();
+        
+        try {
+            // there is an issue without telling the server how many worker threads
+            // to create beforehand with starvation only Runtime.getRuntime().availableProcessors()
+            // worker threads are created by default!!! (yikes)
+            int workersToStarveWith = Runtime.getRuntime().availableProcessors();
+            
+            // initiate bind requests on all sessions we care about -- this should
+            // technicaly "starve" the server of worker threads since they'll all
+            // be blocked in a Thread.sleep
+            for (int i = 0; i < workersToStarveWith; i++) {
+                DefaultSmppClient client0 = new DefaultSmppClient();
+                SmppSessionConfiguration sessionConfig0 = createDefaultConfiguration();
+                sessionConfig0.setName("WorkerTest.Session." + i);
+                // don't use default method of binding, connect the socket first
+                DefaultSmppSession session0 = client0.doOpen(sessionConfig0, new DefaultSmppSessionHandler());
+                // try to bind and execute a bind request and wait for a bind response
+                BaseBind bindRequest = client0.createBindRequest(sessionConfig0);
+                try {
+                    // just send the request without caring if it succeeds
+                    session0.sendRequestPdu(bindRequest, 2000, false);
+                } catch (SmppChannelException e) {
+                    // correct behavior
+                }
+            }
+            
+            // now try to bind normally -- since all previous workers are "starved"
+            // this should fail to bind and the socket closed by the "BindTimer"
+            DefaultSmppClient client0 = new DefaultSmppClient();
+            SmppSessionConfiguration sessionConfig0 = createDefaultConfiguration();
+            sessionConfig0.setName("WorkerTestChannelClosed.Session");
+            sessionConfig0.setBindTimeout(750);
+            
+            try {
+                client0.bind(sessionConfig0);
+            } catch (SmppChannelException e) {
+                // the BindTimer should end up closing the connection since the
+                // worker thread were "starved"
+                logger.debug("Correctly received SmppChannelException during bind");
+            }
             
         } finally {
             server0.stop();

@@ -45,6 +45,7 @@ public class SmppSessionThreadRenamer implements ChannelUpstreamHandler {
         this.threadName = value;
     }
 
+    @Override
     public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
         // always rename the current thread and then rename it back
         String currentThreadName = Thread.currentThread().getName();
