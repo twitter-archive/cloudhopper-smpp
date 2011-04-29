@@ -32,12 +32,16 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer
  */
-public class ServerMain {
-    private static final Logger logger = LoggerFactory.getLogger(ServerMain.class);
+public class SlowServerMain {
+    private static final Logger logger = LoggerFactory.getLogger(SlowServerMain.class);
 
+    private static final long DELAY_BEFORE_RESPONSE = 3000;
+    
     static public void main(String[] args) throws Exception {
         SmppServerConfiguration configuration = new SmppServerConfiguration();
         configuration.setPort(2776);
+        configuration.setMaxConnections(10);
+        configuration.setNonBlockingSocketsEnabled(false);
         
         DefaultSmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler());
 
@@ -54,22 +58,17 @@ public class ServerMain {
     }
 
     public static class DefaultSmppServerHandler implements SmppServerHandler {
-
         @Override
         public void sessionBindRequested(Long sessionId, SmppSessionConfiguration sessionConfiguration, final BaseBind bindRequest) throws SmppProcessingException {
-
-            // test name change of sessions
             // this name actually shows up as thread context....
-            sessionConfiguration.setName("Application.SMPP." + sessionConfiguration.getSystemId());
-
-            //throw new SmppProcessingException(SmppConstants.STATUS_BINDFAIL, null);
+            sessionConfiguration.setName("Application.SMPP." + sessionId);
         }
 
         @Override
         public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) throws SmppProcessingException {
             logger.info("Session created: {}", session);
             // need to do something it now (flag we're ready)
-            session.serverReady(new TestSmppSessionHandler());
+            session.serverReady(new SlowSmppSessionHandler());
         }
 
         @Override
@@ -79,9 +78,13 @@ public class ServerMain {
 
     }
 
-    public static class TestSmppSessionHandler extends DefaultSmppSessionHandler {
+    public static class SlowSmppSessionHandler extends DefaultSmppSessionHandler {
         @Override
         public PduResponse firePduRequestReceived(PduRequest pduRequest) {
+            try {
+                Thread.sleep(DELAY_BEFORE_RESPONSE);
+            } catch (Exception e) { }
+            
             // ignore for now (already logged)
             return pduRequest.createResponse();
         }

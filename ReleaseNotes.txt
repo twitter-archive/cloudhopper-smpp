@@ -8,7 +8,25 @@ SMPP Library
     fix any specific problem)
   * Upgraded joda-time dependency from 1.6 to 1.6.2 (to keep it current)
   * Upgraded ch-commons-util dependency from 4.0 to 4.1
-  
+  * Fixed a significant performance issue with the SmppServer having a total
+    session count greater than the number of processors on the server.  Main
+    issue was with Netty's default "workerCount" value in its constructor.
+    The maximum number of expected concurrent sessions is recommended to be set
+    in the SmppServerConfiguration object.  The new default is 100 max sessions.
+  * Added several other configuration options for an SmppServer:
+      maxConnections - max number of concurrent connections/sessions (default 100)
+      reuseAddress - whether to reuse the server socket (default is true)
+      nonBlockingSocketsEnabled - whether to use NIO (non blocking) or OIO
+            (old blocking) type server sockets. (default is true)
+  * Added an example of a "SlowSmppServer" to test what happens if an SMSC is
+    slow acknowledging submits.
+  * Added support for passing up a SmppChannelException on blocking calls to
+    bind, submit, etc. if the underlying channel is closed during a block.
+    The implementation requires checking the RequestWindow if any callers are
+    waiting and immediately cancelling those requests and setting the "cause" to
+    a ClosedChannelException throwable.
+  * Added a warning to be output to the logger if the number of SMPP server
+    sessions exceeds the maxConnections set in the configuration object.
 
 3.1 - 2011-03-14
   * Removed debug logging from DeliveryReceipt parser.

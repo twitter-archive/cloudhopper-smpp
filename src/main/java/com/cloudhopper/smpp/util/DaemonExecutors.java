@@ -31,6 +31,7 @@ public class DaemonExecutors {
      */
     static public ExecutorService newCachedDaemonThreadPool() {
         return Executors.newCachedThreadPool(new ThreadFactory() {
+            @Override
             public Thread newThread(Runnable r) {
                 Thread t = new Thread(r);
                 t.setDaemon(true);

@@ -40,7 +40,6 @@ public class ClientMain {
     private static final Logger logger = LoggerFactory.getLogger(ClientMain.class);
 
     static public void main(String[] args) throws Exception {
-
         // a bootstrap can be shared (which will reused threads)
         // THIS VERSION USES "DAEMON" threads by default
 	// SmppSessionBootstrap bootstrap = new SmppSessionBootstrap();
@@ -100,10 +99,10 @@ public class ClientMain {
                 submit0.setShortMessage(CharsetUtil.encode("Hello World" + i, CharsetUtil.CHARSET_GSM));
 
                 // SYNCHRONOUS TYPE...
-                SubmitSmResp submitResp = session0.submit(submit0, 10000);
+                //SubmitSmResp submitResp = session0.submit(submit0, 10000);
 
                 // WINDOWED TYPE
-                //session0.sendRequestPdu(submit0, 10000, false);
+                session0.sendRequestPdu(submit0, 10000, false);
             }
 
             long stopTime = System.currentTimeMillis();

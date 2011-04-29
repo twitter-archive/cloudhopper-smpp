@@ -45,6 +45,7 @@ import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.channel.socket.oio.OioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,12 +62,10 @@ public class DefaultSmppServer implements SmppServer {
     private final SmppServerConfiguration configuration;
     private final SmppServerHandler serverHandler;
     private final PduTranscoder transcoder;
-
     private ExecutorService bossThreadPool;
     private ChannelFactory channelFactory;
     private ServerBootstrap serverBootstrap;
     private Channel serverChannel;
-
     // shared instance of a timer background thread to close unbound channels
     private final Timer bindTimer;
     // shared instance of a session id generator (an atomic long)
@@ -83,10 +82,20 @@ public class DefaultSmppServer implements SmppServer {
         this.serverHandler = serverHandler;
         // we'll put the "boss" worker for a server in its own pool
         this.bossThreadPool = Executors.newCachedThreadPool();
+        
         // a factory for creating channels (connections)
-        this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executors);
+        if (configuration.isNonBlockingSocketsEnabled()) {
+            this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executors, configuration.getMaxConnections());
+        } else {
+            this.channelFactory = new OioServerSocketChannelFactory(this.bossThreadPool, executors);
+        }
+        
         // tie the server bootstrap to this server socket channel factory
         this.serverBootstrap = new ServerBootstrap(this.channelFactory);
+        
+        // set options for the server socket that are useful
+        this.serverBootstrap.setOption("reuseAddress", configuration.isReuseAddress());
+        
         // we use the same default pipeline for all new channels - no need for a factory
         this.serverConnector = new SmppServerConnector(channels, this);
         this.serverBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, this.serverConnector);
@@ -94,7 +103,7 @@ public class DefaultSmppServer implements SmppServer {
         this.bindTimer = new Timer(configuration.getName() + "-BindTimer0", true);
         // NOTE: this would permit us to customize the "transcoding" context for a server if needed
         this.transcoder = new DefaultPduTranscoder(new DefaultPduTranscoderContext());
-        this.sessionIdSequence = new AtomicLong(0);
+        this.sessionIdSequence = new AtomicLong(0);        
     }
 
     public PduTranscoder getTranscoder() {
@@ -200,6 +209,11 @@ public class DefaultSmppServer implements SmppServer {
         channel.getPipeline().remove(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME);
         channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
 
+        // check if the # of channels exceeds maxConnections
+        if (this.channels.size() > this.configuration.getMaxConnections()) {
+            logger.warn("The number of connections [{}] exceeds the configured maxConnections of [{}]", this.channels.size(), this.configuration.getMaxConnections());
+        }
+        
         // session created, now pass it upstream
         this.serverHandler.sessionCreated(sessionId, session, preparedBindResponse);
     }

@@ -380,7 +380,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             // the request future may have a cause set that we want to unwrap
             Throwable cause = requestFuture.getCause();
             if (cause != null && cause instanceof ClosedChannelException) {
-                throw new SmppChannelException("Channel was closed during bind", cause);
+                throw new SmppChannelException("Channel was closed after sending request, but before receiving response", cause);
             } else {
                 throw new UnrecoverablePduException(e.getMessage(), e);
             }
@@ -571,21 +571,20 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
         
         // most of the time when a channel is closed, we don't necessarily want
-        // to do anything special.  however, when we're in the middle of a "BIND"
-        // request and this happens, we need to break anything waiting!
-        if (this.state.get() == STATE_BINDING) {
-            if (this.requestWindow.getPendingSize() > 0) {
-                logger.warn("In process of bind(), but channel closed and requestWindow has pending requests, probably is a BindRequest that needs cancelled");
-                Map<Integer,WindowEntry<Integer,PduRequest,PduResponse>> requests = this.requestWindow.getPendingRequests();
-                for (Integer key : requests.keySet()) {
-                    WindowEntry<Integer,PduRequest,PduResponse> entry = requests.get(key);
-                    if (entry.getRequest() instanceof BaseBind) {
-                        logger.warn("Found a BaseBind request in requestWindow, cancelling it");
-                        try {
-                            this.requestWindow.cancelRequest(key, new ClosedChannelException());
-                        } catch (Exception e) { }
-                        return;
-                    }
+        // to do anything special -- however when a caller is waiting for a response
+        // to a request and we know the channel closed, we should check for those
+        // specific requests and make sure to cancel them
+        if (this.requestWindow.getPendingSize() > 0) {
+            logger.warn("Channel closed and requestWindow has [{}] pending requests, some may need cancelled immediately", this.requestWindow.getPendingSize());
+            Map<Integer,WindowEntry<Integer,PduRequest,PduResponse>> requests = this.requestWindow.getPendingRequests();
+            for (Integer key : requests.keySet()) {
+                WindowEntry<Integer,PduRequest,PduResponse> entry = requests.get(key);
+                // is the caller waiting?
+                if (entry.getCallerStatus() == WindowEntry.CALLER_WAITING) {
+                    logger.warn("Caller waiting on request [{}], cancelling it with a channel closed exception", key);
+                    try {
+                        this.requestWindow.cancelRequest(key, new ClosedChannelException());
+                    } catch (Exception e) { }
                 }
             }
         }
