@@ -15,7 +15,7 @@
 package com.cloudhopper.smpp.impl;
 
 import com.cloudhopper.commons.util.HexUtil;
-import com.cloudhopper.commons.util.windowing.ResponseFuture;
+import com.cloudhopper.commons.util.windowing.WindowFuture;
 import com.cloudhopper.smpp.PduAsyncResponse;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
@@ -26,21 +26,24 @@ import com.cloudhopper.smpp.pdu.PduResponse;
  * @author joelauer
  */
 public class DefaultPduAsyncResponse implements PduAsyncResponse {
-    // we internally "wrap" a PDU response future
-    private final ResponseFuture<Integer,PduRequest,PduResponse> future;
+    // we internally "wrap" a PDU window future
+    private final WindowFuture<Integer,PduRequest,PduResponse> future;
 
-    public DefaultPduAsyncResponse(ResponseFuture<Integer,PduRequest,PduResponse> future) {
+    public DefaultPduAsyncResponse(WindowFuture<Integer,PduRequest,PduResponse> future) {
         this.future = future;
     }
 
+    @Override
     public PduRequest getRequest() {
         return future.getRequest();
     }
 
+    @Override
     public PduResponse getResponse() {
         return future.getResponse();
     }
 
+    @Override
     public long getProcessingTime() {
         return future.getProcessingTime();
     }

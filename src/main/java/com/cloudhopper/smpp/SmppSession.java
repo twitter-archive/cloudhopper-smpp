@@ -14,8 +14,8 @@
 
 package com.cloudhopper.smpp;
 
-import com.cloudhopper.commons.util.windowing.RequestFuture;
 import com.cloudhopper.commons.util.windowing.Window;
+import com.cloudhopper.commons.util.windowing.WindowFuture;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppTimeoutException;
 import com.cloudhopper.smpp.pdu.EnquireLink;
@@ -268,19 +268,19 @@ public interface SmppSession {
      *      is returned.
      * @throws RecoverablePduException Thrown when a recoverable PDU error occurs.
      *      A recoverable PDU error includes the partially decoded PDU in order
-     *      to generate a negative acknowledgement (NACK) response.
+     *      to generate a negative acknowledgment (NACK) response.
      * @throws UnrecoverablePduException Thrown when an unrecoverable PDU error
-     *      occurs. This indicates a seriours error occurred and usually indicates
+     *      occurs. This indicates a serious error occurred and usually indicates
      *      the session should be immediately terminated.
      * @throws SmppTimeoutException A timeout occurred while waiting for a response
-     *      from the remote endpoint.  A timeout can either occur with an unresponse
+     *      from the remote endpoint.  A timeout can either occur with an unresponsive
      *      remote endpoint or the bytes were not written in time.
      * @throws SmppChannelException Thrown when the underlying socket/channel was
      *      unable to write the request.
      * @throws InterruptedException The calling thread was interrupted while waiting
      *      to acquire a lock or write/read the bytes from the socket/channel.
      */
-    public RequestFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest request, long timeoutInMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
+    public WindowFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest request, long timeoutInMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
 
     /**
      * Main underlying method for sending a response PDU to the remote endpoint.

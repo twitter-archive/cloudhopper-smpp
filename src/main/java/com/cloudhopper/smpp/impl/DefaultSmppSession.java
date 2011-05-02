@@ -14,17 +14,12 @@
 
 package com.cloudhopper.smpp.impl;
 
-import com.cloudhopper.commons.util.windowing.ExpiredRequestListener;
-import com.cloudhopper.commons.util.windowing.MaxWindowSizeTimeoutException;
-import com.cloudhopper.commons.util.windowing.RequestAlreadyExistsException;
-import com.cloudhopper.commons.util.windowing.RequestCanceledException;
-import com.cloudhopper.commons.util.windowing.RequestFuture;
-import com.cloudhopper.commons.util.windowing.ResponseFuture;
-import com.cloudhopper.commons.util.windowing.ResponseTimeoutException;
 import com.cloudhopper.commons.util.windowing.Window;
-import com.cloudhopper.commons.util.windowing.WindowEntry;
+import com.cloudhopper.commons.util.windowing.WindowFuture;
+import com.cloudhopper.commons.util.windowing.WindowListener;
 import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.SmppFuture;
 import com.cloudhopper.smpp.SmppServerSession;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
@@ -65,7 +60,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author joelauer
  */
-public class DefaultSmppSession implements SmppServerSession, SmppSessionChannelListener, ExpiredRequestListener<Integer,PduRequest,PduResponse> {
+public class DefaultSmppSession implements SmppServerSession, SmppSessionChannelListener, WindowListener<Integer,PduRequest,PduResponse> {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppSession.class);
 
     // are we an "esme" or "smsc" session type?
@@ -116,10 +111,12 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // always "wrap" the custom pdu transcoder context with a default one
         this.transcoder = new DefaultPduTranscoder(new DefaultPduTranscoderContext(this.sessionHandler));
         this.requestWindow = new Window<Integer,PduRequest,PduResponse>(configuration.getWindowSize());
+        
         // should we activate the response expiry reaper?
         if (configuration.getRequestExpiryTimeout() > 0) {
             this.requestWindow.enableExpiredRequestReaper(this, configuration.getRequestExpiryTimeout());
         }
+        
         // these server-only items are null
         this.server = null;
         this.serverSessionId = null;
@@ -371,7 +368,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      * @throws InterruptedException
      */
     protected PduResponse sendRequestAndGetResponse(PduRequest requestPdu, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
-        RequestFuture<Integer,PduRequest,PduResponse> requestFuture = sendRequestPdu(requestPdu, timeoutInMillis, true);
+        WindowFuture<Integer,PduRequest,PduResponse> requestFuture = sendRequestPdu(requestPdu, timeoutInMillis, true);
         try {
             requestFuture.await();
         } catch (ResponseTimeoutException e) {
@@ -418,7 +415,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      */
     @SuppressWarnings("unchecked")
     @Override
-    public RequestFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest pdu, long timeoutInMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
+    public SmppFuture sendRequestPdu(PduRequest pdu, long timeoutInMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
         // assign the next PDU sequence # if its not yet assigned
         if (!pdu.hasSequenceNumberAssigned()) {
             pdu.setSequenceNumber(this.sequenceNumber.next());
@@ -427,9 +424,9 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // encode the pdu into a buffer
         ChannelBuffer buffer = transcoder.encode(pdu);
 
-        RequestFuture<Integer,PduRequest,PduResponse> requestFuture = null;
+        SmppFuture future = null;
         try {
-            requestFuture = requestWindow.addRequest(pdu.getSequenceNumber(), pdu, timeoutInMillis, synchronous);
+            future = requestWindow.offer(pdu.getSequenceNumber(), pdu, timeoutInMillis, synchronous);
         } catch (RequestAlreadyExistsException e) {
             throw new UnrecoverablePduException(e.getMessage(), e);
         } catch (MaxWindowSizeTimeoutException e) {
@@ -600,8 +597,8 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     }
 
     @Override
-    public void requestExpired(WindowEntry<Integer, PduRequest, PduResponse> entry) {
-        this.sessionHandler.firePduRequestExpired(entry.getRequest());
+    public void expired(WindowFuture<Integer, PduRequest, PduResponse> future) {
+        this.sessionHandler.firePduRequestExpired(future.getRequest());
     }
 
 }
