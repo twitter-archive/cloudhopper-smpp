@@ -74,8 +74,8 @@ public class RebindMain {
 
                         session0.close();
 
-                        logger.info("Final pending Requests in Window: {}", session0.getRequestWindow().getPendingSize());
-                        logger.info("With windowSize=" + session0.getRequestWindow().getWindowSize());
+                        logger.info("Final pending Requests in Window: {}", session0.getRequestWindow().getSize());
+                        logger.info("With windowSize=" + session0.getRequestWindow().getMaxSize());
                     }
                 } catch (Throwable t) {
                     logger.error("{}", t);

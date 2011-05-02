@@ -14,15 +14,15 @@
 
 package com.cloudhopper.smpp.impl;
 
-import com.cloudhopper.commons.util.windowing.ExpiredRequestListener;
-import com.cloudhopper.commons.util.windowing.MaxWindowSizeTimeoutException;
-import com.cloudhopper.commons.util.windowing.RequestAlreadyExistsException;
-import com.cloudhopper.commons.util.windowing.RequestCanceledException;
+import com.cloudhopper.commons.util.windowing.WindowListener;
+import com.cloudhopper.commons.util.windowing.OfferTimeoutException;
+import com.cloudhopper.commons.util.windowing.DuplicateKeyException;
+import com.cloudhopper.commons.util.windowing.RequestCancelledException;
 import com.cloudhopper.commons.util.windowing.RequestFuture;
 import com.cloudhopper.commons.util.windowing.ResponseFuture;
 import com.cloudhopper.commons.util.windowing.ResponseTimeoutException;
 import com.cloudhopper.commons.util.windowing.Window;
-import com.cloudhopper.commons.util.windowing.WindowEntry;
+import com.cloudhopper.commons.util.windowing.WindowFuture;
 import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.SmppServerSession;
@@ -65,7 +65,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author joelauer
  */
-public class DefaultSmppSession implements SmppServerSession, SmppSessionChannelListener, ExpiredRequestListener<Integer,PduRequest,PduResponse> {
+public class DefaultSmppSession implements SmppServerSession, SmppSessionChannelListener, WindowListener<Integer,PduRequest,PduResponse> {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppSession.class);
 
     // are we an "esme" or "smsc" session type?
@@ -376,7 +376,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             requestFuture.await();
         } catch (ResponseTimeoutException e) {
             throw new SmppTimeoutException(e.getMessage(), e);
-        } catch (RequestCanceledException e) {
+        } catch (RequestCancelledException e) {
             // the request future may have a cause set that we want to unwrap
             Throwable cause = requestFuture.getCause();
             if (cause != null && cause instanceof ClosedChannelException) {
@@ -430,9 +430,9 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         RequestFuture<Integer,PduRequest,PduResponse> requestFuture = null;
         try {
             requestFuture = requestWindow.addRequest(pdu.getSequenceNumber(), pdu, timeoutInMillis, synchronous);
-        } catch (RequestAlreadyExistsException e) {
+        } catch (DuplicateKeyException e) {
             throw new UnrecoverablePduException(e.getMessage(), e);
-        } catch (MaxWindowSizeTimeoutException e) {
+        } catch (OfferTimeoutException e) {
             throw new SmppTimeoutException(e.getMessage(), e);
         }
 
@@ -526,10 +526,10 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
                     // if this isn't null, we found a match to a request
                     int callerStatus = responseFuture.getCallerStatus();
                     // depending on the status of things, handle the response differently
-                    if (callerStatus == WindowEntry.CALLER_WAITING) {
+                    if (callerStatus == WindowFuture.CALLER_WAITING) {
                         // do nothing -- calling thread going to process it
                         return;
-                    } else if (callerStatus == WindowEntry.CALLER_NO_WAIT) {
+                    } else if (callerStatus == WindowFuture.CALLER_NOT_WAITING) {
                         // this was an "expected" response -- wrap it into an async response
                         this.sessionHandler.fireExpectedPduResponseReceived(new DefaultPduAsyncResponse(responseFuture));
                         return;
@@ -574,13 +574,13 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // to do anything special -- however when a caller is waiting for a response
         // to a request and we know the channel closed, we should check for those
         // specific requests and make sure to cancel them
-        if (this.requestWindow.getPendingSize() > 0) {
-            logger.warn("Channel closed and requestWindow has [{}] pending requests, some may need cancelled immediately", this.requestWindow.getPendingSize());
-            Map<Integer,WindowEntry<Integer,PduRequest,PduResponse>> requests = this.requestWindow.getPendingRequests();
+        if (this.requestWindow.getSize() > 0) {
+            logger.warn("Channel closed and requestWindow has [{}] pending requests, some may need cancelled immediately", this.requestWindow.getSize());
+            Map<Integer,WindowFuture<Integer,PduRequest,PduResponse>> requests = this.requestWindow.getPendingRequests();
             for (Integer key : requests.keySet()) {
-                WindowEntry<Integer,PduRequest,PduResponse> entry = requests.get(key);
+                WindowFuture<Integer,PduRequest,PduResponse> entry = requests.get(key);
                 // is the caller waiting?
-                if (entry.getCallerStatus() == WindowEntry.CALLER_WAITING) {
+                if (entry.getCallerStatus() == WindowFuture.CALLER_WAITING) {
                     logger.warn("Caller waiting on request [{}], cancelling it with a channel closed exception", key);
                     try {
                         this.requestWindow.cancelRequest(key, new ClosedChannelException());
@@ -600,7 +600,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     }
 
     @Override
-    public void requestExpired(WindowEntry<Integer, PduRequest, PduResponse> entry) {
+    public void expired(WindowFuture<Integer, PduRequest, PduResponse> entry) {
         this.sessionHandler.firePduRequestExpired(entry.getRequest());
     }
 

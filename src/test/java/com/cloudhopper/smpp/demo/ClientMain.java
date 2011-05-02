@@ -82,7 +82,7 @@ public class ClientMain {
             long startTime = System.currentTimeMillis();
 
             for (int i = 0; i < count; i++) {
-                logger.info("Pending Requests in Window: {}", session0.getRequestWindow().getPendingSize());
+                logger.info("Pending Requests in Window: {}", session0.getRequestWindow().getSize());
 
                 String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
                 byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);
@@ -108,8 +108,8 @@ public class ClientMain {
             long stopTime = System.currentTimeMillis();
 
             Thread.sleep(1000);
-            logger.info("Final pending Requests in Window: {}", session0.getRequestWindow().getPendingSize());
-            logger.info("With windowSize=" + session0.getRequestWindow().getWindowSize() + " took " + (stopTime-startTime) + " ms to process " + count + " requests");
+            logger.info("Final pending Requests in Window: {}", session0.getRequestWindow().getSize());
+            logger.info("With windowSize=" + session0.getRequestWindow().getMaxSize() + " took " + (stopTime-startTime) + " ms to process " + count + " requests");
 
             System.out.println("Press any key to unbind and close sessions");
             System.in.read();

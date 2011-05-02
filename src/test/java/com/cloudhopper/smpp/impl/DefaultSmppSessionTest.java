@@ -16,7 +16,7 @@ package com.cloudhopper.smpp.impl;
 
 // third party imports
 import com.cloudhopper.smpp.util.DaemonExecutors;
-import com.cloudhopper.commons.util.windowing.MaxWindowSizeTimeoutException;
+import com.cloudhopper.commons.util.windowing.OfferTimeoutException;
 import com.cloudhopper.commons.util.windowing.RequestFuture;
 import com.cloudhopper.commons.util.windowing.ResponseTimeoutException;
 import com.cloudhopper.smpp.PduAsyncResponse;
@@ -340,7 +340,7 @@ public class DefaultSmppSessionTest {
                 RequestFuture future1 = session.sendRequestPdu(el1, 3000, true);
                 RequestFuture future2 = session.sendRequestPdu(el2, 3000, true);
 
-                Assert.assertEquals(3, session.getRequestWindow().getPendingSize());
+                Assert.assertEquals(3, session.getRequestWindow().getSize());
 
                 try {
                     // window size of 3 is now filled up, this one should timeout
@@ -348,10 +348,10 @@ public class DefaultSmppSessionTest {
                     Assert.fail();
                 } catch (SmppTimeoutException e) {
                     Assert.assertNotNull(e.getCause());
-                    Assert.assertEquals(MaxWindowSizeTimeoutException.class, e.getCause().getClass());
+                    Assert.assertEquals(OfferTimeoutException.class, e.getCause().getClass());
                 }
 
-                Assert.assertEquals(3, session.getRequestWindow().getPendingSize());
+                Assert.assertEquals(3, session.getRequestWindow().getSize());
 
                 // now the smsc will send a response back to the second request
                 simulator0.sendPdu(el1Resp);
@@ -360,7 +360,7 @@ public class DefaultSmppSessionTest {
                 future1.await();
 
                 // there should be 1 slot free now in the window
-                Assert.assertEquals(2, session.getRequestWindow().getPendingSize());
+                Assert.assertEquals(2, session.getRequestWindow().getSize());
 
                 // this request should now succeed
                 RequestFuture future3 = session.sendRequestPdu(el3, 3000, true);
@@ -376,7 +376,7 @@ public class DefaultSmppSessionTest {
                 future2.await();
                 future3.await();
 
-                Assert.assertEquals(0, session.getRequestWindow().getPendingSize());
+                Assert.assertEquals(0, session.getRequestWindow().getSize());
         } finally {
             SmppSessionUtil.close(session);
         }

@@ -549,6 +549,7 @@ public class DefaultSmppServerTest {
             
             try {
                 client0.bind(sessionConfig0);
+                Assert.fail();
             } catch (SmppChannelException e) {
                 // the BindTimer should end up closing the connection since the
                 // worker thread were "starved"
