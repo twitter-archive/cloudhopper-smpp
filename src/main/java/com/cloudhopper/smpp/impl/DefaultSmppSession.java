@@ -21,7 +21,6 @@ import com.cloudhopper.commons.util.windowing.WindowFuture;
 import com.cloudhopper.commons.util.windowing.WindowListener;
 import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.SmppFuture;
 import com.cloudhopper.smpp.SmppServerSession;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
@@ -255,9 +254,14 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     protected PduTranscoder getTranscoder() {
         return this.transcoder;
     }
-
+    
     @Override
     public Window<Integer,PduRequest,PduResponse> getRequestWindow() {
+        return getSendWindow();
+    }
+
+    @Override
+    public Window<Integer,PduRequest,PduResponse> getSendWindow() {
         return this.sendWindow;
     }
 
@@ -410,8 +414,9 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         boolean completedWithinTimeout = future.await();
         
         if (!completedWithinTimeout) {
-            // FIXME: make sure we remove this request from the window??
-//            future.cancel();
+            // since this is a "synchronous" request and it timed out, we don't
+            // want it eating up valuable window space - cancel it before returning exception
+            future.cancel();
             throw new SmppTimeoutException("Unable to get response within [" + timeoutInMillis + " ms]");
         }
         
@@ -471,6 +476,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         try {
             future = sendWindow.offer(pdu.getSequenceNumber(), pdu, timeoutInMillis, configuration.getRequestExpiryTimeout(), synchronous);
             logger.debug("IsCallerWaiting? " + future.isCallerWaiting());
+            logger.debug("Expire Timestamp: " + future.getExpireTimestamp());
         } catch (DuplicateKeyException e) {
             throw new UnrecoverablePduException(e.getMessage(), e);
         } catch (OfferTimeoutException e) {

@@ -164,13 +164,19 @@ public interface SmppSession {
     public long getBoundTime();
 
     /**
+     * @deprecated
+     * @see #getRequestWindow
+     */
+    public Window<Integer,PduRequest,PduResponse> getRequestWindow();
+    
+    /**
      * Gets the underlying request "window" for this session.  A "window" represents
      * a request sent to the remote endpoint, but has not received a response
      * yet.  Accessing this property is useful if unacknowledged requests need
      * to be cleared out (most likely for a retry at a later time).
      * @return The request "window"
      */
-    public Window<Integer,PduRequest,PduResponse> getRequestWindow();
+    public Window<Integer,PduRequest,PduResponse> getSendWindow();
 
     /**
      * Immediately close the session by closing the underlying socket/channel.

@@ -22,7 +22,6 @@ import com.cloudhopper.smpp.SmppSession;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.pdu.DeliverSm;
-import com.cloudhopper.smpp.pdu.SubmitSmResp;
 import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.pdu.EnquireLink;
 import com.cloudhopper.smpp.pdu.PduRequest;
@@ -44,7 +43,9 @@ public class ClientMain {
         // THIS VERSION USES "DAEMON" threads by default
 	// SmppSessionBootstrap bootstrap = new SmppSessionBootstrap();
         // THIS VERSION DOESN'T - WILL HANG JVM UNTIL CLOSED
-        DefaultSmppClient bootstrap = new DefaultSmppClient(Executors.newCachedThreadPool());
+        //DefaultSmppClient bootstrap = new DefaultSmppClient(Executors.newCachedThreadPool());
+        // include monitoring (automatic expiration) in this version
+        DefaultSmppClient bootstrap = new DefaultSmppClient(Executors.newCachedThreadPool(), 1, Executors.newScheduledThreadPool(1));
 
         DefaultSmppSessionHandler sessionHandler = new ClientSmppSessionHandler();
 
@@ -58,6 +59,10 @@ public class ClientMain {
         config0.setSystemId("1234567890");
         config0.setPassword("password");
         config0.getLoggingOptions().setLogBytes(true);
+        
+        // to enable monitoring
+        config0.setRequestExpiryTimeout(2000);
+        config0.setWindowMonitorInterval(1000);
 
         SmppSession session0 = null;
 

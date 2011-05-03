@@ -342,7 +342,7 @@ public class DefaultSmppSessionTest {
                 WindowFuture future1 = session.sendRequestPdu(el1, 3000, true);
                 WindowFuture future2 = session.sendRequestPdu(el2, 3000, true);
 
-                Assert.assertEquals(3, session.getRequestWindow().getSize());
+                Assert.assertEquals(3, session.getSendWindow().getSize());
 
                 try {
                     // window size of 3 is now filled up, this one should timeout
@@ -353,7 +353,7 @@ public class DefaultSmppSessionTest {
                     Assert.assertEquals(OfferTimeoutException.class, e.getCause().getClass());
                 }
 
-                Assert.assertEquals(3, session.getRequestWindow().getSize());
+                Assert.assertEquals(3, session.getSendWindow().getSize());
 
                 // now the smsc will send a response back to the second request
                 simulator0.sendPdu(el1Resp);
@@ -362,7 +362,7 @@ public class DefaultSmppSessionTest {
                 future1.await();
 
                 // there should be 1 slot free now in the window
-                Assert.assertEquals(2, session.getRequestWindow().getSize());
+                Assert.assertEquals(2, session.getSendWindow().getSize());
 
                 // this request should now succeed
                 WindowFuture future3 = session.sendRequestPdu(el3, 3000, true);
@@ -378,7 +378,7 @@ public class DefaultSmppSessionTest {
                 future2.await();
                 future3.await();
 
-                Assert.assertEquals(0, session.getRequestWindow().getSize());
+                Assert.assertEquals(0, session.getSendWindow().getSize());
         } finally {
             SmppSessionUtil.close(session);
         }
@@ -955,6 +955,54 @@ public class DefaultSmppSessionTest {
             Assert.assertEquals(0, sessionHandler.getReceivedPduRequests().size());
             Assert.assertEquals(0, sessionHandler.getReceivedExpectedPduResponses().size());
             Assert.assertEquals(0, sessionHandler.getReceivedUnexpectedPduResponses().size());
+        } finally {
+            SmppSessionUtil.close(session);
+        }
+    }
+    
+    
+    @Test
+    public void synchronousSendButNeverGetResponse() throws Exception {
+        SmppSessionConfiguration configuration = createDefaultConfiguration();
+        registerServerBindProcessor();
+        clearAllServerSessions();
+
+        // bind and get the simulator session
+        PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
+        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+
+        SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
+        simulator0.setPduProcessor(null);
+
+        try {
+            try {
+                session.enquireLink(new EnquireLink(), 100);
+                // request should timeout
+                Assert.fail();
+            } catch (SmppTimeoutException e) {
+                // correct behavior
+            }
+            
+            // with a "synchronous" type of send, after a timeout, the request
+            // should have been cancelled
+            Assert.assertEquals(0, session.getSendWindow().getSize()); 
+
+            /**
+            // send a response to a request that was NEVER sent
+            simulator0.sendPdu(el0Resp);
+
+            // we should have received a PDU response
+            PduResponse pdu0 = sessionHandler.getReceivedUnexpectedPduResponses().poll(1000, TimeUnit.MILLISECONDS);
+            Assert.assertNotNull("Unable to receive unexpected PDU response -- perhaps it was routed incorrectly?", pdu0);
+            Assert.assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP, pdu0.getCommandId());
+            Assert.assertEquals(0, pdu0.getCommandStatus());
+            Assert.assertEquals(16, pdu0.getCommandLength());
+            Assert.assertEquals(0x1000, pdu0.getSequenceNumber());
+
+            Assert.assertEquals(0, sessionHandler.getReceivedPduRequests().size());
+            Assert.assertEquals(0, sessionHandler.getReceivedExpectedPduResponses().size());
+            Assert.assertEquals(0, sessionHandler.getReceivedUnexpectedPduResponses().size());
+             */
         } finally {
             SmppSessionUtil.close(session);
         }

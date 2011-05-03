@@ -40,6 +40,7 @@ import com.cloudhopper.smpp.type.SmppChannelConnectTimeoutException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -62,6 +63,7 @@ public class DefaultSmppClient implements SmppClient {
     private ExecutorService executors;
     private NioClientSocketChannelFactory channelFactory;
     private ClientBootstrap clientBootstrap;
+    private ScheduledExecutorService monitorExecutor;
 
     public DefaultSmppClient() {
         this(DaemonExecutors.newCachedDaemonThreadPool());
@@ -72,6 +74,10 @@ public class DefaultSmppClient implements SmppClient {
     }
 
     public DefaultSmppClient(ExecutorService executors, int expectedSessions) {
+        this(executors, expectedSessions, null);
+    }
+    
+    public DefaultSmppClient(ExecutorService executors, int expectedSessions, ScheduledExecutorService monitorExecutor) {
         this.channels = new DefaultChannelGroup();
         this.executors = executors;
         this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
@@ -79,6 +85,7 @@ public class DefaultSmppClient implements SmppClient {
         // we use the same default pipeline for all new channels - no need for a factory
         this.clientConnector = new SmppClientConnector(this.channels);
         this.clientBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, this.clientConnector);
+        this.monitorExecutor = monitorExecutor;
     }
 
     @Override
@@ -177,7 +184,7 @@ public class DefaultSmppClient implements SmppClient {
     }
 
     protected DefaultSmppSession createSession(Channel channel, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
-        DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.CLIENT, config, channel, sessionHandler);
+        DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.CLIENT, config, channel, sessionHandler, monitorExecutor);
 
         // add the thread renamer portion to the pipeline
         if (config.getName() != null) {
