@@ -3,6 +3,17 @@ http://twitter.com/
 http://www.cloudhopper.com/
 SMPP Library
 --------------------------------------------------------------------------------
+4.0 - ?
+
+  * Added SmppFuture as a replacement for using Window object from ch-commons-util
+  * Modified internals of SmppSession to call the "requestWindow" 
+    a "sendWindow".  Since either endpoint of a session can technically
+    generate requests, this actually represents the window just for sending.
+  * Added 2 new time measurements on asynchronous responses (window wait time,
+    and response time).
+  * Added windowWaitTimeout
+
+
 3.2 - 2011-04-28
   * Upgraded netty dependency from 3.1.5 to 3.2.4 (to keep it current, not to
     fix any specific problem)

@@ -38,8 +38,10 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
     private long bindTimeout;       // length of time to wait for a bind response
     // logging settings
     private LoggingOptions loggingOptions;
+    private long windowWaitTimeout;
     // if > 0, then activated
     private long requestExpiryTimeout;
+    private long windowMonitorInterval;
 
     public SmppSessionConfiguration() {
         this(SmppBindType.TRANSCEIVER, null, null, null);
@@ -50,7 +52,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
     }
 
     public SmppSessionConfiguration(SmppBindType type, String systemId, String password, String systemType) {
-        this.windowSize = 1;
+        this.windowSize = SmppConstants.DEFAULT_WINDOW_SIZE;
         this.type = type;
         this.systemId = systemId;
         this.password = password;
@@ -58,7 +60,9 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
         this.interfaceVersion = SmppConstants.VERSION_3_4;
         this.bindTimeout = SmppConstants.DEFAULT_BIND_TIMEOUT;
         this.loggingOptions = new LoggingOptions();
-        this.requestExpiryTimeout = 0;
+        this.windowWaitTimeout = SmppConstants.DEFAULT_WINDOW_WAIT_TIMEOUT;
+        this.requestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
+        this.windowMonitorInterval = -1;
     }
 
     public void setName(String value) {
@@ -141,12 +145,47 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
         this.loggingOptions = loggingOptions;
     }
 
+    public long getWindowWaitTimeout() {
+        return windowWaitTimeout;
+    }
+
+    /**
+     * Set the amount of time to wait until a slot opens up in the sendWindow.
+     * Defaults to 60000.
+     * @param windowWaitTimeout The amount of time to wait (in ms) until a slot
+     *      in the sendWindow becomes available.
+     */
+    public void setWindowWaitTimeout(long windowWaitTimeout) {
+        this.windowWaitTimeout = windowWaitTimeout;
+    }
+
     public long getRequestExpiryTimeout() {
         return requestExpiryTimeout;
     }
 
+    /**
+     * Set the amount of time to wait for an endpoint to respond to
+     * a request before it expires. Defaults to disabled (-1).
+     * @param requestExpiryTimeout  The amount of time to wait (in ms) before
+     *      an unacknowledged request expires.  -1 disables.
+     */
     public void setRequestExpiryTimeout(long requestExpiryTimeout) {
         this.requestExpiryTimeout = requestExpiryTimeout;
     }
-    
+
+    public long getWindowMonitorInterval() {
+        return windowMonitorInterval;
+    }
+
+    /**
+     * Sets the amount of time between executions of monitoring the window
+     * for requests that expire.  It's recommended that this generally either
+     * matches or is half the value of requestExpiryTimeout.  Therefore, at worst
+     * a request would could take up 1.5X the requestExpiryTimeout to clear out.
+     * @param windowMonitorInterval The amount of time to wait (in ms) between
+     *      executions of monitoring the window.
+     */
+    public void setWindowMonitorInterval(long windowMonitorInterval) {
+        this.windowMonitorInterval = windowMonitorInterval;
+    }
 }

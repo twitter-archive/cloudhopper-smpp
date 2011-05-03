@@ -26,10 +26,33 @@ import com.cloudhopper.smpp.pdu.PduResponse;
  */
 public interface PduAsyncResponse {
 
+    /**
+     * Gets the original request associated with the response.
+     * @return The original request
+     */
     public PduRequest getRequest();
 
+    /**
+     * Gets the response from the remote endpoint.
+     * @return The response
+     */
     public PduResponse getResponse();
 
-    public long getProcessingTime();
-
+    /**
+     * Gets the amount of time required to accept the request into the session's
+     * send window (for a free slot to open up).
+     * @return The amount of time (in ms) to accept the request into the send window
+     */
+    public long getWindowWaitTime();
+    
+    /**
+     * Gets the amount of time required for the remote endpoint to acknowledge
+     * the request with a response.  This value is based on the time the request
+     * went out on the wire till a response was received on the wire.  Does not
+     * include any time required waiting for a slot in the window to become
+     * available.
+     * @return The amount of time (in ms) to receive a response from remote endpoint
+     */
+    public long getResponseTime();
+    
 }

@@ -14,17 +14,14 @@
 
 package com.cloudhopper.smpp.impl;
 
-import com.cloudhopper.commons.util.windowing.WindowListener;
-import com.cloudhopper.commons.util.windowing.OfferTimeoutException;
 import com.cloudhopper.commons.util.windowing.DuplicateKeyException;
-import com.cloudhopper.commons.util.windowing.RequestCancelledException;
-import com.cloudhopper.commons.util.windowing.RequestFuture;
-import com.cloudhopper.commons.util.windowing.ResponseFuture;
-import com.cloudhopper.commons.util.windowing.ResponseTimeoutException;
+import com.cloudhopper.commons.util.windowing.OfferTimeoutException;
 import com.cloudhopper.commons.util.windowing.Window;
 import com.cloudhopper.commons.util.windowing.WindowFuture;
+import com.cloudhopper.commons.util.windowing.WindowListener;
 import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.SmppFuture;
 import com.cloudhopper.smpp.SmppServerSession;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
@@ -52,6 +49,7 @@ import com.cloudhopper.smpp.util.SequenceNumber;
 import com.cloudhopper.smpp.util.SmppSessionUtil;
 import java.nio.channels.ClosedChannelException;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -79,21 +77,21 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     private SmppSessionHandler sessionHandler;
     private final SequenceNumber sequenceNumber;
     private final PduTranscoder transcoder;
-    private final Window<Integer,PduRequest,PduResponse> requestWindow;
+    private final Window<Integer,PduRequest,PduResponse> sendWindow;
     private byte interfaceVersion;
-
     // only for server sessions
     private DefaultSmppServer server;
     // the session id assigned by the server to this particular instance
     private Long serverSessionId;
     // pre-prepared BindResponse to send back once we're flagged as ready
     private BaseBindResp preparedBindResponse;
+    private ScheduledExecutorService monitorExecutor;
 
     /**
-     * Creates a server session.
+     * Creates an SmppSession for a server-based session.
      */
-    public DefaultSmppSession(Type localType, SmppSessionConfiguration configuration, Channel channel, DefaultSmppServer server, Long serverSessionId, BaseBindResp preparedBindResponse, byte interfaceVersion) {
-        this(localType, configuration, channel, (SmppSessionHandler)null);
+    public DefaultSmppSession(Type localType, SmppSessionConfiguration configuration, Channel channel, DefaultSmppServer server, Long serverSessionId, BaseBindResp preparedBindResponse, byte interfaceVersion, ScheduledExecutorService monitorExecutor) {
+        this(localType, configuration, channel, (SmppSessionHandler)null, monitorExecutor);
         // default state for a server session is that it's binding
         this.state.set(STATE_BINDING);
         this.server = server;
@@ -103,9 +101,36 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     }
 
     /**
-     * Creates a client session.
+     * Creates an SmppSession for a client-based session. It is <b>NOT</b> 
+     * recommended that this constructor is called directly.  The recommended
+     * way to construct a session is either via a DefaultSmppClient or
+     * DefaultSmppServer.  This constructor will cause monitoring to be disabled.
+     * @param localType The type of local endpoint (ESME vs. SMSC)
+     * @param configuration The session configuration
+     * @param channel The channel associated with this session. The channel
+     *      needs to already be opened.
+     * @param sessionHandler The handler for session events
      */
     public DefaultSmppSession(Type localType, SmppSessionConfiguration configuration, Channel channel, SmppSessionHandler sessionHandler) {
+        this(localType, configuration, channel, sessionHandler, null);
+    }
+    
+    
+    /**
+     * Creates an SmppSession for a client-based session. It is <b>NOT</b> 
+     * recommended that this constructor is called directly.  The recommended
+     * way to construct a session is either via a DefaultSmppClient or
+     * DefaultSmppServer. 
+     * @param localType The type of local endpoint (ESME vs. SMSC)
+     * @param configuration The session configuration
+     * @param channel The channel associated with this session. The channel
+     *      needs to already be opened.
+     * @param sessionHandler The handler for session events
+     * @param executor The executor that window monitoring and potentially
+     *      statistics will be periodically executed under.  If null, monitoring
+     *      will be disabled.
+     */
+    public DefaultSmppSession(Type localType, SmppSessionConfiguration configuration, Channel channel, SmppSessionHandler sessionHandler, ScheduledExecutorService monitorExecutor) {
         this.localType = localType;
         this.state = new AtomicInteger(STATE_OPEN);
         this.configuration = configuration;
@@ -115,16 +140,26 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         this.sequenceNumber = new SequenceNumber();
         // always "wrap" the custom pdu transcoder context with a default one
         this.transcoder = new DefaultPduTranscoder(new DefaultPduTranscoderContext(this.sessionHandler));
-        this.requestWindow = new Window<Integer,PduRequest,PduResponse>(configuration.getWindowSize());
-        // should we activate the response expiry reaper?
-        if (configuration.getRequestExpiryTimeout() > 0) {
-            this.requestWindow.enableExpiredRequestReaper(this, configuration.getRequestExpiryTimeout());
+        this.monitorExecutor = monitorExecutor;
+        
+        // different ways to construct the window if monitoring is enabled
+        if (monitorExecutor != null) {
+            // enable send window monitoring, verify if the monitoringInterval has been set
+            if (configuration.getWindowMonitorInterval() <= 0) {
+                throw new IllegalArgumentException("An executor was included during SmppSession constructor, but windowMonitorInterval was <= 0 [actual=" + configuration.getWindowMonitorInterval() + "]");
+            } else {
+                this.sendWindow = new Window<Integer,PduRequest,PduResponse>(configuration.getWindowSize(), monitorExecutor, configuration.getWindowMonitorInterval(), this, configuration.getName() + ".Monitor");
+            }
+        } else {
+            this.sendWindow = new Window<Integer,PduRequest,PduResponse>(configuration.getWindowSize());
         }
+        
         // these server-only items are null
         this.server = null;
         this.serverSessionId = null;
         this.preparedBindResponse = null;
     }
+    
 
     @Override
     public SmppBindType getBindType() {
@@ -223,7 +258,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
 
     @Override
     public Window<Integer,PduRequest,PduResponse> getRequestWindow() {
-        return this.requestWindow;
+        return this.sendWindow;
     }
 
     @Override
@@ -371,24 +406,29 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      * @throws InterruptedException
      */
     protected PduResponse sendRequestAndGetResponse(PduRequest requestPdu, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
-        RequestFuture<Integer,PduRequest,PduResponse> requestFuture = sendRequestPdu(requestPdu, timeoutInMillis, true);
-        try {
-            requestFuture.await();
-        } catch (ResponseTimeoutException e) {
-            throw new SmppTimeoutException(e.getMessage(), e);
-        } catch (RequestCancelledException e) {
-            // the request future may have a cause set that we want to unwrap
-            Throwable cause = requestFuture.getCause();
-            if (cause != null && cause instanceof ClosedChannelException) {
+        WindowFuture<Integer,PduRequest,PduResponse> future = sendRequestPdu(requestPdu, timeoutInMillis, true);
+        boolean completedWithinTimeout = future.await();
+        
+        if (!completedWithinTimeout) {
+            // FIXME: make sure we remove this request from the window??
+//            future.cancel();
+            throw new SmppTimeoutException("Unable to get response within [" + timeoutInMillis + " ms]");
+        }
+        
+        // 3 possible scenarios once completed: success, failure, or cancellation
+        if (future.isSuccess()) {
+            return future.getResponse();
+        } else if (future.getCause() != null) {
+            Throwable cause = future.getCause();
+            if (cause instanceof ClosedChannelException) {
                 throw new SmppChannelException("Channel was closed after sending request, but before receiving response", cause);
             } else {
-                throw new UnrecoverablePduException(e.getMessage(), e);
+                throw new UnrecoverablePduException(cause.getMessage(), cause);
             }
-        }
-        if (requestFuture.isSuccess()) {
-            return requestFuture.getResponse();
+        } else if (future.isCancelled()) {
+            throw new RecoverablePduException("Request was cancelled");
         } else {
-            throw new UnrecoverablePduException("Unable to sendRequestAndGetResponse successfully");
+            throw new UnrecoverablePduException("Unable to sendRequestAndGetResponse successfully (future was in strange state)");
         }
     }
 
@@ -418,7 +458,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      */
     @SuppressWarnings("unchecked")
     @Override
-    public RequestFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest pdu, long timeoutInMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
+    public WindowFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest pdu, long timeoutInMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
         // assign the next PDU sequence # if its not yet assigned
         if (!pdu.hasSequenceNumberAssigned()) {
             pdu.setSequenceNumber(this.sequenceNumber.next());
@@ -427,9 +467,10 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // encode the pdu into a buffer
         ChannelBuffer buffer = transcoder.encode(pdu);
 
-        RequestFuture<Integer,PduRequest,PduResponse> requestFuture = null;
+        WindowFuture<Integer,PduRequest,PduResponse> future = null;
         try {
-            requestFuture = requestWindow.addRequest(pdu.getSequenceNumber(), pdu, timeoutInMillis, synchronous);
+            future = sendWindow.offer(pdu.getSequenceNumber(), pdu, timeoutInMillis, configuration.getRequestExpiryTimeout(), synchronous);
+            logger.debug("IsCallerWaiting? " + future.isCallerWaiting());
         } catch (DuplicateKeyException e) {
             throw new UnrecoverablePduException(e.getMessage(), e);
         } catch (OfferTimeoutException e) {
@@ -455,7 +496,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             throw new SmppChannelException(channelFuture.getCause().getMessage(), channelFuture.getCause());
         }
 
-        return requestFuture;
+        return future;
     }
 
     /**
@@ -518,25 +559,26 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             int receivedPduSeqNum = pdu.getSequenceNumber();
 
             try {
-                // see if a correlating request exists in the "requestWindow"
-                ResponseFuture<Integer,PduRequest,PduResponse> responseFuture
-                        = this.requestWindow.addResponse(receivedPduSeqNum, responsePdu);
-
-                if (responseFuture != null) {
+                // see if a correlating request exists in the window
+                WindowFuture<Integer,PduRequest,PduResponse> future = this.sendWindow.complete(receivedPduSeqNum, responsePdu);
+                if (future != null) {
+                    logger.debug("Found a future in the window for seqNum [{}]", receivedPduSeqNum);
                     // if this isn't null, we found a match to a request
-                    int callerStatus = responseFuture.getCallerStatus();
-                    // depending on the status of things, handle the response differently
-                    if (callerStatus == WindowFuture.CALLER_WAITING) {
-                        // do nothing -- calling thread going to process it
+                    int callerStateHint = future.getCallerStateHint();
+                    logger.debug("IsCallerWaiting? " + future.isCallerWaiting() + " callerStateHint=" + callerStateHint);
+                    if (callerStateHint == WindowFuture.CALLER_WAITING) {
+                        logger.debug("Going to just return for {}", future.getRequest()); 
+                        // if a caller is waiting, nothing extra needs done as calling thread will handle the response
                         return;
-                    } else if (callerStatus == WindowFuture.CALLER_NOT_WAITING) {
-                        // this was an "expected" response -- wrap it into an async response
-                        this.sessionHandler.fireExpectedPduResponseReceived(new DefaultPduAsyncResponse(responseFuture));
+                    } else if (callerStateHint == WindowFuture.CALLER_NOT_WAITING) {
+                        logger.debug("Going to fireExpectedPduResponseReceived for {}", future.getRequest()); 
+                        // this was an "expected" response - wrap it into an async response
+                        this.sessionHandler.fireExpectedPduResponseReceived(new DefaultPduAsyncResponse(future));
                         return;
                     }
                 }
             } catch (InterruptedException e) {
-                logger.warn("Interrupted while attempting to process response PDU and match it to a request via requesWindow: {}", e);
+                logger.warn("Interrupted while attempting to process response PDU and match it to a request via requesWindow: ", e);
                 // do nothing, continue processing
             }
 
@@ -574,16 +616,16 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // to do anything special -- however when a caller is waiting for a response
         // to a request and we know the channel closed, we should check for those
         // specific requests and make sure to cancel them
-        if (this.requestWindow.getSize() > 0) {
-            logger.warn("Channel closed and requestWindow has [{}] pending requests, some may need cancelled immediately", this.requestWindow.getSize());
-            Map<Integer,WindowFuture<Integer,PduRequest,PduResponse>> requests = this.requestWindow.getPendingRequests();
-            for (Integer key : requests.keySet()) {
-                WindowFuture<Integer,PduRequest,PduResponse> entry = requests.get(key);
+        if (this.sendWindow.getSize() > 0) {
+            logger.warn("Channel closed and sendWindow has [{}] outstanding requests, some may need cancelled immediately", this.sendWindow.getSize());
+            Map<Integer,WindowFuture<Integer,PduRequest,PduResponse>> requests = this.sendWindow.createSortedSnapshot();
+            Throwable cause = new ClosedChannelException();
+            for (WindowFuture<Integer,PduRequest,PduResponse> future : requests.values()) {
                 // is the caller waiting?
-                if (entry.getCallerStatus() == WindowFuture.CALLER_WAITING) {
-                    logger.warn("Caller waiting on request [{}], cancelling it with a channel closed exception", key);
+                if (future.isCallerWaiting()) {
+                    logger.warn("Caller waiting on request [{}], cancelling it with a channel closed exception", future.getKey());
                     try {
-                        this.requestWindow.cancelRequest(key, new ClosedChannelException());
+                        future.fail(cause);
                     } catch (Exception e) { }
                 }
             }
@@ -600,8 +642,8 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     }
 
     @Override
-    public void expired(WindowFuture<Integer, PduRequest, PduResponse> entry) {
-        this.sessionHandler.firePduRequestExpired(entry.getRequest());
+    public void expired(WindowFuture<Integer, PduRequest, PduResponse> future) {
+        this.sessionHandler.firePduRequestExpired(future.getRequest());
     }
 
 }

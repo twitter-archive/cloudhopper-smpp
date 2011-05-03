@@ -41,8 +41,12 @@ public class SmppConstants {
     public static final byte VERSION_3_3 = 0x33;
     public static final byte VERSION_3_4 = 0x34;
 
+    public static final int DEFAULT_WINDOW_SIZE = 1;
+    public static final long DEFAULT_WINDOW_WAIT_TIMEOUT = 60000;
     public static final long DEFAULT_CONNECT_TIMEOUT = 10000;
     public static final long DEFAULT_BIND_TIMEOUT = 5000;
+    public static final long DEFAULT_REQUEST_EXPIRY_TIMEOUT = -1;   // disabled
+
 
     //
     // SUBMIT_MULTI destination type flags

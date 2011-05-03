@@ -37,7 +37,7 @@ import java.net.InetSocketAddress;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -70,12 +70,18 @@ public class DefaultSmppServer implements SmppServer {
     private final Timer bindTimer;
     // shared instance of a session id generator (an atomic long)
     private final AtomicLong sessionIdSequence;
+    // shared instance for monitor executors
+    private final ScheduledExecutorService monitorExecutor;
     
     public DefaultSmppServer(SmppServerConfiguration configuration, SmppServerHandler serverHandler) {
         this(configuration, DaemonExecutors.newCachedDaemonThreadPool(), serverHandler);
     }
+    
+    public DefaultSmppServer(final SmppServerConfiguration configuration, ExecutorService executor, SmppServerHandler serverHandler) {
+        this(configuration, DaemonExecutors.newCachedDaemonThreadPool(), serverHandler, null);
+    }
 
-    public DefaultSmppServer(final SmppServerConfiguration configuration, ExecutorService executors, SmppServerHandler serverHandler) {
+    public DefaultSmppServer(final SmppServerConfiguration configuration, ExecutorService executor, SmppServerHandler serverHandler, ScheduledExecutorService monitorExecutor) {
         this.configuration = configuration;
         // the same group we'll put every server channel
         this.channels = new DefaultChannelGroup();
@@ -85,9 +91,9 @@ public class DefaultSmppServer implements SmppServer {
         
         // a factory for creating channels (connections)
         if (configuration.isNonBlockingSocketsEnabled()) {
-            this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executors, configuration.getMaxConnections());
+            this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executor, configuration.getMaxConnections());
         } else {
-            this.channelFactory = new OioServerSocketChannelFactory(this.bossThreadPool, executors);
+            this.channelFactory = new OioServerSocketChannelFactory(this.bossThreadPool, executor);
         }
         
         // tie the server bootstrap to this server socket channel factory
@@ -104,6 +110,7 @@ public class DefaultSmppServer implements SmppServer {
         // NOTE: this would permit us to customize the "transcoding" context for a server if needed
         this.transcoder = new DefaultPduTranscoder(new DefaultPduTranscoderContext());
         this.sessionIdSequence = new AtomicLong(0);        
+        this.monitorExecutor = monitorExecutor;
     }
 
     public PduTranscoder getTranscoder() {
@@ -193,7 +200,7 @@ public class DefaultSmppServer implements SmppServer {
         byte interfaceVersion = this.autoNegotiateInterfaceVersion(config.getInterfaceVersion());
 
         // create a new server session associated with this server
-        DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.SERVER, config, channel, this, sessionId, preparedBindResponse, interfaceVersion);
+        DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.SERVER, config, channel, this, sessionId, preparedBindResponse, interfaceVersion, monitorExecutor);
 
         // replace name of thread used for renaming
         SmppSessionThreadRenamer threadRenamer = (SmppSessionThreadRenamer)channel.getPipeline().get(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME);

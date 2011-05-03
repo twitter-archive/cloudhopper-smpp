@@ -18,7 +18,6 @@ import com.cloudhopper.smpp.SmppClient;
 import com.cloudhopper.smpp.util.DaemonExecutors;
 import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.type.SmppChannelException;
-import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.SmppSession;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.SmppSessionHandler;
@@ -60,7 +59,6 @@ public class DefaultSmppClient implements SmppClient {
 
     private ChannelGroup channels;
     private SmppClientConnector clientConnector;
-
     private ExecutorService executors;
     private NioClientSocketChannelFactory channelFactory;
     private ClientBootstrap clientBootstrap;
