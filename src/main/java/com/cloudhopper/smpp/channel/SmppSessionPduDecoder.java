@@ -24,7 +24,7 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder;
  * Channel handler responsible for decoding a ChannelBuffer into a PDU.  A
  * decoded PDU is then passed up the pipeline for further processing.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppSessionPduDecoder extends FrameDecoder {
 

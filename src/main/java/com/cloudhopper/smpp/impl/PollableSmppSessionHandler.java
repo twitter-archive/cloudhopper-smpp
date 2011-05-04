@@ -28,9 +28,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Implementation of an SMPP session handler that internally puts every event
  * into a queue.  Callers can then poll for these events rather than asynchronously
  * processing them.  Essentially turns an event driven SmppSession into a polling
- * version.
+ * version.  Mostly used in many of this framework's unit tests.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class PollableSmppSessionHandler implements SmppSessionHandler {
 
@@ -68,43 +68,53 @@ public class PollableSmppSessionHandler implements SmppSessionHandler {
         return this.closedCount.get();
     }
 
+    @Override
     public String lookupResultMessage(int commandStatus) {
         return null;
     }
 
+    @Override
     public String lookupTlvTagName(short tag) {
         return null;
     }
 
+    @Override
     public PduResponse firePduRequestReceived(PduRequest pduRequest) {
         this.receivedPduRequests.add(pduRequest);
         return null;
     }
 
+    @Override
     public void fireExpectedPduResponseReceived(PduAsyncResponse pduAsyncResponse) {
         this.receivedExpectedPduResponses.add(pduAsyncResponse);
     }
 
+    @Override
     public void fireUnexpectedPduResponseReceived(PduResponse pduResponse) {
         this.receivedUnexpectedPduResponses.add(pduResponse);
     }
 
+    @Override
     public void fireUnrecoverablePduException(UnrecoverablePduException e) {
         this.throwables.add(e);
     }
 
+    @Override
     public void fireRecoverablePduException(RecoverablePduException e) {
         this.throwables.add(e);
     }
 
+    @Override
     public void fireUnknownThrowable(Throwable t) {
         this.throwables.add(t);
     }
 
+    @Override
     public void fireChannelUnexpectedlyClosed() {
         this.closedCount.incrementAndGet();
     }
 
+    @Override
     public void firePduRequestExpired(PduRequest pduRequest) {
         // do nothing
     }

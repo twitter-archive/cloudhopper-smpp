@@ -37,7 +37,7 @@ import static org.jboss.netty.buffer.ChannelBuffers.*;
  * these events.  Also, the responses can be scheduled and queued ahead of time.
  * The next event that matches it will automatically write it back.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppSimulatorSessionHandler extends FrameDecoder {
     private static final Logger logger = LoggerFactory.getLogger(SmppSimulatorSessionHandler.class);

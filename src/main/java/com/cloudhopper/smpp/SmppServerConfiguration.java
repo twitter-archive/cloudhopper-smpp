@@ -17,7 +17,7 @@ package com.cloudhopper.smpp;
 /**
  * Configuration of an SMPP server.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppServerConfiguration {
 
@@ -38,6 +38,11 @@ public class SmppServerConfiguration {
     private int maxConnections;
     private boolean nonBlockingSocketsEnabled;
     private boolean reuseAddress;
+    // default request expiry timeout on server sessions
+    private int defaultWindowSize = SmppConstants.DEFAULT_WINDOW_SIZE;
+    private long defaultWindowWaitTimeout = SmppConstants.DEFAULT_WINDOW_WAIT_TIMEOUT;
+    private long defaultRequestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
+    private long defaultWindowMonitorInterval = SmppConstants.DEFAULT_WINDOW_MONITOR_INTERVAL;
 
     public SmppServerConfiguration() {
         this.name = "SmppServer";
@@ -46,9 +51,13 @@ public class SmppServerConfiguration {
         this.systemId = "cloudhopper";
         this.autoNegotiateInterfaceVersion = true;
         this.interfaceVersion = SmppConstants.VERSION_3_4;
-        this.maxConnections = 100;
-        this.nonBlockingSocketsEnabled = true;
-        this.reuseAddress = true;
+        this.maxConnections = SmppConstants.DEFAULT_SERVER_MAX_CONNECTIONS;
+        this.nonBlockingSocketsEnabled = SmppConstants.DEFAULT_SERVER_NON_BLOCKING_SOCKETS_ENABLED;
+        this.reuseAddress = SmppConstants.DEFAULT_SERVER_REUSE_ADDRESS;
+        this.defaultWindowSize = SmppConstants.DEFAULT_WINDOW_SIZE;
+        this.defaultWindowWaitTimeout = SmppConstants.DEFAULT_WINDOW_WAIT_TIMEOUT;
+        this.defaultRequestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
+        this.defaultWindowMonitorInterval = SmppConstants.DEFAULT_WINDOW_MONITOR_INTERVAL;
     }
 
     public boolean isReuseAddress() {
@@ -158,5 +167,37 @@ public class SmppServerConfiguration {
     public void setInterfaceVersion(byte interfaceVersion) {
         this.interfaceVersion = interfaceVersion;
     }
+
+    public long getDefaultRequestExpiryTimeout() {
+        return defaultRequestExpiryTimeout;
+    }
+
+    public void setDefaultRequestExpiryTimeout(long defaultRequestExpiryTimeout) {
+        this.defaultRequestExpiryTimeout = defaultRequestExpiryTimeout;
+    }
+
+    public long getDefaultWindowMonitorInterval() {
+        return defaultWindowMonitorInterval;
+    }
+
+    public void setDefaultWindowMonitorInterval(long defaultWindowMonitorInterval) {
+        this.defaultWindowMonitorInterval = defaultWindowMonitorInterval;
+    }
+
+    public int getDefaultWindowSize() {
+        return defaultWindowSize;
+    }
+
+    public void setDefaultWindowSize(int defaultWindowSize) {
+        this.defaultWindowSize = defaultWindowSize;
+    }
+
+    public long getDefaultWindowWaitTimeout() {
+        return defaultWindowWaitTimeout;
+    }
+
+    public void setDefaultWindowWaitTimeout(long defaultWindowWaitTimeout) {
+        this.defaultWindowWaitTimeout = defaultWindowWaitTimeout;
+    }   
    
 }

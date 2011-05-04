@@ -15,13 +15,12 @@
 package com.cloudhopper.smpp.tlv;
 
 import com.cloudhopper.smpp.type.RecoverablePduException;
-import com.cloudhopper.smpp.pdu.*;
 
 /**
  * Thrown when attempting to cast a TLV value into a different type such as a
  * byte, string, etc. 
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class TlvConvertException extends RecoverablePduException {
     static final long serialVersionUID = 1L;

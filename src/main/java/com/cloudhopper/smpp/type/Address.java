@@ -23,7 +23,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 /**
  * Simple representation of an Address in SMPP.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class Address {
 

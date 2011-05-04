@@ -28,7 +28,7 @@ import com.cloudhopper.smpp.type.SmppProcessingException;
  *   3) If sessionBindRequested is ok, creates a new session, and calls sessionCreated
  *   4) When socket/channel is closed, calls sessionDestroyed
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public interface SmppServerHandler {
 

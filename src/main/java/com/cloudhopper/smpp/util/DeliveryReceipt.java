@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * a DataSm or DeliverSm PDU.  A delivery receipt has a specific message text
  * and a few specific optional parameters.
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class DeliveryReceipt {
     private static final Logger logger = LoggerFactory.getLogger(DeliveryReceipt.class);

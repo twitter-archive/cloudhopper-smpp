@@ -16,6 +16,10 @@ package com.cloudhopper.smpp.pdu;
 
 import com.cloudhopper.smpp.SmppConstants;
 
+/**
+ * 
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
+ */
 public class BindTransceiver extends BaseBind<BindTransceiverResp> {
 
     public BindTransceiver() {

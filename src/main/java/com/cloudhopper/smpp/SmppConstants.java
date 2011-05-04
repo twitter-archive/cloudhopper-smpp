@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * All constants defined for the SMPP protocol.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppConstants {
 
@@ -46,7 +46,10 @@ public class SmppConstants {
     public static final long DEFAULT_CONNECT_TIMEOUT = 10000;
     public static final long DEFAULT_BIND_TIMEOUT = 5000;
     public static final long DEFAULT_REQUEST_EXPIRY_TIMEOUT = -1;   // disabled
-
+    public static final long DEFAULT_WINDOW_MONITOR_INTERVAL = -1;  // disabled
+    public static final int DEFAULT_SERVER_MAX_CONNECTIONS = 100;
+    public static final boolean DEFAULT_SERVER_NON_BLOCKING_SOCKETS_ENABLED = true;
+    public static final boolean DEFAULT_SERVER_REUSE_ADDRESS = true;
 
     //
     // SUBMIT_MULTI destination type flags

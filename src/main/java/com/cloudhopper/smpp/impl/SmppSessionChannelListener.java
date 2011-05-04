@@ -19,7 +19,7 @@ import com.cloudhopper.smpp.pdu.Pdu;
 /**
  * Interface for listening for events on an SmppSessionChannelHandler.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public interface SmppSessionChannelListener {
 

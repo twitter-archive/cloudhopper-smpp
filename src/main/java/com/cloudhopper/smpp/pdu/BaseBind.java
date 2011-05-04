@@ -23,9 +23,12 @@ import com.cloudhopper.commons.util.StringUtil;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.util.ChannelBufferUtil;
 import com.cloudhopper.smpp.util.PduUtil;
-import java.io.UnsupportedEncodingException;
 import org.jboss.netty.buffer.ChannelBuffer;
 
+/**
+ * 
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
+ */
 public abstract class BaseBind<R extends PduResponse> extends PduRequest<R> {
 
     private String systemId;

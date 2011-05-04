@@ -18,7 +18,7 @@ package com.cloudhopper.smpp.util;
  * implementation will atomically increment the sequence number and wrap it
  * around back to 1 when it hits the max 0x7FFFFFFF.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SequenceNumber {
 

@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Channel handler for server SMPP sessions.
+ * 
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @ChannelPipelineCoverage("all")
 public class SmppServerConnector extends SimpleChannelUpstreamHandler {

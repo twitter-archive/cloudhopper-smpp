@@ -25,30 +25,66 @@ import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.type.SmppProcessingException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class ServerMain {
     private static final Logger logger = LoggerFactory.getLogger(ServerMain.class);
 
     static public void main(String[] args) throws Exception {
+        //
+        // setup 3 things required for a server
+        //
+        
+        // for monitoring thread use, it's preferable to create your own instance
+        // of an executor and cast it to a ThreadPoolExecutor from Executors.newCachedThreadPool()
+        // this permits exposing thinks like executor.getActiveCount() via JMX possible
+        // no point renaming the threads in a factory since underlying Netty 
+        // framework does not easily allow you to customize your thread names
+        ThreadPoolExecutor executor = (ThreadPoolExecutor)Executors.newCachedThreadPool();
+        
+        // to enable automatic expiration of requests, a second scheduled executor
+        // is required which is what a monitor task will be executed with - this
+        // is probably a thread pool that can be shared with between all client bootstraps
+        ScheduledThreadPoolExecutor monitorExecutor = (ScheduledThreadPoolExecutor)Executors.newScheduledThreadPool(1, new ThreadFactory() {
+            private AtomicInteger sequence = new AtomicInteger(0);
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t = new Thread(r);
+                t.setName("SmppServerSessionWindowMonitorPool-" + sequence.getAndIncrement());
+                return t;
+            }
+        }); 
+        
+        // create a server configuration
         SmppServerConfiguration configuration = new SmppServerConfiguration();
         configuration.setPort(2776);
+        configuration.setMaxConnections(10);
+        configuration.setDefaultRequestExpiryTimeout(30000);
+        configuration.setDefaultWindowMonitorInterval(15000);
+        configuration.setDefaultWindowSize(5);
+        configuration.setDefaultWindowWaitTimeout(configuration.getDefaultRequestExpiryTimeout());
         
-        DefaultSmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler());
+        // create a server, start it up
+        DefaultSmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler(), executor, monitorExecutor);
 
-        logger.info("About to start SMPP server");
+        logger.info("Starting SMPP server...");
         smppServer.start();
         logger.info("SMPP server started");
 
         System.out.println("Press any key to stop server");
         System.in.read();
 
-        logger.info("SMPP server stopping");
+        logger.info("Stopping SMPP server...");
         smppServer.stop();
         logger.info("SMPP server stopped");
     }

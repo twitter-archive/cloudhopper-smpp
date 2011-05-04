@@ -19,7 +19,7 @@ package com.cloudhopper.smpp.transcoder;
  * For example, custom status messages, sequence number validators, or custom
  * TLV tag names, and other logic in the future.
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public interface PduTranscoderContext {
 

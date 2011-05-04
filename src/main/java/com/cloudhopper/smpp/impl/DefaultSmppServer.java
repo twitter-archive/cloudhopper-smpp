@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Default implementation of an SmppServer that supports SMPP version 3.3 and 3.4.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class DefaultSmppServer implements SmppServer {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppServer.class);
@@ -73,15 +73,47 @@ public class DefaultSmppServer implements SmppServer {
     // shared instance for monitor executors
     private final ScheduledExecutorService monitorExecutor;
     
+    /**
+     * Creates a new default SmppServer. Window monitoring and automatic
+     * expiration of requests will be disabled with no monitorExecutors.
+     * A "cachedDaemonThreadPool" will be used for IO worker threads.
+     * @param configuration The server configuration to create this server with
+     * @param serverHandler The handler implementation for handling bind requests
+     *      and creating/destroying sessions.
+     */
     public DefaultSmppServer(SmppServerConfiguration configuration, SmppServerHandler serverHandler) {
-        this(configuration, DaemonExecutors.newCachedDaemonThreadPool(), serverHandler);
+        this(configuration, serverHandler, DaemonExecutors.newCachedDaemonThreadPool());
     }
     
-    public DefaultSmppServer(final SmppServerConfiguration configuration, ExecutorService executor, SmppServerHandler serverHandler) {
-        this(configuration, DaemonExecutors.newCachedDaemonThreadPool(), serverHandler, null);
+    /**
+     * Creates a new default SmppServer. Window monitoring and automatic
+     * expiration of requests will be disabled with no monitorExecutors.
+     * @param configuration The server configuration to create this server with
+     * @param serverHandler The handler implementation for handling bind requests
+     *      and creating/destroying sessions.
+     * @param executor The executor that IO workers will be executed with. An
+     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
+     *      will never grow more than configuration.getMaxConnections() if NIO
+     *      sockets are used.
+     */
+    public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler, ExecutorService executor) {
+        this(configuration, serverHandler, DaemonExecutors.newCachedDaemonThreadPool(), null);
     }
 
-    public DefaultSmppServer(final SmppServerConfiguration configuration, ExecutorService executor, SmppServerHandler serverHandler, ScheduledExecutorService monitorExecutor) {
+    /**
+     * Creates a new default SmppServer.
+     * @param configuration The server configuration to create this server with
+     * @param serverHandler The handler implementation for handling bind requests
+     *      and creating/destroying sessions.
+     * @param executor The executor that IO workers will be executed with. An
+     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
+     *      will never grow more than configuration.getMaxConnections() if NIO
+     *      sockets are used.
+     * @param monitorExecutor The scheduled executor that all sessions will share
+     *      to monitor themselves and expire requests. If null monitoring will
+     *      be disabled.
+     */
+    public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler, ExecutorService executor, ScheduledExecutorService monitorExecutor) {
         this.configuration = configuration;
         // the same group we'll put every server channel
         this.channels = new DefaultChannelGroup();

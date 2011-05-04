@@ -23,6 +23,10 @@ import com.cloudhopper.smpp.util.ChannelBufferUtil;
 import com.cloudhopper.smpp.util.PduUtil;
 import org.jboss.netty.buffer.ChannelBuffer;
 
+/**
+ * 
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>) 
+ */
 public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
 
     private String serviceType;

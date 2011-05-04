@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * authenticate a channel, then do final setups of an SmppSession, and handoff
  * a prepared session to a server handler.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class UnboundSmppSession implements SmppSessionChannelListener {
     private static final Logger logger = LoggerFactory.getLogger(UnboundSmppSession.class);
@@ -62,6 +62,7 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
     }
 
     // called when a PDU is received and decoded on the channel
+    @Override
     public void firePduReceived(Pdu pdu) {
         // always log the PDU received on an unbound session
         logger.info("received PDU: {}", pdu);
@@ -100,8 +101,8 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
             return;
         }
 
-        // if we got there then we are 98% "bound" -- we just need to create the
-        // new session and tie everything together -- make sure to cancel the bind timer
+        // if we got there then 98% "bound" -- we just need to create the
+        // new session and tie everything together -- cancel the bind timer
         this.bindTimeoutTask.cancel();
 
         // prepare an "OK" bind response that the session will send back once flagged as 'serverReady'
@@ -129,11 +130,13 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
         this.channel.close();
     }
 
+    @Override
     public void fireExceptionThrown(Throwable t) {
         logger.warn("Exception thrown, closing connection [{}]: {}", channelName, t);
         closeChannelAndCancelTimer();
     }
 
+    @Override
     public void fireChannelClosed() {
         logger.info("Connection closed with [{}]", channelName);
         closeChannelAndCancelTimer();
@@ -163,6 +166,12 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
         } else if (bindRequest instanceof BindTransmitter) {
             sessionConfiguration.setType(SmppBindType.TRANSMITTER);
         }
+        
+        // new default options set from server config
+        sessionConfiguration.setWindowSize(server.getConfiguration().getDefaultWindowSize());
+        sessionConfiguration.setWindowWaitTimeout(server.getConfiguration().getDefaultWindowWaitTimeout());
+        sessionConfiguration.setWindowMonitorInterval(server.getConfiguration().getDefaultWindowMonitorInterval());
+        sessionConfiguration.setRequestExpiryTimeout(server.getConfiguration().getDefaultRequestExpiryTimeout());
 
         return sessionConfiguration;
     }

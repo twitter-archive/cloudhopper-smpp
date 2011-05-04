@@ -21,7 +21,7 @@ import com.cloudhopper.smpp.SmppConstants;
  * Utility class for working with SMPP such as encoding/decoding a short
  * message, esm class, or registered delivery flags.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppUtil {
 

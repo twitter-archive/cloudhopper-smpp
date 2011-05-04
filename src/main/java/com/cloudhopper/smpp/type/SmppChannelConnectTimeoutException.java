@@ -18,7 +18,7 @@ package com.cloudhopper.smpp.type;
  * Thrown for exceptions occuring while attempting to connect to a remote
  * system and cannot complete within a period of time.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppChannelConnectTimeoutException extends SmppChannelConnectException {
     static final long serialVersionUID = 1L;

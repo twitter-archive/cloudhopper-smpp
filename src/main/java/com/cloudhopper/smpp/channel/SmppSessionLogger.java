@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * SmppSession.  The internal "options" object is tied directly to the SmppSession
  * so that changes can be made on-the-fly during runtime.
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @ChannelPipelineCoverage("one")
 public class SmppSessionLogger implements ChannelUpstreamHandler, ChannelDownstreamHandler {

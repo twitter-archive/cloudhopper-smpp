@@ -27,7 +27,7 @@ import com.cloudhopper.smpp.pdu.BaseBindResp;
  * specific error.  The underlying status code and mapped message can be figured
  * out as well.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppBindException extends UnrecoverablePduException {
     static final long serialVersionUID = 1L;

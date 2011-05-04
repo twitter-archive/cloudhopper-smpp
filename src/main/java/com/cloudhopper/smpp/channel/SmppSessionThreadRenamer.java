@@ -26,7 +26,7 @@ import org.jboss.netty.channel.ChannelUpstreamHandler;
  * handler should be the first one in the pipeline to make sure all handlers
  * after it have the correct thread name for proper logging.
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @ChannelPipelineCoverage("one")
 public class SmppSessionThreadRenamer implements ChannelUpstreamHandler {

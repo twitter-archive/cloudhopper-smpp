@@ -22,7 +22,7 @@ import com.cloudhopper.smpp.pdu.PduResponse;
  * internally by an SmppSession.  For example, an instance of this class will
  * contain the original request, the response, and the processing time.
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public interface PduAsyncResponse {
 

@@ -20,7 +20,7 @@ import java.util.concurrent.ThreadFactory;
 
 /**
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class DaemonExecutors {
 

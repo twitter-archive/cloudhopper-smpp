@@ -18,7 +18,7 @@ package com.cloudhopper.smpp.type;
  * Thrown specifically when an operation times out vs. some sort of underlying
  * I/O exception like the channel was closed.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppTimeoutException extends Exception {
     static final long serialVersionUID = 1L;

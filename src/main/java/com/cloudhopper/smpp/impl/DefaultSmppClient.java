@@ -51,9 +51,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default implementation to "boostrap" client SMPP sessions (create & bind).
+ * Default implementation to "bootstrap" client SMPP sessions (create & bind).
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class DefaultSmppClient implements SmppClient {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppClient.class);
@@ -65,18 +65,60 @@ public class DefaultSmppClient implements SmppClient {
     private ClientBootstrap clientBootstrap;
     private ScheduledExecutorService monitorExecutor;
 
+    /**
+     * Creates a new default SmppClient. Window monitoring and automatic
+     * expiration of requests will be disabled with no monitorExecutors.
+     * The maximum number of IO worker threads across any client sessions
+     * created with this SmppClient will be Runtime.getRuntime().availableProcessors().
+     * An Executors.newCachedDaemonThreadPool will be used for IO worker threads.
+     */
     public DefaultSmppClient() {
         this(DaemonExecutors.newCachedDaemonThreadPool());
     }
 
+    /**
+     * Creates a new default SmppClient. Window monitoring and automatic
+     * expiration of requests will be disabled with no monitorExecutors.
+     * The maximum number of IO worker threads across any client sessions
+     * created with this SmppClient will be Runtime.getRuntime().availableProcessors().
+     * @param executor The executor that IO workers will be executed with. An
+     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
+     *      will never grow more than expectedSessions if NIO sockets are used.
+     */
     public DefaultSmppClient(ExecutorService executors) {
         this(executors, Runtime.getRuntime().availableProcessors());
     }
 
+    /**
+     * Creates a new default SmppClient. Window monitoring and automatic
+     * expiration of requests will be disabled with no monitorExecutors.
+     * @param executor The executor that IO workers will be executed with. An
+     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
+     *      will never grow more than expectedSessions if NIO sockets are used.
+     * @param expectedSessions The max number of concurrent sessions expected
+     *      to be active at any time.  This number controls the max number of worker
+     *      threads that the underlying Netty library will use.  If processing
+     *      occurs in a sessionHandler (a blocking op), be <b>VERY</b> careful
+     *      setting this to the correct number of concurrent sessions you expect.
+     */
     public DefaultSmppClient(ExecutorService executors, int expectedSessions) {
         this(executors, expectedSessions, null);
     }
     
+    /**
+     * Creates a new default SmppClient.
+     * @param executor The executor that IO workers will be executed with. An
+     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
+     *      will never grow more than expectedSessions if NIO sockets are used.
+     * @param expectedSessions The max number of concurrent sessions expected
+     *      to be active at any time.  This number controls the max number of worker
+     *      threads that the underlying Netty library will use.  If processing
+     *      occurs in a sessionHandler (a blocking op), be <b>VERY</b> careful
+     *      setting this to the correct number of concurrent sessions you expect.
+     * @param monitorExecutor The scheduled executor that all sessions will share
+     *      to monitor themselves and expire requests.  If null monitoring will
+     *      be disabled.
+     */
     public DefaultSmppClient(ExecutorService executors, int expectedSessions, ScheduledExecutorService monitorExecutor) {
         this.channels = new DefaultChannelGroup();
         this.executors = executors;
@@ -86,6 +128,10 @@ public class DefaultSmppClient implements SmppClient {
         this.clientConnector = new SmppClientConnector(this.channels);
         this.clientBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, this.clientConnector);
         this.monitorExecutor = monitorExecutor;
+    }
+    
+    public int getActiveConnections() {
+        return this.channels.size();
     }
 
     @Override
@@ -120,26 +166,6 @@ public class DefaultSmppClient implements SmppClient {
         return bind(config, null);
     }
 
-    /**
-     * 
-     * @param config
-     * @param sessionHandler
-     * @return
-     * @throws SmppTimeoutException Thrown if either the underlying TCP/IP connection
-     *      cannot connect within the "connectTimeout" or we can connect, but don't
-     *      receive a response back to the bind request within the "bindTimeout".
-     * @throws SmppChannelException Thrown if there is an error with the underlying
-     *      TCP/IP connection such as a bad host name or the remote server's port
-     *      is not accepting connections.
-     * @throws SmppBindException Thrown only in the case where the "bind" request
-     *      was successfully sent to the remote system and we actually got back
-     *      a "bind" response that rejected the bind attempt.
-     * @throws UnrecoverablePduException Thrown in the case where we were able
-     *      to connect and send our "bind" request, but we got back data that
-     *      was not parseable to a valid PDU.
-     * @throws InterruptedException Thrown if the calling thread is interrupted
-     *      while we are attempting the bind.
-     */
     @Override
     public SmppSession bind(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, SmppBindException, UnrecoverablePduException, InterruptedException {
         DefaultSmppSession session = null;
@@ -159,7 +185,6 @@ public class DefaultSmppClient implements SmppClient {
         return session;
     }
 
-
     protected void doBind(DefaultSmppSession session, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, SmppBindException, UnrecoverablePduException, InterruptedException {
         // create the bind request we'll use (may throw an exception)
         BaseBind bindRequest = createBindRequest(config);
@@ -174,7 +199,6 @@ public class DefaultSmppClient implements SmppClient {
             throw new UnrecoverablePduException(e.getMessage(), e);
         }
     }
-
 
     protected DefaultSmppSession doOpen(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         // create and connect a channel to the remote host

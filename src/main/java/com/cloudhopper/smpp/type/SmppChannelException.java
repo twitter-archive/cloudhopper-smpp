@@ -20,7 +20,7 @@ package com.cloudhopper.smpp.type;
  *
  * Its best to restart a session if this occurs.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppChannelException extends Exception {
     static final long serialVersionUID = 1L;

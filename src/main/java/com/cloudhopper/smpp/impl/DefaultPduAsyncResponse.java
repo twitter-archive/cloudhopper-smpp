@@ -23,7 +23,7 @@ import com.cloudhopper.smpp.pdu.PduResponse;
 /**
  * Default implementation of an SmppAsyncResponse.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class DefaultPduAsyncResponse implements PduAsyncResponse {
     // we internally "wrap" a PDU window future

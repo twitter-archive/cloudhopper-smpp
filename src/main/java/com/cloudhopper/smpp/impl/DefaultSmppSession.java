@@ -60,7 +60,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Default implementation of either an ESME or SMSC SMPP session.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class DefaultSmppSession implements SmppServerSession, SmppSessionChannelListener, WindowListener<Integer,PduRequest,PduResponse> {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppSession.class);
@@ -373,6 +373,12 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
         this.state.set(STATE_CLOSED);
     }
+    
+    @Override
+    public void shutdown() {
+        close();
+        this.sendWindow.freeExternalResources();
+    }
 
     @Override
     public EnquireLinkResp enquireLink(EnquireLink request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
@@ -400,14 +406,6 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      * Sends a PDU request and gets a PDU response that matches its sequence #.
      * NOTE: This PDU response may not be the actual response the caller was
      * expecting, it needs to verify it afterwards.
-     * @param requestPdu
-     * @param timeoutInMillis
-     * @return
-     * @throws RecoverablePduException
-     * @throws UnrecoverablePduException
-     * @throws SmppTimeoutException
-     * @throws SmppChannelException
-     * @throws InterruptedException
      */
     protected PduResponse sendRequestAndGetResponse(PduRequest requestPdu, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
         WindowFuture<Integer,PduRequest,PduResponse> future = sendRequestPdu(requestPdu, timeoutInMillis, true);
@@ -437,30 +435,6 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
     }
 
-    /**
-     * Synchronously sends a request PDU and waits for a specified length of time
-     * for the response PDU.  Matches the response PDU if it has the same
-     * sequence number.  Please note that its possible this PDU really isn't
-     * the correct PDU we were waiting for, so the caller should verify it.
-     * The best example is that a "Generic_Nack" could be returned.
-     * @param requestPdu The request PDU to send
-     * @param timeoutInMillis The length of time to wait for a response PDU
-     * @param synchronous If true, the calling thread is going to wait for
-     *      a response on the future.  If false, the calling thread is NOT going
-     *      to wait for a response.  This is VERY important for how the response
-     *      is eventually routed back.  If true, the session handler will not
-     *      forward the PDU upstream since the calling thread actually wants it.
-     *      If true, but times out, the session handler will treat this response
-     *      as "unexpected".  If false, the session handler will treat the response
-     *      a "expected".
-     * @return The response PDU -- if a response wasn't returned, this method
-     *      will not return NULL, rather it'll throw an SmppTimeoutException.
-     * @throws RecoverablePduEncodingException
-     * @throws UnrecoverablePduEncodingException
-     * @throws SmppTimeoutException
-     * @throws SmppChannelException
-     * @throws InterruptedException
-     */
     @SuppressWarnings("unchecked")
     @Override
     public WindowFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest pdu, long timeoutInMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
@@ -475,8 +449,6 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         WindowFuture<Integer,PduRequest,PduResponse> future = null;
         try {
             future = sendWindow.offer(pdu.getSequenceNumber(), pdu, timeoutInMillis, configuration.getRequestExpiryTimeout(), synchronous);
-            logger.debug("IsCallerWaiting? " + future.isCallerWaiting());
-            logger.debug("Expire Timestamp: " + future.getExpireTimestamp());
         } catch (DuplicateKeyException e) {
             throw new UnrecoverablePduException(e.getMessage(), e);
         } catch (OfferTimeoutException e) {
@@ -568,16 +540,16 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
                 // see if a correlating request exists in the window
                 WindowFuture<Integer,PduRequest,PduResponse> future = this.sendWindow.complete(receivedPduSeqNum, responsePdu);
                 if (future != null) {
-                    logger.debug("Found a future in the window for seqNum [{}]", receivedPduSeqNum);
+                    logger.trace("Found a future in the window for seqNum [{}]", receivedPduSeqNum);
                     // if this isn't null, we found a match to a request
                     int callerStateHint = future.getCallerStateHint();
-                    logger.debug("IsCallerWaiting? " + future.isCallerWaiting() + " callerStateHint=" + callerStateHint);
+                    logger.trace("IsCallerWaiting? " + future.isCallerWaiting() + " callerStateHint=" + callerStateHint);
                     if (callerStateHint == WindowFuture.CALLER_WAITING) {
-                        logger.debug("Going to just return for {}", future.getRequest()); 
+                        logger.trace("Going to just return for {}", future.getRequest()); 
                         // if a caller is waiting, nothing extra needs done as calling thread will handle the response
                         return;
                     } else if (callerStateHint == WindowFuture.CALLER_NOT_WAITING) {
-                        logger.debug("Going to fireExpectedPduResponseReceived for {}", future.getRequest()); 
+                        logger.trace("Going to fireExpectedPduResponseReceived for {}", future.getRequest()); 
                         // this was an "expected" response - wrap it into an async response
                         this.sessionHandler.fireExpectedPduResponseReceived(new DefaultPduAsyncResponse(future));
                         return;
@@ -623,13 +595,13 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // to a request and we know the channel closed, we should check for those
         // specific requests and make sure to cancel them
         if (this.sendWindow.getSize() > 0) {
-            logger.warn("Channel closed and sendWindow has [{}] outstanding requests, some may need cancelled immediately", this.sendWindow.getSize());
+            logger.trace("Channel closed and sendWindow has [{}] outstanding requests, some may need cancelled immediately", this.sendWindow.getSize());
             Map<Integer,WindowFuture<Integer,PduRequest,PduResponse>> requests = this.sendWindow.createSortedSnapshot();
             Throwable cause = new ClosedChannelException();
             for (WindowFuture<Integer,PduRequest,PduResponse> future : requests.values()) {
                 // is the caller waiting?
                 if (future.isCallerWaiting()) {
-                    logger.warn("Caller waiting on request [{}], cancelling it with a channel closed exception", future.getKey());
+                    logger.debug("Caller waiting on request [{}], cancelling it with a channel closed exception", future.getKey());
                     try {
                         future.fail(cause);
                     } catch (Exception e) { }

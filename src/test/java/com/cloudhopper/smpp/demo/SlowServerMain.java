@@ -14,6 +14,7 @@
 
 package com.cloudhopper.smpp.demo;
 
+import com.cloudhopper.smpp.SmppServer;
 import com.cloudhopper.smpp.SmppServerConfiguration;
 import com.cloudhopper.smpp.SmppServerHandler;
 import com.cloudhopper.smpp.SmppServerSession;
@@ -30,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SlowServerMain {
     private static final Logger logger = LoggerFactory.getLogger(SlowServerMain.class);
@@ -43,7 +44,7 @@ public class SlowServerMain {
         configuration.setMaxConnections(10);
         configuration.setNonBlockingSocketsEnabled(false);
         
-        DefaultSmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler());
+        SmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler());
 
         logger.info("About to start SMPP server");
         smppServer.start();

@@ -23,7 +23,7 @@ import com.cloudhopper.smpp.type.UnrecoverablePduException;
 /**
  * Handles events received on an SmppSession.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public interface SmppSessionHandler extends PduTranscoderContext {
 

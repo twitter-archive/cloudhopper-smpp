@@ -17,7 +17,7 @@ package com.cloudhopper.smpp.channel;
 /**
  * Constants used for SMPP channels and pipelines.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppChannelConstants {
 

@@ -31,7 +31,7 @@ import com.cloudhopper.smpp.type.UnrecoverablePduException;
  * Defines a common interface for either a Client (ESME) or Server (SMSC) SMPP
  * session.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public interface SmppSession {
 
@@ -45,7 +45,7 @@ public interface SmppSession {
         CLIENT
     }
 
-    /** Session is in an intial state (not connected, but created) */
+    /** Session is in an initial state (not connected, but created) */
     static public final int STATE_INITIAL = 0;
     /** Session is connected and a bind is pending */
     static public final int STATE_OPEN = 1;
@@ -54,7 +54,7 @@ public interface SmppSession {
     static public final int STATE_BINDING = 2;
     /** Session is bound (ready to process requests) */
     static public final int STATE_BOUND = 3;
-    /** Session is in the process of unbinding. This may have been initiated by us or them. */
+    /** Session is in the process of un-binding. This may have been initiated by us or them. */
     static public final int STATE_UNBINDING = 4;
     /** Session is unbound and closed (destroyed) */
     static public final int STATE_CLOSED = 5;
@@ -98,7 +98,6 @@ public interface SmppSession {
      * @return The current state of the session by name such as "CLOSED"
      */
     public String getStateName();
-
 
     /**
      * Gets the interface version currently in use between local and remote
@@ -197,6 +196,16 @@ public interface SmppSession {
      * @see #close() 
      */
     public void unbind(long timeoutInMillis);
+    
+    /**
+     * Shutdown a session by ensuring the socket is closed and all
+     * resources are cleaned up.  This method should the <b>last</b> method called
+     * before discarding or losing a reference to a session.  Since this method
+     * cleans up all resources, make sure that any data you need to access is 
+     * accessed <b>before</b> calling this method.  After calling this method
+     * it is not guaranteed that <b>any</b> other method will correctly work.
+     */
+    public void shutdown();
 
     /**
      * Synchronously sends an "enquire_link" request to the remote endpoint and

@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class DefaultSmppSessionTest {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppSessionTest.class);
@@ -165,6 +165,7 @@ public class DefaultSmppSessionTest {
     @Test
     public void bindConnectsButNoResponseThrowsSmppTimeoutException() throws Exception {
         SmppSessionConfiguration configuration = createDefaultConfiguration();
+        unregisterServerBindProcessor();
 
         DefaultSmppSession session = null;
         try {
@@ -986,26 +987,33 @@ public class DefaultSmppSessionTest {
             // with a "synchronous" type of send, after a timeout, the request
             // should have been cancelled
             Assert.assertEquals(0, session.getSendWindow().getSize()); 
-
-            /**
-            // send a response to a request that was NEVER sent
-            simulator0.sendPdu(el0Resp);
-
-            // we should have received a PDU response
-            PduResponse pdu0 = sessionHandler.getReceivedUnexpectedPduResponses().poll(1000, TimeUnit.MILLISECONDS);
-            Assert.assertNotNull("Unable to receive unexpected PDU response -- perhaps it was routed incorrectly?", pdu0);
-            Assert.assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP, pdu0.getCommandId());
-            Assert.assertEquals(0, pdu0.getCommandStatus());
-            Assert.assertEquals(16, pdu0.getCommandLength());
-            Assert.assertEquals(0x1000, pdu0.getSequenceNumber());
-
-            Assert.assertEquals(0, sessionHandler.getReceivedPduRequests().size());
-            Assert.assertEquals(0, sessionHandler.getReceivedExpectedPduResponses().size());
-            Assert.assertEquals(0, sessionHandler.getReceivedUnexpectedPduResponses().size());
-             */
         } finally {
             SmppSessionUtil.close(session);
         }
+    }
+    
+    @Test
+    public void shutdown() throws Exception {
+        SmppSessionConfiguration configuration = createDefaultConfiguration();
+        registerServerBindProcessor();
+        clearAllServerSessions();
+
+        // bind and get the simulator session
+        PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
+        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+
+        SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
+        simulator0.setPduProcessor(null);
+
+        // load up the "window" with a request
+        session.sendRequestPdu(new EnquireLink(), 5000, false);
+        
+        Assert.assertEquals(1, session.getSendWindow().getSize());
+        
+        // make sure that a shutdown request performs all expected cleanup
+        session.shutdown();
+        
+        Assert.assertEquals(0, session.getSendWindow().getSize());
     }
 
 }

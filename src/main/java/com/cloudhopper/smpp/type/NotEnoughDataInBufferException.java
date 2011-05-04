@@ -20,7 +20,7 @@ package com.cloudhopper.smpp.type;
  * estimate of how many bytes are needed/missing in order to succeed in parsing.
  * An estimate of -1 represents an uknown amount of data.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class NotEnoughDataInBufferException extends RecoverablePduException {
     static final long serialVersionUID = 1L;

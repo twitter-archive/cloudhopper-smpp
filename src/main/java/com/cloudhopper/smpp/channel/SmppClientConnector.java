@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * nothing should actually be received so its safe to have a handler that does
  * nothing.
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @ChannelPipelineCoverage("all")
 public class SmppClientConnector extends SimpleChannelUpstreamHandler {

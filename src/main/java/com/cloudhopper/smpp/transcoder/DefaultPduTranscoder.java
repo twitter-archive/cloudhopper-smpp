@@ -46,6 +46,10 @@ import com.cloudhopper.smpp.util.SequenceNumber;
 import org.jboss.netty.buffer.BigEndianHeapChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffer;
 
+/**
+ * 
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
+ */
 public class DefaultPduTranscoder implements PduTranscoder {
 
     private final PduTranscoderContext context;
@@ -54,6 +58,7 @@ public class DefaultPduTranscoder implements PduTranscoder {
         this.context = context;
     }
 
+    @Override
     public ChannelBuffer encode(Pdu pdu) throws UnrecoverablePduException, RecoverablePduException {
         // see if we can map the command status into a message
         if (pdu instanceof PduResponse) {
@@ -93,6 +98,7 @@ public class DefaultPduTranscoder implements PduTranscoder {
         return buffer;
     }
     
+    @Override
     public Pdu decode(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
         // wait until the length prefix is available
         if (buffer.readableBytes() < SmppConstants.PDU_INT_LENGTH) {

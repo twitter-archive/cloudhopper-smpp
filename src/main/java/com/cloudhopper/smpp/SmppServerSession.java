@@ -17,7 +17,7 @@ package com.cloudhopper.smpp;
 /**
  * An extended interface for a Server (SMSC) SMPP session.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public interface SmppServerSession extends SmppSession {
 

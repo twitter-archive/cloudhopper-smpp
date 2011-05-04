@@ -21,7 +21,7 @@ import com.cloudhopper.smpp.type.Address;
 /**
  * Configuration to bind an SmppSession as an ESME to an SMSC.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class SmppSessionConfiguration extends SmppConnectionConfiguration {
 
@@ -62,7 +62,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
         this.loggingOptions = new LoggingOptions();
         this.windowWaitTimeout = SmppConstants.DEFAULT_WINDOW_WAIT_TIMEOUT;
         this.requestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
-        this.windowMonitorInterval = -1;
+        this.windowMonitorInterval = SmppConstants.DEFAULT_WINDOW_MONITOR_INTERVAL;
     }
 
     public void setName(String value) {

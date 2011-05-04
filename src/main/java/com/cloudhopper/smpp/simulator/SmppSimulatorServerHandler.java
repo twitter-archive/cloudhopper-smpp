@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @ChannelPipelineCoverage("one")
 public class SmppSimulatorServerHandler extends SimpleChannelHandler {

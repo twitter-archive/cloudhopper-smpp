@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class TlvTest {
     private static final Logger logger = LoggerFactory.getLogger(TlvTest.class);
@@ -94,7 +94,7 @@ public class TlvTest {
             Assert.fail();
         } catch (TlvConvertException e) {
             // correct behavior
-            logger.debug("{}", e);
+            //logger.debug("{}", e);
         }
     }
 

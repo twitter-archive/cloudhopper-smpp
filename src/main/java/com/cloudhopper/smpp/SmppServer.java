@@ -19,7 +19,7 @@ import org.jboss.netty.channel.group.ChannelGroup;
 /**
  * Interface representing an SmppServer.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public interface SmppServer {
 

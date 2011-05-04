@@ -23,7 +23,7 @@ import com.cloudhopper.smpp.SmppConstants;
  * to call the overridden context and any null value returned will then be
  * looked up using standard rules.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class DefaultPduTranscoderContext implements PduTranscoderContext {
 
@@ -37,6 +37,7 @@ public class DefaultPduTranscoderContext implements PduTranscoderContext {
         this.overrideContext = overrideContext;
     }
     
+    @Override
     public String lookupResultMessage(int commandStatus) {
         String resultMessage = null;
         if (overrideContext != null) {
@@ -48,6 +49,7 @@ public class DefaultPduTranscoderContext implements PduTranscoderContext {
         return resultMessage;
     }
 
+    @Override
     public String lookupTlvTagName(short tag) {
         String tagName = null;
         if (overrideContext != null) {

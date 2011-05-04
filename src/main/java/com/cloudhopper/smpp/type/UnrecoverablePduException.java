@@ -27,7 +27,7 @@ package com.cloudhopper.smpp.type;
  * The recommended action for an unrecoverable error is to close the SMPP 
  * connection.
  *
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class UnrecoverablePduException extends Exception {
     static final long serialVersionUID = 1L;

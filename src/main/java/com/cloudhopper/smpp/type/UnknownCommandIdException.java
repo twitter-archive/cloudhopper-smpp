@@ -21,7 +21,7 @@ import com.cloudhopper.smpp.pdu.Pdu;
  * a recoverable error.  The recommended action is to either return a NAK or
  * a specific SMPP error code.
  * 
- * @author joelauer
+ * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 public class UnknownCommandIdException extends RecoverablePduException {
     static final long serialVersionUID = 1L;
