@@ -12,6 +12,13 @@ specifications that aren't truly compliant.  The goal of the internal PDU
 parser is to be unbreakable.
 
 
+Contributors
+--------------------------------------------------------------------------------
+
+Joe Lauer (twitter: http://twitter.com/jjlauer) OR
+    Text "FOLLOW jjlauer" to 40404
+
+
 Installation
 --------------------------------------------------------------------------------
 
@@ -40,12 +47,6 @@ On Windows, you'd run:
    nmake run-client
 
 
-Contributors
---------------------------------------------------------------------------------
-
-Joe Lauer (follow me on twitter http://twitter.com/jjlauer)
-
-
 License
 --------------------------------------------------------------------------------
 
@@ -64,11 +65,9 @@ in the wild.  Here are a few ways you can help us:
  1. Find nuances with other vendors, create unit tests, and implement a
     workaround.
  2. Additional demos and simulators
- 3. More efficient method "expiring" unacknowledged requests (support is
-    experimental for now).
- 4. Additional utility classes for TLV types
- 5. Additional real world DeliveryReceipt formats
- 6. SSL support (see Netty, both client and server side, custom certs)
+ 3. Additional utility classes for TLV types
+ 4. Additional real world DeliveryReceipt formats
+ 5. SSL support (see Netty, both client and server side, custom certs)
 
 How does SMPP "windowing" effect performance?
 --------------------------------------------------------------------------------

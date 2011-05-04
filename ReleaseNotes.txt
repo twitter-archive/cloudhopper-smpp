@@ -3,16 +3,24 @@ http://twitter.com/
 http://www.cloudhopper.com/
 SMPP Library
 --------------------------------------------------------------------------------
-4.0 - ?
-
-  * Added SmppFuture as a replacement for using Window object from ch-commons-util
+4.0 - 2011-05-03
+  * WARN: There are some minor source and binary backwards compatability issues
+    that were unavoidable to add request expiry as a new feature.
+  * Automatic request expiration is no longer experimental.  See the new 
+    constructors for both DefaultSmppClient and DefaultSmppServer that include
+    a "monitorExecutor" parameter to enable the feature.  Also, there are new
+    defaultXXXXXX settings for an SmppServerConfiguration that will control
+    the default settings for each server session (including enable monitoring).
+  * Added 2 new time measurements on asynchronous responses (window wait time,
+    and response time).
   * Modified internals of SmppSession to call the "requestWindow" 
     a "sendWindow".  Since either endpoint of a session can technically
     generate requests, this actually represents the window just for sending.
-  * Added 2 new time measurements on asynchronous responses (window wait time,
-    and response time).
-  * Added windowWaitTimeout
-
+  * Added windowWaitTimeout as a session configuration.
+  * Improved demo client and server to show how various executors can be included
+    on a constructor for either DefaultSmppClient or DefaultSmppServer to enable
+    monitoring as a new feature.
+  * Large cleanup of javadocs and comments.
 
 3.2 - 2011-04-28
   * Upgraded netty dependency from 3.1.5 to 3.2.4 (to keep it current, not to
