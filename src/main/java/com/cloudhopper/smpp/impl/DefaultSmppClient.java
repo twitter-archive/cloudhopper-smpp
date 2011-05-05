@@ -124,11 +124,7 @@ public class DefaultSmppClient implements SmppClient {
     public DefaultSmppClient(ExecutorService executors, int expectedSessions, ScheduledExecutorService monitorExecutor) {
         this.channels = new DefaultChannelGroup();
         this.executors = executors;
-        
-        
-//        this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
-        this.channelFactory = new OioClientSocketChannelFactory(this.executors);
-        
+        this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
         this.clientBootstrap = new ClientBootstrap(channelFactory);
         // we use the same default pipeline for all new channels - no need for a factory
         this.clientConnector = new SmppClientConnector(this.channels);
