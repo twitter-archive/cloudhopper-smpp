@@ -181,7 +181,7 @@ public class ClientMain {
         // this is required to not causing server to hang from non-daemon threads
         // this also makes sure all open Channels are closed to I *think*
         logger.info("Shutting down client bootstrap and executors...");
-        clientBootstrap.shutdown();
+        clientBootstrap.destroy();
         executor.shutdownNow();
         monitorExecutor.shutdownNow();
         

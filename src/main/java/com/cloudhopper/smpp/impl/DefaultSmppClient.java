@@ -136,7 +136,7 @@ public class DefaultSmppClient implements SmppClient {
     }
 
     @Override
-    public void shutdown() {
+    public void destroy() {
         // close all channels still open within this session "bootstrap"
         this.channels.close().awaitUninterruptibly();
         // clean up all external resources

@@ -78,7 +78,7 @@ public class DefaultSmppSessionTest {
         logger.info("Stopping the server inside test class");
         server.stop();
         logger.info("Stopping the boostrap inside test class");
-        bootstrap.shutdown();
+        bootstrap.destroy();
     }
 
     public SmppSessionConfiguration createDefaultConfiguration() {
