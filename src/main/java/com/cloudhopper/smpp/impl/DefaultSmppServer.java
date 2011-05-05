@@ -25,22 +25,27 @@ import com.cloudhopper.smpp.channel.SmppServerConnector;
 import com.cloudhopper.smpp.channel.SmppSessionLogger;
 import com.cloudhopper.smpp.channel.SmppSessionThreadRenamer;
 import com.cloudhopper.smpp.channel.SmppSessionWrapper;
+import com.cloudhopper.smpp.jmx.DefaultSmppServerMXBean;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.tlv.Tlv;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
+import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppProcessingException;
 import com.cloudhopper.smpp.util.DaemonExecutors;
+import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.management.ObjectName;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
@@ -54,7 +59,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-public class DefaultSmppServer implements SmppServer {
+public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppServer.class);
 
     private final ChannelGroup channels;
@@ -124,7 +129,7 @@ public class DefaultSmppServer implements SmppServer {
         
         // a factory for creating channels (connections)
         if (configuration.isNonBlockingSocketsEnabled()) {
-            this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executor, configuration.getMaxConnections());
+            this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executor, configuration.getMaxConnectionSize());
         } else {
             this.channelFactory = new OioServerSocketChannelFactory(this.bossThreadPool, executor);
         }
@@ -145,6 +150,41 @@ public class DefaultSmppServer implements SmppServer {
         this.sessionIdSequence = new AtomicLong(0);        
         this.monitorExecutor = monitorExecutor;
         this.counters = new DefaultSmppServerCounters();
+        if (configuration.isJmxEnabled()) {
+            registerMBean();
+        }
+    }
+    
+    private void registerMBean() {
+        if (configuration == null) {
+            return;
+        }
+        if (configuration.isJmxEnabled()) {
+            // register the this queue manager as an mbean
+            try {
+                ObjectName name = new ObjectName(configuration.getJmxDomain() + ":name=" + configuration.getName());
+                ManagementFactory.getPlatformMBeanServer().registerMBean(this, name);
+            } catch (Exception e) {
+                // log the error, but don't throw an exception for this datasource
+                logger.error("Unable to register DefaultSmppServerMXBean [{}]", configuration.getName(), e);
+            }
+        }
+    }
+    
+    private void unregisterMBean() {
+        if (configuration == null) {
+            return;
+        }
+        if (configuration.isJmxEnabled()) {
+            // register the this queue manager as an mbean
+            try {
+                ObjectName name = new ObjectName(configuration.getJmxDomain() + ":name=" + configuration.getName());
+                ManagementFactory.getPlatformMBeanServer().unregisterMBean(name);
+            } catch (Exception e) {
+                // log the error, but don't throw an exception for this datasource
+                logger.error("Unable to unregister DefaultSmppServerMXBean [{}]", configuration.getName(), e);
+            }
+        }
     }
 
     public PduTranscoder getTranscoder() {
@@ -170,19 +210,56 @@ public class DefaultSmppServer implements SmppServer {
     }
     
     @Override
-    public void start() {
-        serverChannel = this.serverBootstrap.bind(new InetSocketAddress(configuration.getPort()));
+    public boolean isStarted() {
+        return (this.serverChannel != null && this.serverChannel.isBound());
+    }
+
+    @Override
+    public boolean isStopped() {
+        return (this.serverChannel == null);
+    }
+
+    @Override
+    public boolean isDestroyed() {
+        return (this.serverBootstrap == null);
+    }
+    
+    @Override
+    public void start() throws SmppChannelException {
+        if (isDestroyed()) {
+            throw new SmppChannelException("Unable to start: server is destroyed");
+        }
+        try {
+            serverChannel = this.serverBootstrap.bind(new InetSocketAddress(configuration.getPort()));
+            logger.info("{} started on SMPP port [{}]", configuration.getName(), configuration.getPort());
+        } catch (ChannelException e) {
+            throw new SmppChannelException(e.getMessage(), e);
+        }
     }
 
     @Override
     public void stop() {
+        if (this.channels.size() > 0) {
+            logger.info("{} currently has [{}] open child channel(s) that will be closed as part of stop()", configuration.getName(), this.channels.size());
+        }
         // close all channels still open within this session "bootstrap"
         this.channels.close().awaitUninterruptibly();
         // clean up all external resources
         if (this.serverChannel != null) {
             this.serverChannel.close().awaitUninterruptibly();
+            this.serverChannel = null;
         }
+        logger.info("{} stopped on SMPP port [{}]", configuration.getName(), configuration.getPort());
+    }
+    
+    @Override
+    public void destroy() {
+        this.bindTimer.cancel();
+        stop();
         this.serverBootstrap.releaseExternalResources();
+        this.serverBootstrap = null;
+        unregisterMBean();
+        logger.info("{} destroyed on SMPP port [{}]", configuration.getName(), configuration.getPort());
     }
 
     protected Long nextSessionId() {
@@ -255,21 +332,145 @@ public class DefaultSmppServer implements SmppServer {
         // create a new wrapper around a session to pass the pdu up the chain
         channel.getPipeline().remove(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME);
         channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
-
+        
         // check if the # of channels exceeds maxConnections
-        if (this.channels.size() > this.configuration.getMaxConnections()) {
-            logger.warn("The number of connections [{}] exceeds the configured maxConnections of [{}]", this.channels.size(), this.configuration.getMaxConnections());
+        if (this.channels.size() > this.configuration.getMaxConnectionSize()) {
+            logger.warn("The current connection size [{}] exceeds the configured max connection size [{}]", this.channels.size(), this.configuration.getMaxConnectionSize());
         }
         
         // session created, now pass it upstream
         counters.incrementSessionCreatedAndGet();
+        incrementSessionSizeCounters(session);
         this.serverHandler.sessionCreated(sessionId, session, preparedBindResponse);
+        
+        // register this session as an mbean
+        if (configuration.isJmxEnabled()) {
+            session.registerMBean(configuration.getJmxDomain() + ":type=" + configuration.getName() + "Sessions,name=" + sessionId);
+        }
     }
 
 
     protected void destroySession(Long sessionId, DefaultSmppSession session) {
         // session destroyed, now pass it upstream
         counters.incrementSessionDestroyedAndGet();
+        decrementSessionSizeCounters(session);
         serverHandler.sessionDestroyed(sessionId, session);
+        
+        // unregister this session as an mbean
+        if (configuration.isJmxEnabled()) {
+            session.unregisterMBean(configuration.getJmxDomain() + ":type=" + configuration.getName() + "Sessions,name=" + sessionId);
+        }
+    }
+    
+    private void incrementSessionSizeCounters(DefaultSmppSession session) {
+        this.counters.incrementSessionSizeAndGet();
+        switch (session.getBindType()) {
+            case TRANSCEIVER:
+                this.counters.incrementTransceiverSessionSizeAndGet();
+                break;
+            case RECEIVER:
+                this.counters.incrementTransmitterSessionSizeAndGet();
+                break;
+            case TRANSMITTER:
+                this.counters.incrementReceiverSessionSizeAndGet();
+                break;
+        }
+    }
+    
+    private void decrementSessionSizeCounters(DefaultSmppSession session) {
+        this.counters.decrementSessionSizeAndGet();
+        switch (session.getBindType()) {
+            case TRANSCEIVER:
+                this.counters.decrementTransceiverSessionSizeAndGet();
+                break;
+            case RECEIVER:
+                this.counters.decrementTransmitterSessionSizeAndGet();
+                break;
+            case TRANSMITTER:
+                this.counters.decrementReceiverSessionSizeAndGet();
+                break;
+        }
+    }
+
+    // mainly for exposing via JMX
+    
+    @Override
+    public void resetCounters() {
+        this.counters.reset();
+    }
+    
+    @Override
+    public int getSessionSize() {
+        return this.counters.getSessionSize();
+    }
+    
+    @Override
+    public int getTransceiverSessionSize() {
+        return this.counters.getTransceiverSessionSize();
+    }
+    
+    @Override
+    public int getTransmitterSessionSize() {
+        return this.counters.getTransmitterSessionSize();
+    }
+    
+    @Override
+    public int getReceiverSessionSize() {
+        return this.counters.getReceiverSessionSize();
+    }
+    
+    @Override
+    public int getMaxConnectionSize() {
+        return this.configuration.getMaxConnectionSize();
+    }
+
+    @Override
+    public int getConnectionSize() {
+        return this.channels.size();
+    }
+
+    @Override
+    public long getBindTimeout() {
+        return this.configuration.getBindTimeout();
+    }
+
+    @Override
+    public boolean isNonBlockingSocketsEnabled() {
+        return this.configuration.isNonBlockingSocketsEnabled();
+    }
+    
+    @Override
+    public boolean isReuseAddress() {
+        return this.configuration.isReuseAddress();
+    }
+
+    @Override
+    public int getChannelConnects() {
+        return this.getCounters().getChannelConnects();
+    }
+
+    @Override
+    public int getChannelDisconnects() {
+        return this.getCounters().getChannelDisconnects();
+    }
+
+    @Override
+    public int getBindTimeouts() {
+        return this.getCounters().getBindTimeouts();
+    }
+
+    @Override
+    public int getBindRequested() {
+        return this.getCounters().getBindRequested();
+    }
+
+    @Override
+    public int getSessionCreated() {
+        return this.getCounters().getSessionCreated();
+    }
+
+    @Override
+    public int getSessionDestroyed() {
+        return this.getCounters().getSessionDestroyed();
     }
 }

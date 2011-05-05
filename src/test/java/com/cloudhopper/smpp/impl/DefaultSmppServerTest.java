@@ -29,7 +29,6 @@ import com.cloudhopper.smpp.type.SmppBindException;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppProcessingException;
 import java.util.HashSet;
-import org.jboss.netty.channel.ChannelException;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +80,7 @@ public class DefaultSmppServerTest {
         public HashSet<SmppServerSession> sessions = new HashSet<SmppServerSession>();
         public PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
 
+        @Override
         public void sessionBindRequested(Long sessionId, SmppSessionConfiguration sessionConfiguration, final BaseBind bindRequest) throws SmppProcessingException {
             // test name change of sessions
             sessionConfiguration.setName("Test1");
@@ -96,12 +96,14 @@ public class DefaultSmppServerTest {
             //throw new SmppProcessingException(SmppConstants.STATUS_BINDFAIL, null);
         }
 
+        @Override
         public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
             sessions.add(session);
             // need to do something it now (flag we're ready)
             session.serverReady(sessionHandler);
         }
 
+        @Override
         public void sessionDestroyed(Long sessionId, SmppServerSession session) {
             sessions.remove(session);
         }
@@ -133,27 +135,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());
         } finally {
-            server0.stop();
-        }
-    }
-
-    @Test
-    public void bindTwiceToSamePortFails() throws Exception {
-        DefaultSmppServer server1 = null;
-        DefaultSmppServer server0 = createSmppServer();
-        server0.start();
-        try {
-            server1 = createSmppServer();
-            try {
-                // this should fail
-                server1.start();
-                Assert.fail();
-            } catch (ChannelException e) {
-                // correct behavior
-            }
-        } finally {
-            server0.stop();
-            server1.stop();
+            server0.destroy();
         }
     }
 
@@ -181,7 +163,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(0, serverHandler.sessions.size());
             Assert.assertEquals(0, server0.getChannels().size());
         } finally {
-            server0.stop();
+            server0.destroy();
         }
     }
 
@@ -207,7 +189,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(0, serverHandler.sessions.size());
             Assert.assertEquals(0, server0.getChannels().size());
         } finally {
-            server0.stop();
+            server0.destroy();
         }
     }
 
@@ -263,7 +245,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());
         } finally {
-            server0.stop();
+            server0.destroy();
         }
     }
 
@@ -319,7 +301,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());
         } finally {
-            server0.stop();
+            server0.destroy();
         }
     }
 
@@ -379,7 +361,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());
         } finally {
-            server0.stop();
+            server0.destroy();
         }
     }
 
@@ -439,7 +421,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());
         } finally {
-            server0.stop();
+            server0.destroy();
         }
     }
 
@@ -476,14 +458,11 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(true, session0.isClosed());
             
         } finally {
-            server0.stop();
+            server0.destroy();
         }
     }
     
-    
-    
-    
-    
+
     public static class BlockThreadSmppServerHandler implements SmppServerHandler {
         @Override
         public void sessionBindRequested(Long sessionId, SmppSessionConfiguration sessionConfiguration, final BaseBind bindRequest) throws SmppProcessingException {
@@ -557,7 +536,30 @@ public class DefaultSmppServerTest {
             }
             
         } finally {
-            server0.stop();
+            server0.destroy();
+        }
+    }
+    
+    @Test
+    public void serverBindToUnavailablePortThrowsException() throws Exception {
+        DefaultSmppServer server0 = createSmppServer();
+        DefaultSmppServer server1 = createSmppServer();
+        
+        server0.start();
+        try {
+            server1.getConfiguration().setPort(server0.getConfiguration().getPort());
+            try {
+                // this should fail since we can't bind twice to same port
+                server1.start();
+                Assert.fail();
+            } catch (SmppChannelException e) {
+                // correct behavior
+            }
+        } finally {
+            server0.destroy();
+            if (server1 != null) {
+                server1.destroy();
+            }
         }
     }
 }

@@ -48,7 +48,6 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.channel.socket.oio.OioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,7 +131,7 @@ public class DefaultSmppClient implements SmppClient {
         this.monitorExecutor = monitorExecutor;
     }
     
-    public int getActiveConnections() {
+    public int getConnectionSize() {
         return this.channels.size();
     }
 

@@ -41,7 +41,7 @@ public class SlowServerMain {
     static public void main(String[] args) throws Exception {
         SmppServerConfiguration configuration = new SmppServerConfiguration();
         configuration.setPort(2776);
-        configuration.setMaxConnections(10);
+        configuration.setMaxConnectionSize(10);
         configuration.setNonBlockingSocketsEnabled(false);
         
         SmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler());

@@ -20,6 +20,14 @@ package com.cloudhopper.smpp;
  */
 public interface SmppServerCounters {
     
+    /**
+     * Clears all counters (including session size(s)).
+     */
+    public void clear();
+    
+    /**
+     * Resets counters that don't track any state (e.g. session size(s)).
+     */
     public void reset();
     
     public int getChannelConnects();
@@ -33,5 +41,13 @@ public interface SmppServerCounters {
     public int getSessionCreated();
     
     public int getSessionDestroyed();
+    
+    public int getReceiverSessionSize();
+
+    public int getSessionSize();
+
+    public int getTransceiverSessionSize();
+
+    public int getTransmitterSessionSize();
     
 }

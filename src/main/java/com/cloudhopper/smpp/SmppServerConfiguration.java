@@ -35,9 +35,12 @@ public class SmppServerConfiguration {
     // max number of connections/sessions this server will expect to handle
     // this number corrosponds to the number of worker threads handling reading
     // data from sockets and the thread things will be processed under
-    private int maxConnections;
+    private int maxConnectionSize;
     private boolean nonBlockingSocketsEnabled;
     private boolean reuseAddress;
+    // jmx options
+    private boolean jmxEnabled;
+    private String jmxDomain;
     // default request expiry timeout on server sessions
     private int defaultWindowSize = SmppConstants.DEFAULT_WINDOW_SIZE;
     private long defaultWindowWaitTimeout = SmppConstants.DEFAULT_WINDOW_WAIT_TIMEOUT;
@@ -52,15 +55,33 @@ public class SmppServerConfiguration {
         this.systemId = "cloudhopper";
         this.autoNegotiateInterfaceVersion = true;
         this.interfaceVersion = SmppConstants.VERSION_3_4;
-        this.maxConnections = SmppConstants.DEFAULT_SERVER_MAX_CONNECTIONS;
+        this.maxConnectionSize = SmppConstants.DEFAULT_SERVER_MAX_CONNECTION_SIZE;
         this.nonBlockingSocketsEnabled = SmppConstants.DEFAULT_SERVER_NON_BLOCKING_SOCKETS_ENABLED;
         this.reuseAddress = SmppConstants.DEFAULT_SERVER_REUSE_ADDRESS;
+        this.jmxEnabled = false;
+        this.jmxDomain = "com.cloudhopper.smpp";
         this.defaultWindowSize = SmppConstants.DEFAULT_WINDOW_SIZE;
         this.defaultWindowWaitTimeout = SmppConstants.DEFAULT_WINDOW_WAIT_TIMEOUT;
         this.defaultRequestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
         this.defaultWindowMonitorInterval = SmppConstants.DEFAULT_WINDOW_MONITOR_INTERVAL;
     }
 
+    public String getJmxDomain() {
+        return jmxDomain;
+    }
+
+    public void setJmxDomain(String jmxDomain) {
+        this.jmxDomain = jmxDomain;
+    }
+
+    public boolean isJmxEnabled() {
+        return jmxEnabled;
+    }
+
+    public void setJmxEnabled(boolean jmxEnabled) {
+        this.jmxEnabled = jmxEnabled;
+    }
+    
     public boolean isReuseAddress() {
         return reuseAddress;
     }
@@ -83,20 +104,20 @@ public class SmppServerConfiguration {
         this.nonBlockingSocketsEnabled = nonBlockingSocketsEnabled;
     }
 
-    public int getMaxConnections() {
-        return maxConnections;
+    public int getMaxConnectionSize() {
+        return maxConnectionSize;
     }
 
     /**
      * Set the maximum number of connections this server is configured to
      * handle.
-     * @param maxConnections Max number of connections. Must be >= 1
+     * @param maxConnectionSize Max number of connections. Must be >= 1
      */
-    public void setMaxConnections(int maxConnections) {
-        if (this.maxConnections < 1) {
-            throw new IllegalArgumentException("MaxConnections must be >= 1");
+    public void setMaxConnectionSize(int maxConnectionSize) {
+        if (this.maxConnectionSize < 1) {
+            throw new IllegalArgumentException("Max connection size must be >= 1");
         }
-        this.maxConnections = maxConnections;
+        this.maxConnectionSize = maxConnectionSize;
     }
 
     /**

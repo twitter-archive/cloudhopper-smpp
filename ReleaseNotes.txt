@@ -15,6 +15,7 @@ SMPP Library
   * Added support for counters in both sessions and server for tracking 
     various key metrics.  Counters are enabled on an SmppServer by default, but
     must be explicitly enabled on sessions.
+  * Added initial support for JMX management
   * Added 2 new time measurements on asynchronous responses (window wait time,
     and response time).
   * Modified internals of SmppSession to call the "requestWindow" 
@@ -26,6 +27,10 @@ SMPP Library
     monitoring as a new feature.
   * Added new demo performance client to load test an SMPP server.
   * Large cleanup of javadocs and comments.
+  * Added new feature to allow an SmppServer to stopped and started over again
+    by moving some permanent resource cleanup code to new destroy() method.
+    Please make a change to calling code to possibly change stop() calls to
+    destroy() calls.
 
 3.2 - 2011-04-28
   * Upgraded netty dependency from 3.1.5 to 3.2.4 (to keep it current, not to

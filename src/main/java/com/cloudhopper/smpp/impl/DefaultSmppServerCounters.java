@@ -29,6 +29,10 @@ public class DefaultSmppServerCounters implements SmppServerCounters {
     private AtomicInteger bindRequested;
     private AtomicInteger sessionCreated;
     private AtomicInteger sessionDestroyed;
+    private AtomicInteger sessionSize;
+    private AtomicInteger transceiverSessionSize;
+    private AtomicInteger receiverSessionSize;
+    private AtomicInteger transmitterSessionSize;
     
     public DefaultSmppServerCounters() {
         this.channelConnects = new AtomicInteger(0);
@@ -37,6 +41,10 @@ public class DefaultSmppServerCounters implements SmppServerCounters {
         this.bindRequested = new AtomicInteger(0);
         this.sessionCreated = new AtomicInteger(0);
         this.sessionDestroyed = new AtomicInteger(0);
+        this.sessionSize = new AtomicInteger(0);
+        this.transceiverSessionSize = new AtomicInteger(0);
+        this.receiverSessionSize = new AtomicInteger(0);
+        this.transmitterSessionSize = new AtomicInteger(0);
     }
     
     @Override
@@ -47,6 +55,15 @@ public class DefaultSmppServerCounters implements SmppServerCounters {
         this.bindRequested.set(0);
         this.sessionCreated.set(0);
         this.sessionDestroyed.set(0);
+    }
+    
+    @Override
+    public void clear() {
+        this.reset();
+        this.sessionSize.set(0);
+        this.transceiverSessionSize.set(0);
+        this.receiverSessionSize.set(0);
+        this.transmitterSessionSize.set(0);
     }
 
     @Override
@@ -102,6 +119,58 @@ public class DefaultSmppServerCounters implements SmppServerCounters {
     public int incrementSessionDestroyedAndGet() {
         return this.sessionDestroyed.incrementAndGet();
     }
+
+    @Override
+    public int getSessionSize() {
+        return sessionSize.get();
+    }
+    
+    public int incrementSessionSizeAndGet() {
+        return this.sessionSize.incrementAndGet();
+    }
+    
+    public int decrementSessionSizeAndGet() {
+        return this.sessionSize.decrementAndGet();
+    }
+    
+    @Override
+    public int getReceiverSessionSize() {
+        return receiverSessionSize.get();
+    }
+    
+    public int incrementReceiverSessionSizeAndGet() {
+        return this.receiverSessionSize.incrementAndGet();
+    }
+    
+    public int decrementReceiverSessionSizeAndGet() {
+        return this.receiverSessionSize.decrementAndGet();
+    }
+
+    @Override
+    public int getTransceiverSessionSize() {
+        return transceiverSessionSize.get();
+    }
+    
+    public int incrementTransceiverSessionSizeAndGet() {
+        return this.transceiverSessionSize.incrementAndGet();
+    }
+    
+    public int decrementTransceiverSessionSizeAndGet() {
+        return this.transceiverSessionSize.decrementAndGet();
+    }
+
+    @Override
+    public int getTransmitterSessionSize() {
+        return transmitterSessionSize.get();
+    }
+    
+    public int incrementTransmitterSessionSizeAndGet() {
+        return this.transmitterSessionSize.incrementAndGet();
+    }
+    
+    public int decrementTransmitterSessionSizeAndGet() {
+        return this.transmitterSessionSize.decrementAndGet();
+    }
     
     @Override
     public String toString() {
@@ -118,7 +187,15 @@ public class DefaultSmppServerCounters implements SmppServerCounters {
         to.append(getSessionCreated());
         to.append(" sessionDestroyed=");
         to.append(getSessionDestroyed());
-        to.append("]");
+        to.append(" session [size=");
+        to.append(getSessionSize());
+        to.append(" tr=");
+        to.append(getTransceiverSessionSize());
+        to.append(" tx=");
+        to.append(getTransmitterSessionSize());
+        to.append(" rx=");
+        to.append(getReceiverSessionSize());
+        to.append("]]");
         return to.toString();
     }
 }

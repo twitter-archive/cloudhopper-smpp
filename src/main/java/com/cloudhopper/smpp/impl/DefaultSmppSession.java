@@ -14,6 +14,8 @@
 
 package com.cloudhopper.smpp.impl;
 
+import com.cloudhopper.commons.util.PeriodFormatterUtil;
+import com.cloudhopper.smpp.jmx.DefaultSmppSessionMXBean;
 import com.cloudhopper.commons.util.windowing.DuplicateKeyException;
 import com.cloudhopper.commons.util.windowing.OfferTimeoutException;
 import com.cloudhopper.commons.util.windowing.Window;
@@ -47,11 +49,15 @@ import com.cloudhopper.smpp.type.SmppBindException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.SequenceNumber;
 import com.cloudhopper.smpp.util.SmppSessionUtil;
+import com.cloudhopper.smpp.util.SmppUtil;
+import java.lang.management.ManagementFactory;
+import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.management.ObjectName;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -63,7 +69,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-public class DefaultSmppSession implements SmppServerSession, SmppSessionChannelListener, WindowListener<Integer,PduRequest,PduResponse> {
+public class DefaultSmppSession implements SmppServerSession, SmppSessionChannelListener, WindowListener<Integer,PduRequest,PduResponse>, DefaultSmppSessionMXBean {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppSession.class);
 
     // are we an "esme" or "smsc" session type?
@@ -144,13 +150,9 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         this.monitorExecutor = monitorExecutor;
         
         // different ways to construct the window if monitoring is enabled
-        if (monitorExecutor != null) {
+        if (monitorExecutor != null && configuration.getWindowMonitorInterval() > 0) {
             // enable send window monitoring, verify if the monitoringInterval has been set
-            if (configuration.getWindowMonitorInterval() <= 0) {
-                throw new IllegalArgumentException("An executor was included during SmppSession constructor, but windowMonitorInterval was <= 0 [actual=" + configuration.getWindowMonitorInterval() + "]");
-            } else {
-                this.sendWindow = new Window<Integer,PduRequest,PduResponse>(configuration.getWindowSize(), monitorExecutor, configuration.getWindowMonitorInterval(), this, configuration.getName() + ".Monitor");
-            }
+            this.sendWindow = new Window<Integer,PduRequest,PduResponse>(configuration.getWindowSize(), monitorExecutor, configuration.getWindowMonitorInterval(), this, configuration.getName() + ".Monitor");
         } else {
             this.sendWindow = new Window<Integer,PduRequest,PduResponse>(configuration.getWindowSize());
         }
@@ -164,7 +166,28 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
     }
     
-
+    public void registerMBean(String objectName) {
+        // register the this queue manager as an mbean
+        try {
+            ObjectName name = new ObjectName(objectName);
+            ManagementFactory.getPlatformMBeanServer().registerMBean(this, name);
+        } catch (Exception e) {
+            // log the error, but don't throw an exception for this datasource
+            logger.error("Unable to register DefaultSmppSessionMXBean [{}]", objectName, e);
+        }
+    }
+    
+    public void unregisterMBean(String objectName) {
+        // register the this queue manager as an mbean
+        try {
+            ObjectName name = new ObjectName(objectName);
+            ManagementFactory.getPlatformMBeanServer().unregisterMBean(name);
+        } catch (Exception e) {
+            // log the error, but don't throw an exception for this datasource
+            logger.error("Unable to unregister DefaultSmppServerMXBean [{}]", objectName, e);
+        }
+    }
+        
     @Override
     public SmppBindType getBindType() {
         return this.configuration.getType();
@@ -375,6 +398,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         close(5000);
     }
 
+    @Override
     public void close(long timeoutInMillis) {
         if (channel.isConnected()) {
             // temporarily set to "unbinding" for now
@@ -392,7 +416,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     @Override
     public void shutdown() {
         close();
-        this.sendWindow.freeExternalResources();
+        this.sendWindow.destroy();
         if (this.counters != null) {
             this.counters.reset();
         }
@@ -794,5 +818,186 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
                     break;
             }
         }
+    }
+    
+    // mainly for JMX management
+
+    @Override
+    public void resetCounters() {
+        if (hasCounters()) {
+            this.counters.reset();
+        }
+    }
+    
+    @Override
+    public String getBindTypeName() {
+        return this.getBindType().toString();
+    }
+
+    @Override
+    public String getBoundDuration() {
+        return PeriodFormatterUtil.toLinuxUptimeStyleString(System.currentTimeMillis() - getBoundTime());
+    }
+
+    @Override
+    public String getInterfaceVersionName() {
+        return SmppUtil.toInterfaceVersionString(interfaceVersion);
+    }
+
+    @Override
+    public String getLocalTypeName() {
+        return this.getLocalType().toString();
+    }
+
+    @Override
+    public String getRemoteTypeName() {
+        return this.getRemoteType().toString();
+    }
+
+    @Override
+    public int getNextSequenceNumber() {
+        return this.sequenceNumber.peek();
+    }
+
+    @Override
+    public String getLocalAddressAndPort() {
+        if (this.channel != null) {
+            InetSocketAddress addr = (InetSocketAddress)this.channel.getLocalAddress();
+            return addr.getAddress().getHostAddress() + ":" + addr.getPort();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String getRemoteAddressAndPort() {
+        if (this.channel != null) {
+            InetSocketAddress addr = (InetSocketAddress)this.channel.getRemoteAddress();
+            return addr.getAddress().getHostAddress() + ":" + addr.getPort();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String getName() {
+        return this.configuration.getName();
+    }
+
+    @Override
+    public String getPassword() {
+        return this.configuration.getPassword();
+    }
+
+    @Override
+    public long getRequestExpiryTimeout() {
+        return this.configuration.getRequestExpiryTimeout();
+    }
+
+    @Override
+    public String getSystemId() {
+        return this.configuration.getSystemId();
+    }
+
+    @Override
+    public String getSystemType() {
+        return this.configuration.getSystemType();
+    }
+
+    @Override
+    public boolean isWindowMonitorEnabled() {
+        return (this.monitorExecutor != null && this.configuration.getWindowMonitorInterval() > 0);
+    }
+    
+    @Override
+    public long getWindowMonitorInterval() {
+        return this.configuration.getWindowMonitorInterval();
+    }
+    
+    @Override
+    public int getMaxWindowSize() {
+        return this.sendWindow.getMaxSize();
+    }
+
+    @Override
+    public int getWindowSize() {
+        return this.sendWindow.getSize();
+    }
+
+    @Override
+    public long getWindowWaitTimeout() {
+        return this.configuration.getWindowWaitTimeout();
+    }
+    
+    @Override
+    public String[] dumpWindow() {
+        Map<Integer,WindowFuture<Integer,PduRequest,PduResponse>> sortedSnapshot = this.sendWindow.createSortedSnapshot();
+        String[] dump = new String[sortedSnapshot.size()];
+        int i = 0;
+        for (WindowFuture<Integer,PduRequest,PduResponse> future : sortedSnapshot.values()) {
+            dump[i] = future.getRequest().toString();
+            i++;
+        }
+        return dump;
+    }
+
+    @Override
+    public String getRxDataSMCounter() {
+        return hasCounters() ? this.counters.getRxDataSM().toString() : null;
+    }
+
+    @Override
+    public String getRxDeliverSMCounter() {
+        return hasCounters() ? this.counters.getRxDeliverSM().toString() : null;
+    }
+
+    @Override
+    public String getRxEnquireLinkCounter() {
+        return hasCounters() ? this.counters.getRxEnquireLink().toString() : null;
+    }
+
+    @Override
+    public String getRxSubmitSMCounter() {
+        return hasCounters() ? this.counters.getRxSubmitSM().toString() : null;
+    }
+
+    @Override
+    public String getTxDataSMCounter() {
+        return hasCounters() ? this.counters.getTxDataSM().toString() : null;
+    }
+
+    @Override
+    public String getTxDeliverSMCounter() {
+        return hasCounters() ? this.counters.getTxDeliverSM().toString() : null;
+    }
+
+    @Override
+    public String getTxEnquireLinkCounter() {
+        return hasCounters() ? this.counters.getTxEnquireLink().toString() : null;
+    }
+
+    @Override
+    public String getTxSubmitSMCounter() {
+        return hasCounters() ? this.counters.getTxSubmitSM().toString() : null;
+    }
+    
+    @Override
+    public void enableLogBytes() {
+        this.configuration.getLoggingOptions().setLogBytes(true);
+    }
+    
+    @Override
+    public void disableLogBytes() {
+        this.configuration.getLoggingOptions().setLogBytes(false);
+    }
+    
+    @Override
+    public void enableLogPdu() {
+        this.configuration.getLoggingOptions().setLogPdu(true);
+    }
+    
+    @Override
+    public void disableLogPdu() {
+        this.configuration.getLoggingOptions().setLogPdu(false);
     }
 }

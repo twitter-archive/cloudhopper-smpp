@@ -14,7 +14,6 @@
 
 package com.cloudhopper.smpp;
 
-import com.cloudhopper.smpp.impl.DefaultSmppSessionCounters;
 import com.cloudhopper.smpp.type.SmppConnectionConfiguration;
 import com.cloudhopper.smpp.type.LoggingOptions;
 import com.cloudhopper.smpp.type.Address;
