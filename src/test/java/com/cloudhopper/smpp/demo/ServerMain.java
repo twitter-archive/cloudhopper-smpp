@@ -71,7 +71,7 @@ public class ServerMain {
         SmppServerConfiguration configuration = new SmppServerConfiguration();
         configuration.setPort(2776);
         configuration.setMaxConnections(10);
-        configuration.setNonBlockingSocketsEnabled(true);
+        configuration.setNonBlockingSocketsEnabled(false);
         configuration.setDefaultRequestExpiryTimeout(30000);
         configuration.setDefaultWindowMonitorInterval(15000);
         configuration.setDefaultWindowSize(5);
@@ -92,7 +92,7 @@ public class ServerMain {
         smppServer.stop();
         logger.info("SMPP server stopped");
         
-        logger.info("Final server counters: {}", smppServer.getCounters());
+        logger.info("Server counters: {}", smppServer.getCounters());
     }
 
     public static class DefaultSmppServerHandler implements SmppServerHandler {
