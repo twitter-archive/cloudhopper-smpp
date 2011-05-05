@@ -3,7 +3,7 @@ http://twitter.com/
 http://www.cloudhopper.com/
 SMPP Library
 --------------------------------------------------------------------------------
-4.0 - 2011-05-03
+4.0 - 2011-05-05
   * Upgraded ch-commons-util dependency from 4.1 to 5.0
   * WARN: There are some minor source and binary backwards compatability issues
     that were unavoidable to add request expiry as a new feature.
@@ -12,6 +12,9 @@ SMPP Library
     a "monitorExecutor" parameter to enable the feature.  Also, there are new
     defaultXXXXXX settings for an SmppServerConfiguration that will control
     the default settings for each server session (including enable monitoring).
+  * Added support for counters in both sessions and server for tracking 
+    various key metrics.  Counters are enabled on an SmppServer by default, but
+    must be explicitly enabled on sessions.
   * Added 2 new time measurements on asynchronous responses (window wait time,
     and response time).
   * Modified internals of SmppSession to call the "requestWindow" 
@@ -21,6 +24,7 @@ SMPP Library
   * Improved demo client and server to show how various executors can be included
     on a constructor for either DefaultSmppClient or DefaultSmppServer to enable
     monitoring as a new feature.
+  * Added new demo performance client to load test an SMPP server.
   * Large cleanup of javadocs and comments.
 
 3.2 - 2011-04-28
