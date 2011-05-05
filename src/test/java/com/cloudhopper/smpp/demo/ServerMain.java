@@ -17,6 +17,7 @@ package com.cloudhopper.smpp.demo;
 import com.cloudhopper.smpp.SmppServerConfiguration;
 import com.cloudhopper.smpp.SmppServerHandler;
 import com.cloudhopper.smpp.SmppServerSession;
+import com.cloudhopper.smpp.SmppSession;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
@@ -25,6 +26,7 @@ import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.type.SmppProcessingException;
+import java.lang.ref.WeakReference;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
@@ -69,10 +71,12 @@ public class ServerMain {
         SmppServerConfiguration configuration = new SmppServerConfiguration();
         configuration.setPort(2776);
         configuration.setMaxConnections(10);
+        configuration.setNonBlockingSocketsEnabled(true);
         configuration.setDefaultRequestExpiryTimeout(30000);
         configuration.setDefaultWindowMonitorInterval(15000);
         configuration.setDefaultWindowSize(5);
         configuration.setDefaultWindowWaitTimeout(configuration.getDefaultRequestExpiryTimeout());
+        configuration.setDefaultSessionCountersEnabled(true);
         
         // create a server, start it up
         DefaultSmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler(), executor, monitorExecutor);
@@ -87,13 +91,14 @@ public class ServerMain {
         logger.info("Stopping SMPP server...");
         smppServer.stop();
         logger.info("SMPP server stopped");
+        
+        logger.info("Final server counters: {}", smppServer.getCounters());
     }
 
     public static class DefaultSmppServerHandler implements SmppServerHandler {
 
         @Override
         public void sessionBindRequested(Long sessionId, SmppSessionConfiguration sessionConfiguration, final BaseBind bindRequest) throws SmppProcessingException {
-
             // test name change of sessions
             // this name actually shows up as thread context....
             sessionConfiguration.setName("Application.SMPP." + sessionConfiguration.getSystemId());
@@ -105,19 +110,45 @@ public class ServerMain {
         public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) throws SmppProcessingException {
             logger.info("Session created: {}", session);
             // need to do something it now (flag we're ready)
-            session.serverReady(new TestSmppSessionHandler());
+            session.serverReady(new TestSmppSessionHandler(session));
         }
 
         @Override
         public void sessionDestroyed(Long sessionId, SmppServerSession session) {
             logger.info("Session destroyed: {}", session);
+            // print out final stats
+            if (session.hasCounters()) {
+                logger.info(" final session rx-submitSM: {}", session.getCounters().getRxSubmitSM());
+            }
+            
+            // make sure it's really shutdown
+            session.shutdown();
         }
 
     }
 
     public static class TestSmppSessionHandler extends DefaultSmppSessionHandler {
+        
+        private WeakReference<SmppSession> sessionRef;
+        
+        public TestSmppSessionHandler(SmppSession session) {
+            this.sessionRef = new WeakReference<SmppSession>(session);
+        }
+        
         @Override
         public PduResponse firePduRequestReceived(PduRequest pduRequest) {
+            SmppSession session = sessionRef.get();
+            
+            // mimic how long processing could take on a slower smsc
+            try {
+                //Thread.sleep(50);
+            } catch (Exception e) { }
+            
+            if (session != null) {
+                //logger.debug("rx-enquireLink: {}", session.getCounters().getRxEnquireLink());
+                //logger.debug("rx-submitSM: {}", session.getCounters().getRxSubmitSM());
+            }
+            
             // ignore for now (already logged)
             return pduRequest.createResponse();
         }

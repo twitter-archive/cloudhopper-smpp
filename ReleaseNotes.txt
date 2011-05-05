@@ -4,6 +4,7 @@ http://www.cloudhopper.com/
 SMPP Library
 --------------------------------------------------------------------------------
 4.0 - 2011-05-03
+  * Upgraded ch-commons-util dependency from 4.1 to 5.0
   * WARN: There are some minor source and binary backwards compatability issues
     that were unavoidable to add request expiry as a new feature.
   * Automatic request expiration is no longer experimental.  See the new 

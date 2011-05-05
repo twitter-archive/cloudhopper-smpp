@@ -51,6 +51,7 @@ public class SmppServerConnector extends SimpleChannelUpstreamHandler {
 
         // always add it to our channel group
         channels.add(channel);
+        this.server.getCounters().incrementChannelConnectsAndGet();
 
         // create a default "unbound" thread name for the thread processing the channel
         // this will create a name of "RemoteIPAddress.RemotePort"
@@ -78,6 +79,7 @@ public class SmppServerConnector extends SimpleChannelUpstreamHandler {
     public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         // called every time a channel disconnects
         channels.remove(e.getChannel());
+        this.server.getCounters().incrementChannelDisconnectsAndGet();
     }
 
 }

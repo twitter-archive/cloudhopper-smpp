@@ -46,7 +46,9 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.channel.socket.oio.OioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +63,7 @@ public class DefaultSmppClient implements SmppClient {
     private ChannelGroup channels;
     private SmppClientConnector clientConnector;
     private ExecutorService executors;
-    private NioClientSocketChannelFactory channelFactory;
+    private ClientSocketChannelFactory channelFactory;
     private ClientBootstrap clientBootstrap;
     private ScheduledExecutorService monitorExecutor;
 
@@ -122,7 +124,11 @@ public class DefaultSmppClient implements SmppClient {
     public DefaultSmppClient(ExecutorService executors, int expectedSessions, ScheduledExecutorService monitorExecutor) {
         this.channels = new DefaultChannelGroup();
         this.executors = executors;
-        this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
+        
+        
+//        this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
+        this.channelFactory = new OioClientSocketChannelFactory(this.executors);
+        
         this.clientBootstrap = new ClientBootstrap(channelFactory);
         // we use the same default pipeline for all new channels - no need for a factory
         this.clientConnector = new SmppClientConnector(this.channels);

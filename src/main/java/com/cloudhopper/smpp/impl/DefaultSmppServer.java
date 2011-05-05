@@ -72,6 +72,7 @@ public class DefaultSmppServer implements SmppServer {
     private final AtomicLong sessionIdSequence;
     // shared instance for monitor executors
     private final ScheduledExecutorService monitorExecutor;
+    private DefaultSmppServerCounters counters;
     
     /**
      * Creates a new default SmppServer. Window monitoring and automatic
@@ -143,6 +144,7 @@ public class DefaultSmppServer implements SmppServer {
         this.transcoder = new DefaultPduTranscoder(new DefaultPduTranscoderContext());
         this.sessionIdSequence = new AtomicLong(0);        
         this.monitorExecutor = monitorExecutor;
+        this.counters = new DefaultSmppServerCounters();
     }
 
     public PduTranscoder getTranscoder() {
@@ -156,6 +158,11 @@ public class DefaultSmppServer implements SmppServer {
 
     public SmppServerConfiguration getConfiguration() {
         return this.configuration;
+    }
+    
+    @Override
+    public DefaultSmppServerCounters getCounters() {
+        return this.counters;
     }
 
     public Timer getBindTimer() {
@@ -211,6 +218,7 @@ public class DefaultSmppServer implements SmppServer {
     }    
 
     protected void bindRequested(Long sessionId, SmppSessionConfiguration config, BaseBind bindRequest) throws SmppProcessingException {
+        counters.incrementBindRequestedAndGet();
         // delegate request upstream to server handler
         this.serverHandler.sessionBindRequested(sessionId, config, bindRequest);
     }
@@ -254,12 +262,14 @@ public class DefaultSmppServer implements SmppServer {
         }
         
         // session created, now pass it upstream
+        counters.incrementSessionCreatedAndGet();
         this.serverHandler.sessionCreated(sessionId, session, preparedBindResponse);
     }
 
 
     protected void destroySession(Long sessionId, DefaultSmppSession session) {
         // session destroyed, now pass it upstream
+        counters.incrementSessionDestroyedAndGet();
         serverHandler.sessionDestroyed(sessionId, session);
     }
 }

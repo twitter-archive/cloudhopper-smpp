@@ -43,6 +43,7 @@ public class SmppServerConfiguration {
     private long defaultWindowWaitTimeout = SmppConstants.DEFAULT_WINDOW_WAIT_TIMEOUT;
     private long defaultRequestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
     private long defaultWindowMonitorInterval = SmppConstants.DEFAULT_WINDOW_MONITOR_INTERVAL;
+    private boolean defaultSessionCountersEnabled = false;
 
     public SmppServerConfiguration() {
         this.name = "SmppServer";
@@ -198,6 +199,14 @@ public class SmppServerConfiguration {
 
     public void setDefaultWindowWaitTimeout(long defaultWindowWaitTimeout) {
         this.defaultWindowWaitTimeout = defaultWindowWaitTimeout;
-    }   
-   
+    }
+
+    public boolean isDefaultSessionCountersEnabled() {
+        return defaultSessionCountersEnabled;
+    }
+
+    public void setDefaultSessionCountersEnabled(boolean defaultSessionCountersEnabled) {
+        this.defaultSessionCountersEnabled = defaultSessionCountersEnabled;
+    }
+
 }

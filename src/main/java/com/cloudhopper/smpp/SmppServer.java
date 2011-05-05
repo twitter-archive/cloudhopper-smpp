@@ -23,10 +23,12 @@ import org.jboss.netty.channel.group.ChannelGroup;
  */
 public interface SmppServer {
 
-    void start();
+    public void start();
 
-    void stop();
+    public void stop();
 
-    ChannelGroup getChannels();
+    public ChannelGroup getChannels();
+    
+    public SmppServerCounters getCounters();
 
 }

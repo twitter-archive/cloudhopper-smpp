@@ -164,7 +164,7 @@ public interface SmppSession {
 
     /**
      * @deprecated
-     * @see #getRequestWindow
+     * @see #getSendWindow()
      */
     public Window<Integer,PduRequest,PduResponse> getRequestWindow();
     
@@ -176,6 +176,18 @@ public interface SmppSession {
      * @return The request "window"
      */
     public Window<Integer,PduRequest,PduResponse> getSendWindow();
+    
+    /**
+     * Returns true if and only if this session has counters enabled.
+     * @return True if the session has counters
+     */
+    public boolean hasCounters();
+    
+    /**
+     * Gets the counters this session is tracking.
+     * @return The session counters or null if counters are disabled.
+     */
+    public SmppSessionCounters getCounters();
 
     /**
      * Immediately close the session by closing the underlying socket/channel.

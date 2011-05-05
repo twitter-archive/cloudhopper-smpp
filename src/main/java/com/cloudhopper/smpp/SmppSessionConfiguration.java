@@ -14,6 +14,7 @@
 
 package com.cloudhopper.smpp;
 
+import com.cloudhopper.smpp.impl.DefaultSmppSessionCounters;
 import com.cloudhopper.smpp.type.SmppConnectionConfiguration;
 import com.cloudhopper.smpp.type.LoggingOptions;
 import com.cloudhopper.smpp.type.Address;
@@ -42,6 +43,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
     // if > 0, then activated
     private long requestExpiryTimeout;
     private long windowMonitorInterval;
+    private boolean countersEnabled;
 
     public SmppSessionConfiguration() {
         this(SmppBindType.TRANSCEIVER, null, null, null);
@@ -63,6 +65,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
         this.windowWaitTimeout = SmppConstants.DEFAULT_WINDOW_WAIT_TIMEOUT;
         this.requestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
         this.windowMonitorInterval = SmppConstants.DEFAULT_WINDOW_MONITOR_INTERVAL;
+        this.countersEnabled = false;
     }
 
     public void setName(String value) {
@@ -188,4 +191,13 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
     public void setWindowMonitorInterval(long windowMonitorInterval) {
         this.windowMonitorInterval = windowMonitorInterval;
     }
+
+    public boolean isCountersEnabled() {
+        return countersEnabled;
+    }
+
+    public void setCountersEnabled(boolean countersEnabled) {
+        this.countersEnabled = countersEnabled;
+    }
+
 }
