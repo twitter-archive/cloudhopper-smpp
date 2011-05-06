@@ -173,7 +173,7 @@ public class ClientMain {
                 logger.info("rx-dataSM: {}", session0.getCounters().getRxDataSM());
             }
             
-            session0.shutdown();
+            session0.destroy();
             // alternatively, could call close(), get outstanding requests from
             // the sendWindow (if we wanted to retry them later), then call shutdown()
         }

@@ -123,7 +123,7 @@ public class ServerMain {
             }
             
             // make sure it's really shutdown
-            session.shutdown();
+            session.destroy();
         }
 
     }

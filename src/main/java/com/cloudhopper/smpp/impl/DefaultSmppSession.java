@@ -414,7 +414,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     }
     
     @Override
-    public void shutdown() {
+    public void destroy() {
         close();
         this.sendWindow.destroy();
         if (this.counters != null) {

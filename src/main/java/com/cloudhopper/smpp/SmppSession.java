@@ -210,14 +210,14 @@ public interface SmppSession {
     public void unbind(long timeoutInMillis);
     
     /**
-     * Shutdown a session by ensuring the socket is closed and all
+     * Destroy a session by ensuring the socket is closed and all
      * resources are cleaned up.  This method should the <b>last</b> method called
      * before discarding or losing a reference to a session.  Since this method
      * cleans up all resources, make sure that any data you need to access is 
      * accessed <b>before</b> calling this method.  After calling this method
      * it is not guaranteed that <b>any</b> other method will correctly work.
      */
-    public void shutdown();
+    public void destroy();
 
     /**
      * Synchronously sends an "enquire_link" request to the remote endpoint and

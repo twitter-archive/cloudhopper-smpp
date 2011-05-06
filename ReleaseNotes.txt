@@ -7,15 +7,23 @@ SMPP Library
   * Upgraded ch-commons-util dependency from 4.1 to 5.0
   * WARN: There are some minor source and binary backwards compatability issues
     that were unavoidable to add request expiry as a new feature.
-  * Automatic request expiration is no longer experimental.  See the new 
+  * Automatic request expiration is fully supported.  See the new 
     constructors for both DefaultSmppClient and DefaultSmppServer that include
     a "monitorExecutor" parameter to enable the feature.  Also, there are new
-    defaultXXXXXX settings for an SmppServerConfiguration that will control
+    several new options for an SmppServerConfiguration that will control
     the default settings for each server session (including enable monitoring).
+       defaultWindowSize
+       defaultWindowMonitorInterval
+       defaultWindowWaitTimeout
+       defaultRequestExpiryTimeout
+       maxConnectionSize
   * Added support for counters in both sessions and server for tracking 
     various key metrics.  Counters are enabled on an SmppServer by default, but
-    must be explicitly enabled on sessions.
-  * Added initial support for JMX management
+    must be explicitly enabled on sessions.  See countersEnableD() option.
+  * Added initial support for JMX management by including an SmppServerMXBean
+    and an SmppSessionMXBean.  Servers can automatically have themselves and
+    their sessions registered & unregistered, but clients will need to use
+    explictly register/unregister.
   * Added 2 new time measurements on asynchronous responses (window wait time,
     and response time).
   * Modified internals of SmppSession to call the "requestWindow" 
@@ -43,9 +51,9 @@ SMPP Library
     The maximum number of expected concurrent sessions is recommended to be set
     in the SmppServerConfiguration object.  The new default is 100 max sessions.
   * Added several other configuration options for an SmppServer:
-      maxConnections - max number of concurrent connections/sessions (default 100)
-      reuseAddress - whether to reuse the server socket (default is true)
-      nonBlockingSocketsEnabled - whether to use NIO (non blocking) or OIO
+       maxConnections - max number of concurrent connections/sessions (default 100)
+       reuseAddress - whether to reuse the server socket (default is true)
+       nonBlockingSocketsEnabled - whether to use NIO (non blocking) or OIO
             (old blocking) type server sockets. (default is true)
   * Added an example of a "SlowSmppServer" to test what happens if an SMSC is
     slow acknowledging submits.

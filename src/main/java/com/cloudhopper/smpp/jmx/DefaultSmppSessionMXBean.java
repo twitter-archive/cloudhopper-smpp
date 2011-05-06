@@ -56,7 +56,7 @@ public interface DefaultSmppSessionMXBean {
 
     public void close(long timeoutInMillis);
 
-    public void shutdown();
+    public void destroy();
 
     public void unbind(long timeoutInMillis);
     

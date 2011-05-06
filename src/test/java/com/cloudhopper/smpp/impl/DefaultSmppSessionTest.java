@@ -1011,7 +1011,7 @@ public class DefaultSmppSessionTest {
         Assert.assertEquals(1, session.getSendWindow().getSize());
         
         // make sure that a shutdown request performs all expected cleanup
-        session.shutdown();
+        session.destroy();
         
         Assert.assertEquals(0, session.getSendWindow().getSize());
     }
