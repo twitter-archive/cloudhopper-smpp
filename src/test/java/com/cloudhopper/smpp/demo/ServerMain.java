@@ -146,14 +146,7 @@ public class ServerMain {
                 //Thread.sleep(50);
             } catch (Exception e) { }
             
-            // do not respond to a submit
-            if (pduRequest instanceof BaseSm) {
-                logger.warn("Ignoring request by not returning a response");
-                return null;
-            } else {
-                // ignore for now (already logged)
-                return pduRequest.createResponse();
-            }
+            return pduRequest.createResponse();
         }
     }
     
