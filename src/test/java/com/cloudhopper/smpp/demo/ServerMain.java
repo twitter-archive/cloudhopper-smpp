@@ -23,6 +23,7 @@ import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
+import com.cloudhopper.smpp.pdu.BaseSm;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.type.SmppProcessingException;
@@ -145,13 +146,14 @@ public class ServerMain {
                 //Thread.sleep(50);
             } catch (Exception e) { }
             
-            if (session != null) {
-                //logger.debug("rx-enquireLink: {}", session.getCounters().getRxEnquireLink());
-                //logger.debug("rx-submitSM: {}", session.getCounters().getRxSubmitSM());
+            // do not respond to a submit
+            if (pduRequest instanceof BaseSm) {
+                logger.warn("Ignoring request by not returning a response");
+                return null;
+            } else {
+                // ignore for now (already logged)
+                return pduRequest.createResponse();
             }
-            
-            // ignore for now (already logged)
-            return pduRequest.createResponse();
         }
     }
     

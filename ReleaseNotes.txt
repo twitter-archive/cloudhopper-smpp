@@ -3,7 +3,7 @@ http://twitter.com/
 http://www.cloudhopper.com/
 SMPP Library
 --------------------------------------------------------------------------------
-4.0 - 2011-05-05
+4.0 - 2011-05-09
   * Upgraded ch-commons-util dependency from 4.1 to 5.0
   * WARN: There are some minor source and binary backwards compatability issues
     that were unavoidable to add request expiry as a new feature.
@@ -26,6 +26,8 @@ SMPP Library
     explictly register/unregister.
   * Added 3 new time measurements on asynchronous responses (window wait time,
     response time, and estimated processing time).
+  * PduAsyncResponse now includes "getWindowSize" which returns the size of the
+    window after adding this response.  Used to estimate processing time.
   * Modified internals of SmppSession to call the "requestWindow" 
     a "sendWindow".  Since either endpoint of a session can technically
     generate requests, this actually represents the window just for sending.

@@ -44,6 +44,11 @@ public class DefaultPduAsyncResponse implements PduAsyncResponse {
     }
     
     @Override
+    public int getWindowSize() {
+        return future.getWindowSize();
+    }
+    
+    @Override
     public long getWindowWaitTime() {
         return future.getOfferToAcceptTime();
     }
@@ -67,6 +72,8 @@ public class DefaultPduAsyncResponse implements PduAsyncResponse {
         StringBuilder buf = new StringBuilder(100);
         buf.append("smpp_async_resp: seqNum [0x");
         buf.append(HexUtil.toHexString(this.future.getKey()));
+        buf.append("] windowSize [");
+        buf.append(getWindowSize());
         buf.append("] windowWaitTime [");
         buf.append(getWindowWaitTime());
         buf.append(" ms] responseTime [");

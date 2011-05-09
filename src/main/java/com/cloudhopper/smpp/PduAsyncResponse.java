@@ -37,6 +37,12 @@ public interface PduAsyncResponse {
      * @return The response
      */
     public PduResponse getResponse();
+    
+    /**
+     * Gets the size of the window after this request was added.
+     * @return The size of the window after this request was added.
+     */
+    public int getWindowSize();
 
     /**
      * Gets the amount of time required to accept the request into the session
