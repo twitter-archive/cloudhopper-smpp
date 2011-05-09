@@ -420,6 +420,10 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         if (this.counters != null) {
             this.counters.reset();
         }
+        // make sure to lose the reference to to the session handler - many
+        // users of this class will probably pass themselves as the reference
+        // and this may help to prevent a circular reference
+        this.sessionHandler = null;
     }
 
     @Override

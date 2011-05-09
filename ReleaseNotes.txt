@@ -24,8 +24,8 @@ SMPP Library
     and an SmppSessionMXBean.  Servers can automatically have themselves and
     their sessions registered & unregistered, but clients will need to use
     explictly register/unregister.
-  * Added 2 new time measurements on asynchronous responses (window wait time,
-    and response time).
+  * Added 3 new time measurements on asynchronous responses (window wait time,
+    response time, and estimated processing time).
   * Modified internals of SmppSession to call the "requestWindow" 
     a "sendWindow".  Since either endpoint of a session can technically
     generate requests, this actually represents the window just for sending.
