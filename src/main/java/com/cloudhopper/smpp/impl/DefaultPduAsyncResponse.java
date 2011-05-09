@@ -52,6 +52,15 @@ public class DefaultPduAsyncResponse implements PduAsyncResponse {
     public long getResponseTime() {
         return future.getAcceptToDoneTime();
     }
+    
+    @Override
+    public long getEstimatedProcessingTime() {
+        long responseTime = getResponseTime();
+        if (responseTime == 0 || future.getWindowSize() == 0) {
+            return 0;
+        }
+        return (responseTime / future.getWindowSize());
+    }
 
     @Override
     public String toString() {
@@ -60,8 +69,10 @@ public class DefaultPduAsyncResponse implements PduAsyncResponse {
         buf.append(HexUtil.toHexString(this.future.getKey()));
         buf.append("] windowWaitTime [");
         buf.append(getWindowWaitTime());
-        buf.append("] responseTime [");
-        buf.append(getWindowWaitTime());
+        buf.append(" ms] responseTime [");
+        buf.append(getResponseTime());
+        buf.append(" ms] estProcessingTime [");
+        buf.append(getEstimatedProcessingTime());
         buf.append(" ms] reqType [");
         buf.append(getRequest().getName());
         buf.append("] respType [");
@@ -69,4 +80,5 @@ public class DefaultPduAsyncResponse implements PduAsyncResponse {
         buf.append("]");
         return buf.toString();
     }
+    
 }

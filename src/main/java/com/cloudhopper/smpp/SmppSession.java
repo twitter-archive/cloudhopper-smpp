@@ -203,11 +203,11 @@ public interface SmppSession {
      * Attempts to "unbind" the session, waiting up to a specified period of
      * milliseconds for an unbind response from the remote endpoint.  Regardless of whether
      * a proper unbind response was received, the socket/channel is closed.
-     * @param timeoutInMillis The number of milliseconds to wait until an unbind
+     * @param timeoutMillis The number of milliseconds to wait until an unbind
      *      response is received from the SMSC.
      * @see #close() 
      */
-    public void unbind(long timeoutInMillis);
+    public void unbind(long timeoutMillis);
     
     /**
      * Destroy a session by ensuring the socket is closed and all
@@ -226,7 +226,7 @@ public interface SmppSession {
      * takes to transmit the actual bytes on the socket, and for the remote
      * endpoint to send a response back.
      * @param request The request to send to the remote endpoint
-     * @param timeoutInMillis The number of milliseconds to wait until a valid
+     * @param timeoutMillis The number of milliseconds to wait until a valid
      *      response is received.
      * @return A valid response to the request
      * @throws RecoverablePduException Thrown when a recoverable PDU error occurs.
@@ -243,7 +243,7 @@ public interface SmppSession {
      * @throws InterruptedException The calling thread was interrupted while waiting
      *      to acquire a lock or write/read the bytes from the socket/channel.
      */
-    public EnquireLinkResp enquireLink(EnquireLink request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
+    public EnquireLinkResp enquireLink(EnquireLink request, long timeoutMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
 
     /**
      * Synchronously sends a "submit" request to the remote endpoint and
@@ -252,7 +252,7 @@ public interface SmppSession {
      * takes to transmit the actual bytes on the socket, and for the remote
      * endpoint to send a response back.
      * @param request The request to send to the remote endpoint
-     * @param timeoutInMillis The number of milliseconds to wait until a valid
+     * @param timeoutMillis The number of milliseconds to wait until a valid
      *      response is received.
      * @return A valid response to the request
      * @throws RecoverablePduException Thrown when a recoverable PDU error occurs.
@@ -269,7 +269,7 @@ public interface SmppSession {
      * @throws InterruptedException The calling thread was interrupted while waiting
      *      to acquire a lock or write/read the bytes from the socket/channel.
      */
-    public SubmitSmResp submit(SubmitSm request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
+    public SubmitSmResp submit(SubmitSm request, long timeoutMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
 
     /**
      * Main underlying method for sending a request PDU to the remote endpoint.
@@ -284,9 +284,14 @@ public interface SmppSession {
      * the "fireExpectedPduResponseReceived" method on the session handler.
      * Please note that its possible th response PDU really isn't
      * the correct PDU we were waiting for, so the caller should verify it.
-     * The best example is that a "Generic_Nack" could be returned.
+     * For example it is possible that a "Generic_Nack" could be returned by
+     * the remote endpoint in response to a PDU.
      * @param requestPdu The request PDU to send
-     * @param timeoutInMillis The length of time to wait for a response PDU
+     * @param timeoutMillis If synchronous is true, this represents the time to
+     *      wait for a slot to open in the underlying window AND the time to wait
+     *      for a response back from the remote endpoint. If synchronous is false,
+     *      this only represents the time to wait for a slot to open in the
+     *      underlying window.
      * @param synchronous True if the calling thread plans on waiting for a
      *      response on the returned future.  False if the calling thread plans
      *      on discarding the returned future and expects the response PDU to
@@ -307,7 +312,7 @@ public interface SmppSession {
      * @throws InterruptedException The calling thread was interrupted while waiting
      *      to acquire a lock or write/read the bytes from the socket/channel.
      */
-    public WindowFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest request, long timeoutInMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
+    public WindowFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest request, long timeoutMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
 
     /**
      * Main underlying method for sending a response PDU to the remote endpoint.
@@ -316,9 +321,9 @@ public interface SmppSession {
      * @param response The response PDU to send
      * @throws RecoverablePduException Thrown when a recoverable PDU error occurs.
      *      A recoverable PDU error includes the partially decoded PDU in order
-     *      to generate a negative acknowledgement (NACK) response.
+     *      to generate a negative acknowledgment (NACK) response.
      * @throws UnrecoverablePduException Thrown when an unrecoverable PDU error
-     *      occurs. This indicates a seriours error occurred and usually indicates
+     *      occurs. This indicates a serious error occurred and usually indicates
      *      the session should be immediately terminated.
      * @throws SmppChannelException Thrown when the underlying socket/channel was
      *      unable to write the request.

@@ -27,6 +27,7 @@ public class ConcurrentCommandCounter {
     private AtomicInteger requestExpired;
     private AtomicLong requestWaitTime;
     private AtomicLong requestResponseTime;
+    private AtomicLong requestEstimatedProcessingTime;
     private AtomicInteger response;
     private ConcurrentCommandStatusCounter responseCommandStatusCounter;
     
@@ -35,15 +36,17 @@ public class ConcurrentCommandCounter {
         this.requestExpired = new AtomicInteger(0);
         this.requestWaitTime = new AtomicLong(0);
         this.requestResponseTime = new AtomicLong(0);
+        this.requestEstimatedProcessingTime = new AtomicLong(0);
         this.response = new AtomicInteger(0);
         this.responseCommandStatusCounter = new ConcurrentCommandStatusCounter();
     }
 
-    public ConcurrentCommandCounter(int request, int requestExpired, long requestWaitTime, long requestResponseTime, int response, final ConcurrentCommandStatusCounter responseCommandStatusCounter) {
+    public ConcurrentCommandCounter(int request, int requestExpired, long requestWaitTime, long requestResponseTime, long requestEstimatedProcessingTime, int response, final ConcurrentCommandStatusCounter responseCommandStatusCounter) {
         this.request = new AtomicInteger(request);
         this.requestExpired = new AtomicInteger(requestExpired);
         this.requestWaitTime = new AtomicLong(requestWaitTime);
         this.requestResponseTime = new AtomicLong(requestResponseTime);
+        this.requestEstimatedProcessingTime = new AtomicLong(requestEstimatedProcessingTime);
         this.response = new AtomicInteger(response);
         this.responseCommandStatusCounter = responseCommandStatusCounter.copy();
     }
@@ -53,12 +56,13 @@ public class ConcurrentCommandCounter {
         this.requestExpired.set(0);
         this.requestWaitTime.set(0);
         this.requestResponseTime.set(0);
+        this.requestEstimatedProcessingTime.set(0);
         this.response.set(0);
         this.responseCommandStatusCounter.reset();
     }
     
     public ConcurrentCommandCounter createSnapshot() {
-        return new ConcurrentCommandCounter(request.get(), requestExpired.get(), requestWaitTime.get(), requestResponseTime.get(), response.get(), responseCommandStatusCounter);
+        return new ConcurrentCommandCounter(request.get(), requestExpired.get(), requestWaitTime.get(), requestResponseTime.get(), requestEstimatedProcessingTime.get(), response.get(), responseCommandStatusCounter);
     }
 
     public int getRequest() {
@@ -91,6 +95,14 @@ public class ConcurrentCommandCounter {
     
     public long addRequestResponseTimeAndGet(long responseTime) {
         return this.requestResponseTime.addAndGet(responseTime);
+    }
+    
+    public long getRequestEstimatedProcessingTime() {
+        return this.requestEstimatedProcessingTime.get();
+    }
+    
+    public long addRequestEstimatedProcessingTimeAndGet(long estimatedProcessingTime) {
+        return this.requestEstimatedProcessingTime.addAndGet(estimatedProcessingTime);
     }
 
     public int getResponse() {
@@ -128,6 +140,13 @@ public class ConcurrentCommandCounter {
             avgResponseTime = (double)getRequestResponseTime()/(double)getResponse();
         }
         to.append(DecimalUtil.toString(avgResponseTime, 1));
+        
+        to.append("ms avgEstimatedProcessingTime=");
+        double avgEstimatedProcessingTime = 0;
+        if (getResponse() > 0) {
+            avgEstimatedProcessingTime = (double)getRequestEstimatedProcessingTime()/(double)getResponse();
+        }
+        to.append(DecimalUtil.toString(avgEstimatedProcessingTime, 1));
         
         to.append("ms cmdStatus=[");
         to.append(this.responseCommandStatusCounter.toString());

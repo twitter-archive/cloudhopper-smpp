@@ -479,7 +479,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
 
     @SuppressWarnings("unchecked")
     @Override
-    public WindowFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest pdu, long timeoutInMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
+    public WindowFuture<Integer,PduRequest,PduResponse> sendRequestPdu(PduRequest pdu, long timeoutMillis, boolean synchronous) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
         // assign the next PDU sequence # if its not yet assigned
         if (!pdu.hasSequenceNumberAssigned()) {
             pdu.setSequenceNumber(this.sequenceNumber.next());
@@ -490,7 +490,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
 
         WindowFuture<Integer,PduRequest,PduResponse> future = null;
         try {
-            future = sendWindow.offer(pdu.getSequenceNumber(), pdu, timeoutInMillis, configuration.getRequestExpiryTimeout(), synchronous);
+            future = sendWindow.offer(pdu.getSequenceNumber(), pdu, timeoutMillis, configuration.getRequestExpiryTimeout(), synchronous);
         } catch (DuplicateKeyException e) {
             throw new UnrecoverablePduException(e.getMessage(), e);
         } catch (OfferTimeoutException e) {
@@ -576,7 +576,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             if (responsePdu != null) {
                 try {
                     long responseTime = System.currentTimeMillis() - startTime;
-                    this.countSendResponsePdu(responsePdu, responseTime);
+                    this.countSendResponsePdu(responsePdu, responseTime, responseTime);
                     
                     this.sendResponsePdu(responsePdu);
                 } catch (Exception e) {
@@ -593,7 +593,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
                 WindowFuture<Integer,PduRequest,PduResponse> future = this.sendWindow.complete(receivedPduSeqNum, responsePdu);
                 if (future != null) {
                     logger.trace("Found a future in the window for seqNum [{}]", receivedPduSeqNum);
-                    this.countReceiveResponsePdu(responsePdu, future.getOfferToAcceptTime(), future.getAcceptToDoneTime());
+                    this.countReceiveResponsePdu(responsePdu, future.getOfferToAcceptTime(), future.getAcceptToDoneTime(), (future.getAcceptToDoneTime() / future.getWindowSize()));
                     
                     // if this isn't null, we found a match to a request
                     int callerStateHint = future.getCallerStateHint();
@@ -613,7 +613,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
                         this.sessionHandler.fireUnexpectedPduResponseReceived(responsePdu);
                     }
                 } else {
-                    this.countReceiveResponsePdu(responsePdu, 0, 0);
+                    this.countReceiveResponsePdu(responsePdu, 0, 0, 0);
                     
                     // original request either expired OR was completely unexpected
                     this.sessionHandler.fireUnexpectedPduResponseReceived(responsePdu);
@@ -708,7 +708,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
     }
     
-    private void countSendResponsePdu(PduResponse pdu, long responseTime) {
+    private void countSendResponsePdu(PduResponse pdu, long responseTime, long estimatedProcessingTime) {
         if (this.counters == null) {
             return;     // noop
         }
@@ -718,21 +718,25 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
                 case SmppConstants.CMD_ID_SUBMIT_SM_RESP:
                     this.counters.getRxSubmitSM().incrementResponseAndGet();
                     this.counters.getRxSubmitSM().addRequestResponseTimeAndGet(responseTime);
+                    this.counters.getRxSubmitSM().addRequestEstimatedProcessingTimeAndGet(estimatedProcessingTime);
                     this.counters.getRxSubmitSM().getResponseCommandStatusCounter().incrementAndGet(pdu.getCommandStatus());
                     break;
                 case SmppConstants.CMD_ID_DELIVER_SM_RESP:
                     this.counters.getRxDeliverSM().incrementResponseAndGet();
                     this.counters.getRxDeliverSM().addRequestResponseTimeAndGet(responseTime);
+                    this.counters.getRxDeliverSM().addRequestEstimatedProcessingTimeAndGet(estimatedProcessingTime);
                     this.counters.getRxDeliverSM().getResponseCommandStatusCounter().incrementAndGet(pdu.getCommandStatus());
                     break;
                 case SmppConstants.CMD_ID_DATA_SM_RESP:
                     this.counters.getRxDataSM().incrementResponseAndGet();
                     this.counters.getRxDataSM().addRequestResponseTimeAndGet(responseTime);
+                    this.counters.getRxDataSM().addRequestEstimatedProcessingTimeAndGet(estimatedProcessingTime);
                     this.counters.getRxDataSM().getResponseCommandStatusCounter().incrementAndGet(pdu.getCommandStatus());
                     break;
                 case SmppConstants.CMD_ID_ENQUIRE_LINK_RESP:
                     this.counters.getRxEnquireLink().incrementResponseAndGet();
                     this.counters.getRxEnquireLink().addRequestResponseTimeAndGet(responseTime);
+                    this.counters.getRxEnquireLink().addRequestEstimatedProcessingTimeAndGet(estimatedProcessingTime);
                     this.counters.getRxEnquireLink().getResponseCommandStatusCounter().incrementAndGet(pdu.getCommandStatus());
                     break;
             }
@@ -785,7 +789,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
     }
     
-    private void countReceiveResponsePdu(PduResponse pdu, long waitTime, long responseTime) {
+    private void countReceiveResponsePdu(PduResponse pdu, long waitTime, long responseTime, long estimatedProcessingTime) {
         if (this.counters == null) {
             return;     // noop
         }
@@ -796,24 +800,28 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
                     this.counters.getTxSubmitSM().incrementResponseAndGet();
                     this.counters.getTxSubmitSM().addRequestWaitTimeAndGet(waitTime);
                     this.counters.getTxSubmitSM().addRequestResponseTimeAndGet(responseTime);
+                    this.counters.getTxSubmitSM().addRequestEstimatedProcessingTimeAndGet(estimatedProcessingTime);
                     this.counters.getTxSubmitSM().getResponseCommandStatusCounter().incrementAndGet(pdu.getCommandStatus());
                     break;
                 case SmppConstants.CMD_ID_DELIVER_SM_RESP:
                     this.counters.getTxDeliverSM().incrementResponseAndGet();
                     this.counters.getTxDeliverSM().addRequestWaitTimeAndGet(waitTime);
                     this.counters.getTxDeliverSM().addRequestResponseTimeAndGet(responseTime);
+                    this.counters.getTxDeliverSM().addRequestEstimatedProcessingTimeAndGet(estimatedProcessingTime);
                     this.counters.getTxDeliverSM().getResponseCommandStatusCounter().incrementAndGet(pdu.getCommandStatus());
                     break;
                 case SmppConstants.CMD_ID_DATA_SM_RESP:
                     this.counters.getTxDataSM().incrementResponseAndGet();
                     this.counters.getTxDataSM().addRequestWaitTimeAndGet(waitTime);
                     this.counters.getTxDataSM().addRequestResponseTimeAndGet(responseTime);
+                    this.counters.getTxDataSM().addRequestEstimatedProcessingTimeAndGet(estimatedProcessingTime);
                     this.counters.getTxDataSM().getResponseCommandStatusCounter().incrementAndGet(pdu.getCommandStatus());
                     break;
                 case SmppConstants.CMD_ID_ENQUIRE_LINK_RESP:
                     this.counters.getTxEnquireLink().incrementResponseAndGet();
                     this.counters.getTxEnquireLink().addRequestWaitTimeAndGet(waitTime);
                     this.counters.getTxEnquireLink().addRequestResponseTimeAndGet(responseTime);
+                    this.counters.getTxEnquireLink().addRequestEstimatedProcessingTimeAndGet(estimatedProcessingTime);
                     this.counters.getTxEnquireLink().getResponseCommandStatusCounter().incrementAndGet(pdu.getCommandStatus());
                     break;
             }

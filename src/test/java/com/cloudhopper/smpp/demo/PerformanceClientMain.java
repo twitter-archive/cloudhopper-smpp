@@ -48,7 +48,7 @@ public class PerformanceClientMain {
     // total number of sessions (conns) to create
     static public final int SESSION_COUNT = 10;
     // size of window per session
-    static public final int WINDOW_SIZE = 4;
+    static public final int WINDOW_SIZE = 50;
     // total number of submit to send total across all sessions
     static public final int SUBMIT_TO_SEND = 2000;
     // total number of submit sent
@@ -148,6 +148,7 @@ public class PerformanceClientMain {
         
         logger.info("Performance client finished:");
         logger.info("       Sessions: " + SESSION_COUNT);
+        logger.info("    Window Size: " + WINDOW_SIZE);
         logger.info("Sessions Failed: " + sessionFailures);
         logger.info("           Time: " + (stopTimeMillis - startTimeMillis) + " ms");
         logger.info("  Target Submit: " + SUBMIT_TO_SEND);
