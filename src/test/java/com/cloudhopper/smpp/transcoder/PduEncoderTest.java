@@ -15,6 +15,7 @@
 package com.cloudhopper.smpp.transcoder;
 
 // third party imports
+import com.cloudhopper.commons.util.HexString;
 import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
@@ -37,6 +38,8 @@ import com.cloudhopper.smpp.pdu.SubmitSmResp;
 import com.cloudhopper.smpp.pdu.Unbind;
 import com.cloudhopper.smpp.pdu.UnbindResp;
 import com.cloudhopper.smpp.tlv.Tlv;
+import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
+import java.io.UnsupportedEncodingException;
 import org.junit.*;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
@@ -367,4 +370,61 @@ public class PduEncoderTest {
         Assert.assertArrayEquals(HexUtil.toByteArray("00000010800000000000000100082a77"), BufferHelper.createByteArray(buffer));
     }
 
+    @Test
+    public void encodeSubmitSmWithShortMessageAsMax255Bytes() throws Exception {
+        SubmitSm pdu0 = new SubmitSm();
+
+        String text255 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum in orci magna. Etiam auctor ultrices lacus vel suscipit. Maecenas eget faucibus purus. Etiam aliquet mollis fermentum. Proin vel augue arcu. Praesent venenatis tristique ante turpis duis.";
+        
+        pdu0.setSequenceNumber(20456);
+        pdu0.setSourceAddress(new Address((byte)0x01, (byte)0x01, "40404"));
+        pdu0.setDestAddress(new Address((byte)0x01, (byte)0x01, "44951361920"));
+        pdu0.setEsmClass((byte)0x00);
+        pdu0.setProtocolId((byte)0x00);
+        pdu0.setPriority((byte)0x00);
+        pdu0.setScheduleDeliveryTime(null);
+        pdu0.setValidityPeriod(null);
+        pdu0.setRegisteredDelivery((byte)0x01);
+        pdu0.setReplaceIfPresent((byte)0x00);
+        pdu0.setDataCoding((byte)0x00);
+        pdu0.setDefaultMsgId((byte)0x00);
+        pdu0.setShortMessage(text255.getBytes("ISO-8859-1"));
+
+        ChannelBuffer buffer = transcoder.encode(pdu0);
+        
+        String expectedHex = "00000130000000040000000000004FE80001013430343034000101343439353133363139323000000000000001000000FF" + HexUtil.toHexString(text255.getBytes("ISO-8859-1")).toUpperCase();
+        String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
+        
+        Assert.assertEquals(expectedHex, actualHex);
+    }
+    
+    @Test
+    public void encodeSubmitSmWithShortMessageUsing256BytesThrowsInvalidArgumentException() throws Exception {
+        SubmitSm pdu0 = new SubmitSm();
+
+        String text256 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum in orci magna. Etiam auctor ultrices lacus vel suscipit. Maecenas eget faucibus purus. Etiam aliquet mollis fermentum. Proin vel augue arcu. Praesent venenatis tristique ante turpis duis.A";
+        
+        pdu0.setSequenceNumber(20456);
+        pdu0.setSourceAddress(new Address((byte)0x01, (byte)0x01, "40404"));
+        pdu0.setDestAddress(new Address((byte)0x01, (byte)0x01, "44951361920"));
+        pdu0.setEsmClass((byte)0x00);
+        pdu0.setProtocolId((byte)0x00);
+        pdu0.setPriority((byte)0x00);
+        pdu0.setScheduleDeliveryTime(null);
+        pdu0.setValidityPeriod(null);
+        pdu0.setRegisteredDelivery((byte)0x01);
+        pdu0.setReplaceIfPresent((byte)0x00);
+        pdu0.setDataCoding((byte)0x00);
+        pdu0.setDefaultMsgId((byte)0x00);
+        // 256 bytes is *NOT* permitted for a short message since only a single
+        // byte can represent the length of the message -- in version <= 4.0
+        // this would be permitted -- causing an overflow for the byte, but still
+        // writing out all 256 bytes in the buffer
+        try {
+            pdu0.setShortMessage(text256.getBytes("ISO-8859-1"));
+            Assert.fail();
+        } catch (SmppInvalidArgumentException e) {
+            // expected behavior
+        }
+    }
 }

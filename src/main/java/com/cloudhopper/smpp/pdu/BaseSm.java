@@ -19,6 +19,7 @@ import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.commons.util.StringUtil;
+import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
 import com.cloudhopper.smpp.util.ChannelBufferUtil;
 import com.cloudhopper.smpp.util.PduUtil;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -55,7 +56,10 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
         return this.shortMessage;
     }
 
-    public void setShortMessage(byte[] value) {
+    public void setShortMessage(byte[] value) throws SmppInvalidArgumentException {
+        if (value != null && value.length > 255) {
+            throw new SmppInvalidArgumentException("A short message in a PDU can only be a max of 255 bytes [actual=" + value.length + "]; use optional parameter message_payload as an alternative");
+        }
         this.shortMessage = value;
     }
 

@@ -3,6 +3,17 @@ http://twitter.com/
 http://www.cloudhopper.com/
 SMPP Library
 --------------------------------------------------------------------------------
+4.1.0 - 2011-07-26
+  * Upgraded ch-commons-util dependency from 5.0 to 5.1.0
+  * Upgraded ch-commons-gsm dependency from 2.0 to 2.1.0
+  * Upgrade parent POM dependency from 1.0 to 1.5
+  * Switched to new version format.
+  * Added Version class to compile build info into jar
+  * Added SmppInvalidArgumentException class
+  * Fixed issue with short messages > than 255 bytes in length not triggering
+    an exception to be thrown when attempting to setShortMessage(). The length
+    of the byte array is now checked.
+
 4.0 - 2011-05-09
   * Upgraded ch-commons-util dependency from 4.1 to 5.0
   * WARN: There are some minor source and binary backwards compatability issues

@@ -7,13 +7,13 @@
   <groupId>cloudhopper</groupId>
   <artifactId>ch-smpp</artifactId>
   <packaging>jar</packaging>
-  <version>4.0</version>
+  <version>4.1.0</version>
   <name>ch-smpp</name>
 
   <parent>
     <groupId>cloudhopper</groupId>
     <artifactId>ch-maven-parent-public</artifactId>
-    <version>1.1</version>
+    <version>1.5</version>
   </parent>
 
   <repositories>
@@ -24,15 +24,6 @@
       <url>http://maven.cloudhopper.com/repos/third-party</url>
     </repository>
   </repositories>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>com.mycila.maven-license-plugin</groupId>
-        <artifactId>maven-license-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
 
   <!--
     I prefer jars managed out of the Cloudhopper Maven Repo with more consistent
@@ -96,10 +87,11 @@
   </dependencies>
 
   <properties>
+    <main.java.package>com.cloudhopper.smpp</main.java.package>
     <netty.version>[3.2,)</netty.version>
     <ch-commons-charset.version>[2.0,)</ch-commons-charset.version>
-    <ch-commons-gsm.version>[2.0,)</ch-commons-gsm.version>
-    <ch-commons-util.version>5.0-SNAPSHOT</ch-commons-util.version>
+    <ch-commons-gsm.version>[2.1,)</ch-commons-gsm.version>
+    <ch-commons-util.version>[5.1,)</ch-commons-util.version>
   </properties>
 
 </project>

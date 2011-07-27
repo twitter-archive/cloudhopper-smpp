@@ -1172,5 +1172,76 @@ public class PduDecoderTest {
         Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
         Assert.assertEquals(0, pdu0.getShortMessageLength());
     }
+    
+    @Test
+    public void decodeWAUMalformedPacket() throws Exception {
+        ChannelBuffer buffer = BufferHelper.createBuffer("000000400000000500000000A2859F22313030310001013434393531333631393230000001343034303430343034303430343034300000000000000000080000");
 
+        DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
+
+        /**
+        Assert.assertEquals(64, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        Assert.assertEquals(0, pdu0.getCommandStatus());
+        Assert.assertEquals(-1568301278, pdu0.getSequenceNumber());
+        Assert.assertEquals(true, pdu0.isRequest());
+        Assert.assertEquals("1001", pdu0.getServiceType());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        Assert.assertEquals("44951361920", pdu0.getSourceAddress().getAddress());
+        Assert.assertEquals(0x00, pdu0.getDestAddress().getTon());
+        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        Assert.assertEquals("4040404040404040", pdu0.getDestAddress().getAddress());
+        Assert.assertEquals(0x00, pdu0.getEsmClass());
+        Assert.assertEquals(0x00, pdu0.getProtocolId());
+        Assert.assertEquals(0x00, pdu0.getPriority());
+        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
+        Assert.assertEquals("", pdu0.getValidityPeriod());
+        Assert.assertEquals(0x00, pdu0.getRegisteredDelivery());
+        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
+        Assert.assertEquals(0x08, pdu0.getDataCoding());
+        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
+        Assert.assertEquals(0, pdu0.getShortMessageLength());
+         */
+    }
+
+    
+    @Test
+    public void decodeSubmitSmWith255ByteShortMessage() throws Exception {
+        String text255 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum in orci magna. Etiam auctor ultrices lacus vel suscipit. Maecenas eget faucibus purus. Etiam aliquet mollis fermentum. Proin vel augue arcu. Praesent venenatis tristique ante turpis duis.";
+        byte[] text255Bytes = text255.getBytes("ISO-8859-1");
+
+        ChannelBuffer buffer = BufferHelper.createBuffer("00000130000000040000000000004FE80001013430343034000101343439353133363139323000000000000001000000FF" + HexUtil.toHexString(text255Bytes));
+
+        SubmitSm pdu0 = (SubmitSm)transcoder.decode(buffer);
+
+        Assert.assertEquals(304, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_SUBMIT_SM, pdu0.getCommandId());
+        Assert.assertEquals(0, pdu0.getCommandStatus());
+        Assert.assertEquals(20456, pdu0.getSequenceNumber());
+        Assert.assertEquals(true, pdu0.isRequest());
+        Assert.assertEquals("", pdu0.getServiceType());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        Assert.assertEquals("40404", pdu0.getSourceAddress().getAddress());
+        Assert.assertEquals(0x01, pdu0.getDestAddress().getTon());
+        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        Assert.assertEquals("44951361920", pdu0.getDestAddress().getAddress());
+        Assert.assertEquals(0x00, pdu0.getEsmClass());
+        Assert.assertEquals(0x00, pdu0.getProtocolId());
+        Assert.assertEquals(0x00, pdu0.getPriority());
+        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
+        Assert.assertEquals("", pdu0.getValidityPeriod());
+        Assert.assertEquals(0x01, pdu0.getRegisteredDelivery());
+        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
+        Assert.assertEquals(0x00, pdu0.getDataCoding());
+        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
+        Assert.assertEquals(255, pdu0.getShortMessage().length);
+        Assert.assertArrayEquals(text255Bytes, pdu0.getShortMessage());
+
+        Assert.assertEquals(null, pdu0.getOptionalParameters());
+
+        // interesting -- this example has optional parameters it happened to skip...
+        Assert.assertEquals(0, buffer.readableBytes());
+    }
 }
