@@ -1205,7 +1205,6 @@ public class PduDecoderTest {
          */
     }
 
-    
     @Test
     public void decodeSubmitSmWith255ByteShortMessage() throws Exception {
         String text255 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum in orci magna. Etiam auctor ultrices lacus vel suscipit. Maecenas eget faucibus purus. Etiam aliquet mollis fermentum. Proin vel augue arcu. Praesent venenatis tristique ante turpis duis.";
@@ -1243,5 +1242,38 @@ public class PduDecoderTest {
 
         // interesting -- this example has optional parameters it happened to skip...
         Assert.assertEquals(0, buffer.readableBytes());
+    }
+    
+    @Ignore @Test
+    public void decodeDeliverSMWithCorrectTotalByteLengthButInvalidShortMessageLength() throws Exception {
+        // short_message is only 8 bytes, but short_message_length claims it should be 16
+        // the problem is that the pdu_length in the header IS set to the correct length
+        // this normally causes an IndexOutOfBoundsException on the ByteBuffer read, but
+        // this should probably be caught and have a specific exception thrown instead!
+        // MX nextel parsing exception in real world
+        ChannelBuffer buffer = BufferHelper.createBuffer("00000039000000050000000000000001000101393939393139393134353933000000363436340000000000000000080010c1e1e9edf3faf1fc");
+
+        DeliverSm pdu = (DeliverSm)transcoder.decode(buffer);
+
+        // 999919914593
+    }
+    
+    @Test
+    public void decodeDeliverSMWithNotPerSpecSequenceNumberButNeedsToBeValid() throws Exception {
+        ChannelBuffer buffer = BufferHelper.createBuffer("000000390000000500000000806A179B000101393939393139393134353933000000363436340000000000000000080008c1e1e9edf3faf1fc");
+
+        DeliverSm pdu = (DeliverSm)transcoder.decode(buffer);
+        
+        // confirm the sequence number was parsed ok
+        Assert.assertEquals(pdu.getSequenceNumber(), 0x806A179B);
+
+        // make sure the pdu is correct on a reply
+        DeliverSmResp pduResponse = pdu.createResponse();
+        
+        ChannelBuffer respbuf = transcoder.encode(pduResponse);
+        String actualHex = BufferHelper.createHexString(respbuf).toUpperCase();
+        String expectedHex = "000000118000000500000000806A179B00";
+        
+        Assert.assertEquals(expectedHex, actualHex);
     }
 }
