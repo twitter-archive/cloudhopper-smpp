@@ -1,13 +1,13 @@
 
 The following files have been resolved:
-   ch.qos.logback:logback-classic:jar:0.9.29:test
-   ch.qos.logback:logback-core:jar:0.9.29:test
    cloudhopper:ch-commons-charset:jar:2.2.0:compile
    cloudhopper:ch-commons-gsm:jar:2.1.0:test
-   cloudhopper:ch-commons-util:jar:5.1.0:compile
+   cloudhopper:ch-commons-util:jar:5.1.1:compile
    jboss:netty:jar:3.2.4:compile
    joda:joda-time:jar:1.6.2:compile
    junit:junit:jar:4.8.2:test
-   org.slf4j:log4j-over-slf4j:jar:1.6.1:provided
-   org.slf4j:slf4j-api:jar:1.6.1:compile
+   logback:logback-classic:jar:0.9.28:test
+   logback:logback-core:jar:0.9.28:test
+   slf4j:log4j-over-slf4j:jar:1.6.1:provided
+   slf4j:slf4j-api:jar:1.6.1:compile
 

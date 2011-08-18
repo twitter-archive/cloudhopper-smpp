@@ -316,29 +316,6 @@ public class PduEncoderTest {
         //logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
         Assert.assertArrayEquals(HexUtil.toByteArray("00000039000000040000000000004FE80001013430343034000101343439353133363139323000000000000001000000084024232125262F3A"), BufferHelper.createByteArray(buffer));
     }
-    
-    @Test
-    public void encodeDataSmWithEmptyMessage() throws Exception {
-        DataSm pdu0 = new DataSm();
-
-        pdu0.setSequenceNumber(3);
-        pdu0.setSourceAddress(new Address((byte)0x02, (byte)0x01, "87654321"));
-        pdu0.setDestAddress(new Address((byte)0x04, (byte)0x09, "40404"));
-        pdu0.setEsmClass((byte)0x00);
-        pdu0.setProtocolId((byte)0x00);
-        pdu0.setPriority((byte)0x00);
-        pdu0.setScheduleDeliveryTime(null);
-        pdu0.setValidityPeriod(null);
-        pdu0.setRegisteredDelivery((byte)0x00);
-        pdu0.setReplaceIfPresent((byte)0x00);
-        pdu0.setDataCoding((byte)0x00);
-        pdu0.setDefaultMsgId((byte)0x00);
-        pdu0.setShortMessage(null);
-
-        ChannelBuffer buffer = transcoder.encode(pdu0);
-        //logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000002E000001030000000000000003000201383736353433323100040934303430340000000000000000000000"), BufferHelper.createByteArray(buffer));
-    }
 
     @Test
     public void encodeUnbind() throws Exception {
@@ -406,7 +383,7 @@ public class PduEncoderTest {
         
         pdu0.setSequenceNumber(20456);
         pdu0.setSourceAddress(new Address((byte)0x01, (byte)0x01, "40404"));
-        pdu0.setDestAddress(new Address((byte)0x01, (byte)0x01, "44951361920"));
+        pdu0.setDestAddress(new Address((byte)0x01, (byte)0x01, "44555361920"));
         pdu0.setEsmClass((byte)0x00);
         pdu0.setProtocolId((byte)0x00);
         pdu0.setPriority((byte)0x00);
@@ -426,5 +403,27 @@ public class PduEncoderTest {
         } catch (SmppInvalidArgumentException e) {
             // expected behavior
         }
+    }
+    
+    @Test
+    public void encodeDataSM() throws Exception {
+        DataSm pdu0 = new DataSm();
+        
+        pdu0.setSequenceNumber(0);
+        pdu0.setSourceAddress(new Address((byte)0x01, (byte)0x01, "5552710000"));
+        pdu0.setDestAddress(new Address((byte)0x00, (byte)0x01, "9695"));
+        pdu0.setEsmClass((byte)0x00);
+        pdu0.setRegisteredDelivery((byte)0x01);
+        pdu0.setDataCoding((byte)0x00);
+        
+        Tlv tlv0 = new Tlv(SmppConstants.TAG_MESSAGE_PAYLOAD, "Test".getBytes("ISO-8859-1"));
+        pdu0.addOptionalParameter(tlv0);
+        
+        ChannelBuffer buffer = transcoder.encode(pdu0);
+        
+        String expectedHex = "000000300000010300000000000000000001013535353237313030303000000139363935000001000424000454657374";
+        String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
+        
+        Assert.assertEquals(expectedHex, actualHex);
     }
 }

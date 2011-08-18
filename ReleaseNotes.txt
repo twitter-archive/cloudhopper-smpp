@@ -3,6 +3,10 @@ http://twitter.com/
 http://www.cloudhopper.com/
 SMPP Library
 --------------------------------------------------------------------------------
+4.1.1 - 2011-08-18
+  * Fixed bug with DataSM decoding and encoding (previous impl was not per
+    SMPP 3.4 specs).
+
 4.1.0 - 2011-07-26
   * Upgraded ch-commons-util dependency from 5.0 to 5.1.0
   * Upgraded ch-commons-gsm dependency from 2.0 to 2.1.0

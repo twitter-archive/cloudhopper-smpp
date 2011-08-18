@@ -25,24 +25,28 @@ import com.cloudhopper.smpp.util.PduUtil;
 import org.jboss.netty.buffer.ChannelBuffer;
 
 /**
+ * Base "short message" PDU as a super class for submit_sm, deliver_sm, and
+ * data_sm.  Having a common base class they all inherit from makes it easier
+ * to work with requests in a standard way, even though data_sm does NOT actually
+ * support all of the same parameters.
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>) 
  */
 public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
 
-    private String serviceType;
-    private Address sourceAddress;
-    private Address destAddress;
-    private byte esmClass;
-    private byte protocolId;
-    private byte priority;
-    private String scheduleDeliveryTime;
-    private String validityPeriod;
-    private byte registeredDelivery;
-    private byte replaceIfPresent;
-    private byte dataCoding;
-    private byte defaultMsgId;  // not used in deliverSMs...
-    private byte[] shortMessage;
+    protected String serviceType;
+    protected Address sourceAddress;
+    protected Address destAddress;
+    protected byte esmClass;
+    private byte protocolId;                    // not present in data_sm
+    private byte priority;                      // not present in data_sm
+    private String scheduleDeliveryTime;        // not present in data_sm
+    private String validityPeriod;              // not present in data_sm
+    protected byte registeredDelivery;
+    private byte replaceIfPresent;              // not present in data_sm
+    protected byte dataCoding;
+    private byte defaultMsgId;                  // not present in data_sm, not used in deliver_sm
+    private byte[] shortMessage;                // not present in data_sm         
 
     public BaseSm(int commandId, String name) {
         super(commandId, name);

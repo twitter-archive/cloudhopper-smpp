@@ -7,7 +7,7 @@
   <groupId>cloudhopper</groupId>
   <artifactId>ch-smpp</artifactId>
   <packaging>jar</packaging>
-  <version>4.1.0</version>
+  <version>4.1.1</version>
   <name>ch-smpp</name>
 
   <parent>
@@ -40,6 +40,12 @@
       <groupId>cloudhopper</groupId>
       <artifactId>ch-commons-util</artifactId>
       <version>${ch-commons-util.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>jboss</groupId>
@@ -47,13 +53,13 @@
       <version>${netty.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
+      <groupId>slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
     <!-- provided scope -->
     <dependency>
-      <groupId>org.slf4j</groupId>
+      <groupId>slf4j</groupId>
       <artifactId>log4j-over-slf4j</artifactId>
       <version>${slf4j.version}</version>
       <scope>provided</scope>
@@ -73,13 +79,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>ch.qos.logback</groupId>
+      <groupId>logback</groupId>
       <artifactId>logback-core</artifactId>
       <version>${logback.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>ch.qos.logback</groupId>
+      <groupId>logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback.version}</version>
       <scope>test</scope>

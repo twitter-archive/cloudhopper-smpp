@@ -15,6 +15,11 @@
 package com.cloudhopper.smpp.pdu;
 
 import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.type.RecoverablePduException;
+import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import com.cloudhopper.smpp.util.ChannelBufferUtil;
+import com.cloudhopper.smpp.util.PduUtil;
+import org.jboss.netty.buffer.ChannelBuffer;
 
 public class DataSm extends BaseSm<DataSmResp> {
 
@@ -32,6 +37,36 @@ public class DataSm extends BaseSm<DataSmResp> {
     @Override
     public Class<DataSmResp> getResponseClass() {
         return DataSmResp.class;
+    }
+    
+    @Override
+    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+        this.serviceType = ChannelBufferUtil.readNullTerminatedString(buffer);
+        this.sourceAddress = ChannelBufferUtil.readAddress(buffer);
+        this.destAddress = ChannelBufferUtil.readAddress(buffer);
+        this.esmClass = buffer.readByte();
+        this.registeredDelivery = buffer.readByte();
+        this.dataCoding = buffer.readByte();
+    }
+
+    @Override
+    public int calculateByteSizeOfBody() {
+        int bodyLength = 0;
+        bodyLength += PduUtil.calculateByteSizeOfNullTerminatedString(this.serviceType);
+        bodyLength += PduUtil.calculateByteSizeOfAddress(this.sourceAddress);
+        bodyLength += PduUtil.calculateByteSizeOfAddress(this.destAddress);
+        bodyLength += 3;    // esmClass, regDelivery, dataCoding bytes
+        return bodyLength;
+    }
+
+    @Override
+    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+        ChannelBufferUtil.writeNullTerminatedString(buffer, this.serviceType);
+        ChannelBufferUtil.writeAddress(buffer, this.sourceAddress);
+        ChannelBufferUtil.writeAddress(buffer, this.destAddress);
+        buffer.writeByte(this.esmClass);
+        buffer.writeByte(this.registeredDelivery);
+        buffer.writeByte(this.dataCoding);
     }
     
 }
