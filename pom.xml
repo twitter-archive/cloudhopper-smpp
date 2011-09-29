@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>cloudhopper</groupId>
   <artifactId>ch-smpp</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <version>4.1.1</version>
   <name>ch-smpp</name>
 
@@ -100,5 +100,16 @@
     <ch-commons-util.version>[5.1,)</ch-commons-util.version>
   </properties>
 
+  <build>
+    <plugins>
+      <!-- Generate osgi metadata -->
+      <!-- TODO: Move this into the parent pom -->
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>2.3.5</version>
+        <extensions>true</extensions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
-
