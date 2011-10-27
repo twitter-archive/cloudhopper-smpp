@@ -3,6 +3,10 @@ http://twitter.com/
 http://www.cloudhopper.com/
 SMPP Library
 --------------------------------------------------------------------------------
+4.1.2 - 2011-10-26
+  * Upgrade parent POM dependency from 1.5 to 1.6
+  * Added support for OSGI in final jar
+
 4.1.1 - 2011-08-18
   * Fixed bug with DataSM decoding and encoding (previous impl was not per
     SMPP 3.4 specs).
