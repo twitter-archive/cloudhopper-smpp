@@ -31,5 +31,6 @@ public class SmppChannelConstants {
     public static final String PIPELINE_SESSION_LOGGER_NAME = "smppSessionLogger";
     public static final String PIPELINE_SESSION_PDU_DECODER_NAME = "smppSessionPduDecoder";
     public static final String PIPELINE_SESSION_WRAPPER_NAME = "smppSessionWrapper";
+    public static final String PIPELINE_SESSION_SSL_NAME = "smppSessionSSL";
 
 }
