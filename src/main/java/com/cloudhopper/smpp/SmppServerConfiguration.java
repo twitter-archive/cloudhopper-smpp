@@ -14,6 +14,8 @@
 
 package com.cloudhopper.smpp;
 
+import javax.net.ssl.SSLEngine;
+
 /**
  * Configuration of an SMPP server.
  * 
@@ -47,6 +49,7 @@ public class SmppServerConfiguration {
     private long defaultRequestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
     private long defaultWindowMonitorInterval = SmppConstants.DEFAULT_WINDOW_MONITOR_INTERVAL;
     private boolean defaultSessionCountersEnabled = false;
+    private SSLEngine sslEngine = null;
 
     public SmppServerConfiguration() {
         this.name = "SmppServer";
@@ -74,7 +77,7 @@ public class SmppServerConfiguration {
         this.jmxDomain = jmxDomain;
     }
 
-    public boolean isJmxEnabled() {
+	public boolean isJmxEnabled() {
         return jmxEnabled;
     }
 
@@ -229,5 +232,15 @@ public class SmppServerConfiguration {
     public void setDefaultSessionCountersEnabled(boolean defaultSessionCountersEnabled) {
         this.defaultSessionCountersEnabled = defaultSessionCountersEnabled;
     }
+
+	public SSLEngine getSslEngine() {
+		return sslEngine;
+	}
+
+	public void setSslEngine(SSLEngine sslEngine) {
+		this.sslEngine = sslEngine;
+		if (sslEngine != null)
+			sslEngine.setUseClientMode(false);
+	}
 
 }

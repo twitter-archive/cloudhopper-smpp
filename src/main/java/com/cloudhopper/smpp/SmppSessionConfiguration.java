@@ -14,6 +14,9 @@
 
 package com.cloudhopper.smpp;
 
+
+import javax.net.ssl.SSLEngine;
+
 import com.cloudhopper.smpp.type.SmppConnectionConfiguration;
 import com.cloudhopper.smpp.type.LoggingOptions;
 import com.cloudhopper.smpp.type.Address;
@@ -43,6 +46,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
     private long requestExpiryTimeout;
     private long windowMonitorInterval;
     private boolean countersEnabled;
+    private SSLEngine sslEngine;
 
     public SmppSessionConfiguration() {
         this(SmppBindType.TRANSCEIVER, null, null, null);
@@ -65,6 +69,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
         this.requestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
         this.windowMonitorInterval = SmppConstants.DEFAULT_WINDOW_MONITOR_INTERVAL;
         this.countersEnabled = false;
+        this.sslEngine = null;
     }
 
     public void setName(String value) {
@@ -195,8 +200,18 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
         return countersEnabled;
     }
 
-    public void setCountersEnabled(boolean countersEnabled) {
+	public void setCountersEnabled(boolean countersEnabled) {
         this.countersEnabled = countersEnabled;
     }
+
+	public SSLEngine getSslEngine() {
+		return sslEngine;
+	}
+
+	public void setSslEngine(SSLEngine sslEngine) {
+		this.sslEngine = sslEngine;
+		if (sslEngine != null)
+			sslEngine.setUseClientMode(true);
+	}
 
 }

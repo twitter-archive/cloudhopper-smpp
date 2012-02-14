@@ -23,6 +23,7 @@ import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +65,11 @@ public class SmppServerConnector extends SimpleChannelUpstreamHandler {
         logger.info("New channel from [{}]", channelName);
         Thread.currentThread().setName(currentThreadName);
 
+        // attach SSL handler at the top of the pipeline
+        if (server.getConfiguration().getSslEngine() != null) {
+        	channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(server.getConfiguration().getSslEngine()));
+        }
+        
         // add a new instance of a thread renamer
         channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(threadName));
         

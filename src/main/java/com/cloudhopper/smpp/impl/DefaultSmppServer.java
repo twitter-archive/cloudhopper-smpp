@@ -51,6 +51,7 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.oio.OioServerSocketChannelFactory;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,6 +144,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         // we use the same default pipeline for all new channels - no need for a factory
         this.serverConnector = new SmppServerConnector(channels, this);
         this.serverBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, this.serverConnector);
+        
         // a shared timer used to make sure new channels are bound within X milliseconds
         this.bindTimer = new Timer(configuration.getName() + "-BindTimer0", true);
         // NOTE: this would permit us to customize the "transcoding" context for a server if needed
@@ -332,7 +334,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         // create a new wrapper around a session to pass the pdu up the chain
         channel.getPipeline().remove(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME);
         channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
-        
+   
         // check if the # of channels exceeds maxConnections
         if (this.channels.size() > this.configuration.getMaxConnectionSize()) {
             logger.warn("The current connection size [{}] exceeds the configured max connection size [{}]", this.channels.size(), this.configuration.getMaxConnectionSize());
