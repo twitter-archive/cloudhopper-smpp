@@ -210,6 +210,8 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
 
 	public void setSslEngine(SSLEngine sslEngine) {
 		this.sslEngine = sslEngine;
+		if (sslEngine != null)
+			sslEngine.setUseClientMode(true);
 	}
 
 }

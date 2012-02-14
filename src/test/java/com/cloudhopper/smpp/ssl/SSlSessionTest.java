@@ -17,11 +17,13 @@ import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.impl.DefaultSmppServerTest;
+import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.pdu.EnquireLink;
 import com.cloudhopper.smpp.pdu.EnquireLinkResp;
-import com.cloudhopper.smpp.ssl.ServerMain.TestSmppSessionHandler;
+import com.cloudhopper.smpp.pdu.PduRequest;
+import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.type.SmppProcessingException;
 
 public class SSlSessionTest {
@@ -37,7 +39,6 @@ public class SSlSessionTest {
 		SmppServerConfiguration configuration = new SmppServerConfiguration();
 		configuration.setPort(PORT);
 		configuration.setSystemId("cloudhopper");
-		//configuration.setDefaultRequestExpiryTimeout(5000);
 		return configuration;
 	}
 
@@ -46,7 +47,6 @@ public class SSlSessionTest {
 		// Add SSL handler to the server configuration.
 		// In this example, we use a bogus certificate at the server side.
 		configuration.setSslEngine(SslContextFactoryMinimal.getServerContext().createSSLEngine());
-		configuration.getSslEngine().setUseClientMode(false);
 		return configuration;
 	}
 
@@ -55,7 +55,6 @@ public class SSlSessionTest {
 		// Add SSL handler to the server configuration.
 		// In this example, we use a bogus certificate at the server side.
 		configuration.setSslEngine(SslContextFactoryTrusted.getServerContext().createSSLEngine());
-		configuration.getSslEngine().setUseClientMode(false);			//TODO put in config
 		// activate clients authentication
 		configuration.getSslEngine().setNeedClientAuth(true);
 		return configuration;
@@ -73,12 +72,11 @@ public class SSlSessionTest {
 		configuration.setType(SmppBindType.TRANSCEIVER);
 		configuration.setHost("localhost");
 		configuration.setPort(PORT);
-		configuration.setConnectTimeout(100);
-		configuration.setBindTimeout(100);
+		configuration.setConnectTimeout(200);
+		configuration.setBindTimeout(200);
 		configuration.setSystemId(SYSTEMID);
 		configuration.setPassword(PASSWORD);
 		configuration.getLoggingOptions().setLogBytes(true);
-		//configuration.setRequestExpiryTimeout(6000);
 		return configuration;
 	}
 
@@ -86,15 +84,13 @@ public class SSlSessionTest {
 		SmppSessionConfiguration configuration = createClientConfigurationNoSSL();
 		// Add SSL handler to encrypt and decrypt everything.
 		configuration.setSslEngine(SslContextFactoryMinimal.getClientContext().createSSLEngine());
-		configuration.getSslEngine().setUseClientMode(true);
 		return configuration;
 	}
 
 	public SmppSessionConfiguration createClientConfigurationStrongSSL() {
 		SmppSessionConfiguration configuration = createClientConfigurationNoSSL();
-		// Add SSL handler to encrypt and decrypt everything.
+		// Add SSL handler to encrypt and validate the other side.
 		configuration.setSslEngine(SslContextFactoryTrusted.getClientContext().createSSLEngine());
-		configuration.getSslEngine().setUseClientMode(true);	//TODO put in config
 		return configuration;
 	}
 
@@ -120,7 +116,7 @@ public class SSlSessionTest {
 		public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
 			sessions.add(session);
 			// need to do something it now (flag we're ready)
-			session.serverReady(new TestSmppSessionHandler(session));
+			session.serverReady(new TestSmppSessionHandler());
 		}
 
 		@Override
@@ -128,6 +124,13 @@ public class SSlSessionTest {
 			sessions.remove(session);
 		}
 	}
+	
+	public static class TestSmppSessionHandler extends DefaultSmppSessionHandler {
+        @Override
+        public PduResponse firePduRequestReceived(PduRequest pduRequest) {
+            return pduRequest.createResponse();
+        }
+    }
 
 	@Test
 	public void serverOverSSL() throws Exception {
@@ -184,8 +187,6 @@ public class SSlSessionTest {
 			SmppSession session0 = client0.bind(sessionConfig0);
 
 			Thread.sleep(100);
-			EnquireLinkResp enquireLinkResp1 = session0.enquireLink(new EnquireLink(), 1000);
-			logger.info("enquire_link_resp #1: commandStatus [" + enquireLinkResp1.getCommandStatus() + "=" + enquireLinkResp1.getResultMessage() + "]");
 
 			Assert.assertEquals(1, serverHandler.sessions.size());
 			Assert.assertEquals(1, server0.getChannels().size());
@@ -244,7 +245,7 @@ public class SSlSessionTest {
 			SmppSession session1 = client0.bind(sessionConfig0);
 			SmppSession session2 = client0.bind(sessionConfig0);
 
-			Thread.sleep(100);
+			Thread.sleep(300);
 
 			Assert.assertEquals(3, serverHandler.sessions.size());
 			Assert.assertEquals(3, server0.getChannels().size());

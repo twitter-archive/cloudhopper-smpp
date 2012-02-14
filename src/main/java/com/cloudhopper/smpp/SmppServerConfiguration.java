@@ -239,6 +239,8 @@ public class SmppServerConfiguration {
 
 	public void setSslEngine(SSLEngine sslEngine) {
 		this.sslEngine = sslEngine;
+		if (sslEngine != null)
+			sslEngine.setUseClientMode(false);
 	}
 
 }
