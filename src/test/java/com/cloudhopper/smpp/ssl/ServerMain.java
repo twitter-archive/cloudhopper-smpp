@@ -79,9 +79,10 @@ public class ServerMain {
         configuration.setJmxEnabled(true);
 
         // Add SSL handler to encrypt and decrypt everything.
-        // In this example, we use a bogus certificate in the server side.
-        configuration.setSslEngine(SslContextFactory.getServerContext().createSSLEngine());
+        configuration.setSslEngine(SslContextFactoryMinimal.getServerContext().createSSLEngine());
         configuration.getSslEngine().setUseClientMode(false);
+        //configuration.getSslEngine().setNeedClientAuth(true);
+
         
         // create a server, start it up
         DefaultSmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler(), executor, monitorExecutor);

@@ -13,20 +13,15 @@
  */
 package com.cloudhopper.smpp.ssl;
 
-import com.cloudhopper.commons.charset.CharsetUtil;
-import com.cloudhopper.commons.util.windowing.WindowFuture;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppSession;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
-import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.pdu.EnquireLink;
 import com.cloudhopper.smpp.pdu.EnquireLinkResp;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
-import com.cloudhopper.smpp.pdu.SubmitSm;
-import com.cloudhopper.smpp.pdu.SubmitSmResp;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
@@ -98,11 +93,13 @@ public class ClientMain {
         config0.setRequestExpiryTimeout(30000);
         config0.setWindowMonitorInterval(15000);
         config0.setCountersEnabled(true);
+        
         // Add SSL handler to encrypt and decrypt everything.
         // In this example, we use a bogus certificate in the server side.
-        config0.setSslEngine(SslContextFactory.getClientContext().createSSLEngine());
+        config0.setSslEngine(SslContextFactoryMinimal.getClientContext().createSSLEngine());
         config0.getSslEngine().setUseClientMode(true);
 
+        
         //
         // create session, enquire link, submit an sms, close session
         //
@@ -119,18 +116,6 @@ public class ClientMain {
             EnquireLinkResp enquireLinkResp1 = session0.enquireLink(new EnquireLink(), 10000);
             logger.info("enquire_link_resp #1: commandStatus [" + enquireLinkResp1.getCommandStatus() + "=" + enquireLinkResp1.getResultMessage() + "]");
 
-            System.out.println("send message");
-
-            String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
-            byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);
-            
-            SubmitSm submit0 = new SubmitSm();
-            submit0.setSourceAddress(new Address((byte)0x03, (byte)0x00, "40404"));
-            submit0.setDestAddress(new Address((byte)0x01, (byte)0x01, "44555519205"));
-            submit0.setShortMessage(textBytes);
-
-            SubmitSmResp submitResp = session0.submit(submit0, 10000);
-            
             System.out.println("Press any key to unbind and close sessions");
             System.in.read();
             
@@ -140,18 +125,6 @@ public class ClientMain {
         }
 
         if (session0 != null) {
-            logger.info("Cleaning up session... (final counters)");
-            if (session0.hasCounters()) {
-                logger.info("tx-enquireLink: {}", session0.getCounters().getTxEnquireLink());
-                logger.info("tx-submitSM: {}", session0.getCounters().getTxSubmitSM());
-                logger.info("tx-deliverSM: {}", session0.getCounters().getTxDeliverSM());
-                logger.info("tx-dataSM: {}", session0.getCounters().getTxDataSM());
-                logger.info("rx-enquireLink: {}", session0.getCounters().getRxEnquireLink());
-                logger.info("rx-submitSM: {}", session0.getCounters().getRxSubmitSM());
-                logger.info("rx-deliverSM: {}", session0.getCounters().getRxDeliverSM());
-                logger.info("rx-dataSM: {}", session0.getCounters().getRxDataSM());
-            }
-            
             session0.destroy();
             // alternatively, could call close(), get outstanding requests from
             // the sendWindow (if we wanted to retry them later), then call shutdown()

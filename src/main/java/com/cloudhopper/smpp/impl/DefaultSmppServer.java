@@ -145,11 +145,6 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         this.serverConnector = new SmppServerConnector(channels, this);
         this.serverBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, this.serverConnector);
         
-        // attach SSL handler at the top of the pipeline for all channels
-        if (configuration.getSslEngine() != null) {
-        	this.serverBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(configuration.getSslEngine()));
-        }
-
         // a shared timer used to make sure new channels are bound within X milliseconds
         this.bindTimer = new Timer(configuration.getName() + "-BindTimer0", true);
         // NOTE: this would permit us to customize the "transcoding" context for a server if needed
