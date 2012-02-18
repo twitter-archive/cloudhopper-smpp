@@ -1,9 +1,9 @@
 
 The following files have been resolved:
-   cloudhopper:ch-commons-charset:jar:2.3.0:compile
-   cloudhopper:ch-commons-gsm:jar:2.1.0:test
+   cloudhopper:ch-commons-charset:jar:2.3.1:compile
+   cloudhopper:ch-commons-gsm:jar:2.1.1:test
    cloudhopper:ch-commons-util:jar:5.1.2:compile
-   jboss:netty:jar:3.2.4:compile
+   jboss:netty:jar:3.3.1:compile
    joda:joda-time:jar:1.6.2:compile
    junit:junit:jar:4.10:test
    logback:logback-classic:jar:0.9.28:test

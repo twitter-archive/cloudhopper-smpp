@@ -132,7 +132,7 @@ public class SSlSessionTest {
         }
     }
 
-	@Test
+	@Test @Ignore
 	public void serverOverSSL() throws Exception {
 		// server is SSL, client is not!
 		DefaultSmppServer server0 = createSmppServer(createServerConfigurationWeakSSL());
@@ -152,7 +152,8 @@ public class SSlSessionTest {
 		}
 	}
 
-	@Test @Ignore("ignored because it hangs out at bind(), after UnboundSmppSession.fireExceptionThrown()")
+	@Test
+        //@Ignore("ignored because it hangs out at bind(), after UnboundSmppSession.fireExceptionThrown()")
 	public void clientOverSSL() throws Exception {
 		// server is not SSL, client is SSL
 		DefaultSmppServer server0 = createSmppServer(createServerConfigurationNoSSL());
@@ -160,6 +161,8 @@ public class SSlSessionTest {
 
 		DefaultSmppClient client0 = new DefaultSmppClient();
 		SmppSessionConfiguration sessionConfig0 = createClientConfigurationWeakSSL();
+                sessionConfig0.setConnectTimeout(30000);
+                sessionConfig0.setBindTimeout(30000);
 
 		try {
 			// this should fail
@@ -173,7 +176,7 @@ public class SSlSessionTest {
 		}
 	}
 	
-	@Test
+	@Test @Ignore
 	public void bindOverSSL() throws Exception {
 		// both server and client are SSL
 		DefaultSmppServer server0 = createSmppServer(createServerConfigurationWeakSSL());
@@ -206,7 +209,7 @@ public class SSlSessionTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void enquireLinkOverSSL() throws Exception {
 		// both server and client are SSL
 		DefaultSmppServer server0 = createSmppServer(createServerConfigurationWeakSSL());
@@ -230,7 +233,7 @@ public class SSlSessionTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void threeConnectionsOverSSL() throws Exception {
 		// both server and client are SSL
 		DefaultSmppServer server0 = createSmppServer(createServerConfigurationWeakSSL());
@@ -254,7 +257,7 @@ public class SSlSessionTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void TrustedClientSSL() throws Exception {
 		// both server and client are SSL with compatible certificate.
 		DefaultSmppServer server0 = createSmppServer(createServerConfigurationStrongSSL());
@@ -274,7 +277,7 @@ public class SSlSessionTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void UntrustedClientSSL() throws Exception {
 		// both server and client are SSL. But the client is certificateless.
 		// server has activated trust manager that refuses untrusted clients.

@@ -99,6 +99,11 @@ public class ClientMain {
         config0.setRequestExpiryTimeout(30000);
         config0.setWindowMonitorInterval(15000);
         config0.setCountersEnabled(true);
+        
+        //
+        // enabled ssl
+        //
+        
 
         //
         // create session, enquire link, submit an sms, close session

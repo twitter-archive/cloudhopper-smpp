@@ -21,13 +21,8 @@ import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.SmppSession;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.SmppSessionHandler;
-import com.cloudhopper.smpp.channel.SmppChannelConstants;
+import com.cloudhopper.smpp.channel.*;
 import com.cloudhopper.smpp.type.SmppTimeoutException;
-import com.cloudhopper.smpp.channel.SmppClientConnector;
-import com.cloudhopper.smpp.channel.SmppSessionPduDecoder;
-import com.cloudhopper.smpp.channel.SmppSessionLogger;
-import com.cloudhopper.smpp.channel.SmppSessionWrapper;
-import com.cloudhopper.smpp.channel.SmppSessionThreadRenamer;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.pdu.BindReceiver;
@@ -213,8 +208,12 @@ public class DefaultSmppClient implements SmppClient {
         DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.CLIENT, config, channel, sessionHandler, monitorExecutor);
 
         // SSL handler must be the first in the pipeline
+        SslHandler sslHandler = null;
         if (config.getSslEngine() != null) {
-        	channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(config.getSslEngine()));
+            // for debugging SSL handshake failure
+            //channel.getPipeline().addLast("ssl debug", new SslDebugLogger());
+            sslHandler = new SslHandler(config.getSslEngine());
+            channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, sslHandler);
         }
 
         // add the thread renamer portion to the pipeline
@@ -234,6 +233,39 @@ public class DefaultSmppClient implements SmppClient {
         // create a new wrapper around a session to pass the pdu up the chain
         channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
 
+        //
+        // Workaround for netty SSL handshake bug (at least as of Netty v3.3.1)
+        // netty only watches for the channelDisconnected event in SslHandler
+        // for a socket close event during the handshake -- this means the future
+        // returned by handshake() never knows that the socket was closed and can
+        // lead to a deadlock situation.  The best fix would be for netty to also
+        // listen for a channel close() event and also update the handshake future.
+        // The workaround will be to never wait indefinitely and to do a loop
+        // of smaller timeout intervals so that the client returns faster if the 
+        // SSL handshake fails or never completes...
+        //
+        if (sslHandler != null) {
+            logger.info("doing SSL handshake...");
+            long handshakeTimeout = System.currentTimeMillis() + config.getConnectTimeout();
+            ChannelFuture sslFuture = sslHandler.handshake();
+            while (!sslFuture.isDone()) {
+                // verify the channel is still connected before we bother waiting
+                logger.info("verifying SSL channel connected...");
+                if (!channel.isConnected()) {
+                    logger.error("SSL handshake channel close detected");
+                    throw new SmppChannelConnectException("Channel was closed before SSL handshake completed (peer may have bad cert or not running SSL?)");
+                }
+                logger.info("waiting for SSL handshake to complete...");
+                boolean timeout = !sslFuture.await(500);
+                if (timeout && System.currentTimeMillis() >= handshakeTimeout) {
+                    logger.error("SSL handshake timeout occurred!");
+                    throw new SmppChannelConnectTimeoutException("Unable to SSL handshake with host [" + config.getHost() + "] and port [" + config.getPort() + "] within " + config.getConnectTimeout() + " ms");
+                }
+            }
+            logger.info("finished SSL handshake: " + sslHandler.getEngine().getSession().getCipherSuite() + " cipher suite.\n");
+            
+        }
+        
         return session;
     }
 

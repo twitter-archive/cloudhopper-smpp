@@ -8,6 +8,7 @@
     </appender>
     
     <logger name="com.cloudhopper" level="DEBUG"/>
+    <logger name="org.jboss" level="DEBUG"/>
 
     <root level="WARN">
         <appender-ref ref="CONSOLE"/>

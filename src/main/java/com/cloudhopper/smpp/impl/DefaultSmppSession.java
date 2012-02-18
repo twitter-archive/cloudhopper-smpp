@@ -512,10 +512,19 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
 
         // write the pdu out & wait till its written
-        ChannelFuture channelFuture = this.channel.write(buffer).await();
-
+        // unit tests for SSL demonstrated that doing an .await() by itself
+        // causes a deadlock (bug within netty SslHandler) as the underlying channel is
+        // actually closed but never notifies the waiting thread!
+        //ChannelFuture channelFuture = this.channel.write(buffer).await();
+        ChannelFuture channelFuture = this.channel.write(buffer);
+        if (!channelFuture.await(timeoutMillis)) {
+            // timeout occurred!
+            throw new SmppTimeoutException("Timeout while waiting for channel write while sending request PDU");
+        }
+        
         // check if the write was a success
         if (!channelFuture.isSuccess()) {
+            logger.error("WRITE CLEARLY FAILED UPSTREAM!");
             // the write failed, make sure to throw an exception
             throw new SmppChannelException(channelFuture.getCause().getMessage(), channelFuture.getCause());
         }
