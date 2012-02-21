@@ -21,9 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Channel handler responsible for logging the bytes sent/received on an 
- * SmppSession.  The internal "options" object is tied directly to the SmppSession
- * so that changes can be made on-the-fly during runtime.
+ * Channel handler meant to mirror how Netty's SslHandler uses a SimplChannelHandler
+ * to negotiate SSL.  A handshake failure relies on the "channelDisconnected"
+ * method to be called, but is appears only a "channelClosed" event occurs - 
+ * leading to a situation where a handshake future .await() method deadlocks.
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */

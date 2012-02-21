@@ -14,28 +14,15 @@
 
 package com.cloudhopper.smpp.impl;
 
-import com.cloudhopper.smpp.SmppClient;
-import com.cloudhopper.smpp.util.DaemonExecutors;
-import com.cloudhopper.smpp.SmppBindType;
-import com.cloudhopper.smpp.type.SmppChannelException;
-import com.cloudhopper.smpp.SmppSession;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
-import com.cloudhopper.smpp.SmppSessionHandler;
+import com.cloudhopper.smpp.*;
 import com.cloudhopper.smpp.channel.*;
-import com.cloudhopper.smpp.type.SmppTimeoutException;
-import com.cloudhopper.smpp.pdu.BaseBind;
-import com.cloudhopper.smpp.pdu.BaseBindResp;
-import com.cloudhopper.smpp.pdu.BindReceiver;
-import com.cloudhopper.smpp.pdu.BindTransceiver;
-import com.cloudhopper.smpp.pdu.BindTransmitter;
-import com.cloudhopper.smpp.type.RecoverablePduException;
-import com.cloudhopper.smpp.type.SmppBindException;
-import com.cloudhopper.smpp.type.SmppChannelConnectException;
-import com.cloudhopper.smpp.type.SmppChannelConnectTimeoutException;
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import com.cloudhopper.smpp.pdu.*;
+import com.cloudhopper.smpp.type.*;
+import com.cloudhopper.smpp.util.DaemonExecutors;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.net.ssl.SSLSession;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -210,7 +197,8 @@ public class DefaultSmppClient implements SmppClient {
         // SSL handler must be the first in the pipeline
         SslHandler sslHandler = null;
         if (config.getSslEngine() != null) {
-            // for debugging SSL handshake failure
+            // for debugging SSL handshake failure in netty - check if 
+            // "channelDisconnected()" method is triggered - if not Netty has a bug
             //channel.getPipeline().addLast("ssl debug", new SslDebugLogger());
             sslHandler = new SslHandler(config.getSslEngine());
             channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, sslHandler);
@@ -245,25 +233,46 @@ public class DefaultSmppClient implements SmppClient {
         // SSL handshake fails or never completes...
         //
         if (sslHandler != null) {
-            logger.info("doing SSL handshake...");
+            logger.debug("starting SSL handshake...");
             long handshakeTimeout = System.currentTimeMillis() + config.getConnectTimeout();
-            ChannelFuture sslFuture = sslHandler.handshake();
-            while (!sslFuture.isDone()) {
+            ChannelFuture handshakeFuture = sslHandler.handshake();
+            
+            // keep checking status of handshake at small interval until the
+            // handshake either succeeds, fails, cancelled, or the channel is closed
+            while (!handshakeFuture.isDone()) {
                 // verify the channel is still connected before we bother waiting
-                logger.info("verifying SSL channel connected...");
+                logger.debug("verifying SSL channel is still connected...");
                 if (!channel.isConnected()) {
-                    logger.error("SSL handshake channel close detected");
                     throw new SmppChannelConnectException("Channel was closed before SSL handshake completed (peer may have bad cert or not running SSL?)");
                 }
-                logger.info("waiting for SSL handshake to complete...");
-                boolean timeout = !sslFuture.await(500);
+                logger.debug("waiting for SSL handshake to complete...");
+                boolean timeout = !handshakeFuture.await(250);
                 if (timeout && System.currentTimeMillis() >= handshakeTimeout) {
-                    logger.error("SSL handshake timeout occurred!");
-                    throw new SmppChannelConnectTimeoutException("Unable to SSL handshake with host [" + config.getHost() + "] and port [" + config.getPort() + "] within " + config.getConnectTimeout() + " ms");
+                    throw new SmppChannelConnectTimeoutException("SSL handshake timeout with host [" + config.getHost() + "] and port [" + config.getPort() + "] within " + config.getConnectTimeout() + " ms");
                 }
             }
-            logger.info("finished SSL handshake: " + sslHandler.getEngine().getSession().getCipherSuite() + " cipher suite.\n");
             
+            // at this point, the future must be done, otherwise a timeout
+            // or channel closed exception would have been previously thrown
+            // safest approach is to simply check if the future was successful
+            if (!handshakeFuture.isSuccess()) {
+                if (handshakeFuture.getCause() != null) {
+                    throw new SmppChannelConnectException("SSL handshake failure during connect: " + handshakeFuture.getCause(), handshakeFuture.getCause());
+                } else {
+                    throw new SmppChannelConnectException("SSL handshake failure during connect");
+                }
+            }
+            
+            // debug interesting info about peer
+            if (logger.isDebugEnabled()) {
+                SSLSession sslSession = sslHandler.getEngine().getSession();
+                logger.debug("SSL handshake completed successfully: cipher [" + sslSession.getCipherSuite() + "]");
+                try {
+                    logger.debug("SSL handshake completed successfully: peer-principal [" + sslSession.getPeerPrincipal().getName() + "]");
+                } catch (Exception e) {
+                    // do nothing
+                }
+            }
         }
         
         return session;
