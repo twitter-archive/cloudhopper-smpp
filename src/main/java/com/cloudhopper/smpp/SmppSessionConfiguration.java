@@ -20,9 +20,12 @@ import javax.net.ssl.SSLEngine;
 import com.cloudhopper.smpp.type.SmppConnectionConfiguration;
 import com.cloudhopper.smpp.type.LoggingOptions;
 import com.cloudhopper.smpp.type.Address;
+import javax.net.ssl.SSLContext;
 
 /**
- * Configuration to bind an SmppSession as an ESME to an SMSC.
+ * Configuration to bind an SmppSession as an ESME to an SMSC. A configuration
+ * object is reusable over and over again between binds.  Any stateful info
+ * will be maintained in the the SmppSession itself.
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
@@ -47,6 +50,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
     private long windowMonitorInterval;
     private boolean countersEnabled;
     private SSLEngine sslEngine;
+    private SSLContext sslContext;  // context to use if creating a secure session
 
     public SmppSessionConfiguration() {
         this(SmppBindType.TRANSCEIVER, null, null, null);

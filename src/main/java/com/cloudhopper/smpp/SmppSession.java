@@ -26,6 +26,7 @@ import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.cloudhopper.smpp.pdu.SubmitSmResp;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import javax.net.ssl.SSLSession;
 
 /**
  * Defines a common interface for either a Client (ESME) or Server (SMSC) SMPP
@@ -154,7 +155,21 @@ public interface SmppSession {
      * @return True if session is currently in the "CLOSED" state, otherwise false.
      */
     public boolean isClosed();
+    
+    /**
+     * Returns true if the session was created via a secure connection such as SSL/TLS.
+     * @return True if the session is secured with SSL/TLS, otherwise false.
+     */
+    public boolean isSecure();
+    
+    /**
+     * Gets the SSL session associated with the underlying connection if the
+     * connection is secure.
+     * @return The SSL session or null if the session is not secure (plaintext).
+     */
+    public SSLSession getSslSession();
 
+    
     /**
      * Returns the System.currentTimeMillis() value of when this session reached
      * the "BOUND" state.
