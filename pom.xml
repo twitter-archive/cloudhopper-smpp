@@ -1,77 +1,53 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                      http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>cloudhopper</groupId>
+  <groupId>com.cloudhopper</groupId>
   <artifactId>ch-smpp</artifactId>
   <packaging>jar</packaging>
-  <version>4.1.2</version>
+  <version>5.0.0-SNAPSHOT</version>
   <name>ch-smpp</name>
-
+  <description>Efficient, scalable, and flexible Java implementation of the Short Messaging Peer to Peer Protocol (SMPP)</description>
+  <url>https://github.com/twitter/cloudhopper-smpp</url>
+  <inceptionYear>2009</inceptionYear>
+    
+  <scm>
+      <url>https://github.com/twitter/cloudhopper-smpp</url>
+      <connection>scm:git:https://github.com/twitter/cloudhopper-smpp.git</connection>
+    <tag>HEAD</tag>
+  </scm>
+  
   <parent>
-    <groupId>cloudhopper</groupId>
-    <artifactId>ch-maven-parent-public</artifactId>
-    <version>1.6</version>
+    <groupId>com.cloudhopper</groupId>
+    <artifactId>ch-maven-parent-oss</artifactId>
+    <version>1.4</version>
   </parent>
 
-  <repositories>
-    <repository>
-      <id>cloudhopper-public</id>
-      <name>Cloudhopper Public Maven Repository</name>
-      <layout>default</layout>
-      <url>http://maven.cloudhopper.com/repos/third-party</url>
-    </repository>
-  </repositories>
-
-  <!--
-    I prefer jars managed out of the Cloudhopper Maven Repo with more consistent
-    versioning.  I apologize for not using more common Maven repos
-  -->
   <dependencies>
     <!-- compile scope -->
     <dependency>
-      <groupId>cloudhopper</groupId>
+      <groupId>com.cloudhopper</groupId>
+      <artifactId>ch-commons-util</artifactId>
+      <version>${ch-commons-util.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudhopper</groupId>
       <artifactId>ch-commons-charset</artifactId>
       <version>${ch-commons-charset.version}</version>
     </dependency>
     <dependency>
-      <groupId>cloudhopper</groupId>
-      <artifactId>ch-commons-util</artifactId>
-      <version>${ch-commons-util.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>netty</artifactId>
-      <version>${netty.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>slf4j</groupId>
+      <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
-    <!-- provided scope -->
     <dependency>
-      <groupId>slf4j</groupId>
-      <artifactId>log4j-over-slf4j</artifactId>
-      <version>${slf4j.version}</version>
-      <scope>provided</scope>
+      <groupId>io.netty</groupId>
+      <artifactId>netty</artifactId>
+      <version>${netty.version}</version>
     </dependency>
+
+    <!-- provided scope -->
     <!-- runtime scope -->
     <!-- testing scope -->
-    <dependency>
-      <groupId>cloudhopper</groupId>
-      <artifactId>ch-commons-gsm</artifactId>
-      <version>${ch-commons-gsm.version}</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -79,13 +55,19 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>logback</groupId>
+      <groupId>com.cloudhopper</groupId>
+      <artifactId>ch-commons-gsm</artifactId>
+      <version>${ch-commons-gsm.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
       <version>${logback.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>logback</groupId>
+      <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback.version}</version>
       <scope>test</scope>
@@ -94,10 +76,10 @@
 
   <properties>
     <main.java.package>com.cloudhopper.smpp</main.java.package>
-    <netty.version>[3.2,)</netty.version>
-    <ch-commons-charset.version>[2.0,)</ch-commons-charset.version>
-    <ch-commons-gsm.version>[2.1,)</ch-commons-gsm.version>
-    <ch-commons-util.version>[5.1,)</ch-commons-util.version>
+    <ch-commons-util.version>[6.0.0,)</ch-commons-util.version>
+    <ch-commons-charset.version>[3.0.0,)</ch-commons-charset.version>
+    <ch-commons-gsm.version>[3.0.0,)</ch-commons-gsm.version>
+    <netty.version>3.5.8.Final</netty.version>
   </properties>
 
 </project>
