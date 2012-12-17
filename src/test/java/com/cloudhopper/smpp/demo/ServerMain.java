@@ -56,7 +56,7 @@ public class ServerMain {
         
         // for monitoring thread use, it's preferable to create your own instance
         // of an executor and cast it to a ThreadPoolExecutor from Executors.newCachedThreadPool()
-        // this permits exposing thinks like executor.getActiveCount() via JMX possible
+        // this permits exposing things like executor.getActiveCount() via JMX possible
         // no point renaming the threads in a factory since underlying Netty 
         // framework does not easily allow you to customize your thread names
         ThreadPoolExecutor executor = (ThreadPoolExecutor)Executors.newCachedThreadPool();
