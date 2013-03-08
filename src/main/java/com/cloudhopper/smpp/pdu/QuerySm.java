@@ -34,7 +34,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
  *
  * @author chris.matthews <idpromnut@gmail.com>
  */
-public class QuerySm extends PduRequest<CancelSmResp> {
+public class QuerySm extends PduRequest<QuerySmResp> {
 
     private String messageId;
     private Address sourceAddress;
@@ -91,15 +91,15 @@ public class QuerySm extends PduRequest<CancelSmResp> {
     }
 
     @Override
-    public CancelSmResp createResponse() {
-        CancelSmResp resp = new CancelSmResp();
+    public QuerySmResp createResponse() {
+        QuerySmResp resp = new QuerySmResp();
         resp.setSequenceNumber(this.getSequenceNumber());
         return resp;
     }
 
     @Override
-    public Class<CancelSmResp> getResponseClass() {
-        return CancelSmResp.class;
+    public Class<QuerySmResp> getResponseClass() {
+        return QuerySmResp.class;
     }
 
 }
