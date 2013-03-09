@@ -36,8 +36,6 @@ import org.jboss.netty.buffer.ChannelBuffer;
  */
 public class CancelSm extends PduRequest<CancelSmResp> {
 
-
-
     protected String serviceType;
     protected String messageId;
     protected Address sourceAddress;
