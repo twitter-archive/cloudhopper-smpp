@@ -137,6 +137,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(SmppSession.Type.CLIENT, serverSession0.getRemoteType());
 
             serverSession0.close();
+            Thread.sleep(200);
             Assert.assertEquals(0, serverHandler.sessions.size());
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());
@@ -247,6 +248,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals("cloudhopper", bindResponse.getSystemId());
 
             serverSession0.close();
+            Thread.sleep(200);
             Assert.assertEquals(0, serverHandler.sessions.size());
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());
@@ -303,6 +305,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals("cloudhopper", bindResponse.getSystemId());
 
             serverSession0.close();
+            Thread.sleep(200);
             Assert.assertEquals(0, serverHandler.sessions.size());
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());
@@ -363,6 +366,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(SmppConstants.VERSION_3_4, scInterfaceVersion.getValueAsByte());
 
             serverSession0.close();
+            Thread.sleep(200);
             Assert.assertEquals(0, serverHandler.sessions.size());
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());
@@ -423,6 +427,7 @@ public class DefaultSmppServerTest {
             Assert.assertEquals(SmppConstants.VERSION_3_4, scInterfaceVersion.getValueAsByte());
 
             serverSession0.close();
+            Thread.sleep(200);
             Assert.assertEquals(0, serverHandler.sessions.size());
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());

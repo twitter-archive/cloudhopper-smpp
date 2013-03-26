@@ -22,27 +22,10 @@ package com.cloudhopper.smpp.transcoder;
 
 // third party imports
 import com.cloudhopper.commons.util.HexString;
+import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.pdu.BindReceiver;
-import com.cloudhopper.smpp.pdu.BindReceiverResp;
-import com.cloudhopper.smpp.pdu.BindTransceiver;
-import com.cloudhopper.smpp.pdu.BindTransceiverResp;
-import com.cloudhopper.smpp.pdu.BindTransmitter;
-import com.cloudhopper.smpp.pdu.BindTransmitterResp;
-import com.cloudhopper.smpp.pdu.BufferHelper;
-import com.cloudhopper.smpp.pdu.DataSm;
-import com.cloudhopper.smpp.pdu.DataSmResp;
-import com.cloudhopper.smpp.pdu.DeliverSm;
-import com.cloudhopper.smpp.pdu.DeliverSmResp;
-import com.cloudhopper.smpp.pdu.EnquireLink;
-import com.cloudhopper.smpp.pdu.EnquireLinkResp;
-import com.cloudhopper.smpp.pdu.GenericNack;
-import com.cloudhopper.smpp.pdu.SubmitSm;
-import com.cloudhopper.smpp.pdu.SubmitSmResp;
-import com.cloudhopper.smpp.pdu.Unbind;
-import com.cloudhopper.smpp.pdu.UnbindResp;
 import com.cloudhopper.smpp.tlv.Tlv;
 import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
 import java.io.UnsupportedEncodingException;
@@ -431,5 +414,72 @@ public class PduEncoderTest {
         String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
         
         Assert.assertEquals(expectedHex, actualHex);
+    }
+
+    @Test
+    public void encodeCancelSm() throws Exception {
+        CancelSm pdu0 = new CancelSm();
+
+        pdu0.setSequenceNumber(20456);
+        pdu0.setSourceAddress(new Address((byte)0x01, (byte)0x01, "40404"));
+        pdu0.setDestAddress(new Address((byte)0x01, (byte)0x01, "44951361920"));
+        pdu0.setMessageId("12345");
+
+        ChannelBuffer buffer = transcoder.encode(pdu0);
+//        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
+        Assert.assertArrayEquals(HexUtil.toByteArray("0000002D000000080000000000004FE80031323334350001013430343034000101343439353133363139323000"), BufferHelper.createByteArray(buffer));
+    }
+
+    @Test
+    public void encodeCancelSmResp() throws Exception {
+        CancelSmResp pdu0 = new CancelSmResp();
+
+        pdu0.setSequenceNumber(20456);
+        pdu0.setCommandStatus((byte)0x00);
+
+        ChannelBuffer buffer = transcoder.encode(pdu0);
+//        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
+        Assert.assertArrayEquals(HexUtil.toByteArray("00000010800000080000000000004FE8"), BufferHelper.createByteArray(buffer));
+    }
+
+    @Test
+    public void encodeCancelSmRespStatusFailed() throws Exception {
+        CancelSmResp pdu0 = new CancelSmResp();
+
+        pdu0.setSequenceNumber(20456);
+        pdu0.setCommandStatus((byte)0x11);
+
+        ChannelBuffer buffer = transcoder.encode(pdu0);
+//        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
+        Assert.assertArrayEquals(HexUtil.toByteArray("00000010800000080000001100004FE8"), BufferHelper.createByteArray(buffer));
+    }
+
+
+    @Test
+    public void encodeQuerySm() throws Exception {
+        QuerySm pdu0 = new QuerySm();
+
+        pdu0.setSequenceNumber(20456);
+        pdu0.setSourceAddress(new Address((byte)0x01, (byte)0x01, "40404"));
+        pdu0.setMessageId("12345");
+
+        ChannelBuffer buffer = transcoder.encode(pdu0);
+//        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
+        Assert.assertArrayEquals(HexUtil.toByteArray("0000001E000000030000000000004FE83132333435000101343034303400"), BufferHelper.createByteArray(buffer));
+    }
+
+    @Test
+    public void encodeQueryRespSm() throws Exception {
+        QuerySmResp pdu0 = new QuerySmResp();
+
+        pdu0.setSequenceNumber(20456);
+        pdu0.setMessageId("12345");
+        pdu0.setMessageState((byte)0x06);
+        pdu0.setFinalDate(null);
+        pdu0.setErrorCode((byte)0x00);
+
+        ChannelBuffer buffer = transcoder.encode(pdu0);
+//        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
+        Assert.assertArrayEquals(HexUtil.toByteArray("00000019800000030000000000004FE8313233343500000600"), BufferHelper.createByteArray(buffer));
     }
 }

@@ -31,6 +31,8 @@ import com.cloudhopper.smpp.pdu.BindTransceiver;
 import com.cloudhopper.smpp.pdu.BindTransceiverResp;
 import com.cloudhopper.smpp.pdu.BindTransmitter;
 import com.cloudhopper.smpp.pdu.BindTransmitterResp;
+import com.cloudhopper.smpp.pdu.CancelSm;
+import com.cloudhopper.smpp.pdu.CancelSmResp;
 import com.cloudhopper.smpp.pdu.DataSm;
 import com.cloudhopper.smpp.pdu.DataSmResp;
 import com.cloudhopper.smpp.pdu.DeliverSm;
@@ -42,6 +44,8 @@ import com.cloudhopper.smpp.pdu.PartialPdu;
 import com.cloudhopper.smpp.pdu.PartialPduResp;
 import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduResponse;
+import com.cloudhopper.smpp.pdu.QuerySm;
+import com.cloudhopper.smpp.pdu.QuerySmResp;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.cloudhopper.smpp.pdu.SubmitSmResp;
 import com.cloudhopper.smpp.pdu.Unbind;
@@ -157,6 +161,10 @@ public class DefaultPduTranscoder implements PduTranscoder {
                 pdu = new SubmitSm();
             } else if (commandId == SmppConstants.CMD_ID_DATA_SM) {
                 pdu = new DataSm();
+            } else if (commandId == SmppConstants.CMD_ID_CANCEL_SM) {
+                pdu = new CancelSm();
+            } else if (commandId == SmppConstants.CMD_ID_QUERY_SM) {
+                pdu = new QuerySm();
             } else if (commandId == SmppConstants.CMD_ID_BIND_TRANSCEIVER) {
                 pdu = new BindTransceiver();
             } else if (commandId == SmppConstants.CMD_ID_BIND_TRANSMITTER) {
@@ -175,6 +183,10 @@ public class DefaultPduTranscoder implements PduTranscoder {
                 pdu = new DeliverSmResp();
             } else if (commandId == SmppConstants.CMD_ID_DATA_SM_RESP) {
                 pdu = new DataSmResp();
+            } else if (commandId == SmppConstants.CMD_ID_CANCEL_SM_RESP) {
+                pdu = new CancelSmResp();
+            } else if (commandId == SmppConstants.CMD_ID_QUERY_SM_RESP) {
+                pdu = new QuerySmResp();
             } else if (commandId == SmppConstants.CMD_ID_ENQUIRE_LINK_RESP) {
                 pdu = new EnquireLinkResp();
             } else if (commandId == SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP) {
@@ -211,7 +223,7 @@ public class DefaultPduTranscoder implements PduTranscoder {
         }
 
         try {
-            // parse pdu body paramters (may throw exception)
+            // parse pdu body parameters (may throw exception)
             pdu.readBody(buffer);
             // parse pdu optional parameters (may throw exception)
             pdu.readOptionalParameters(buffer, context);
