@@ -20,6 +20,7 @@ package com.cloudhopper.smpp;
  * #L%
  */
 
+import com.cloudhopper.smpp.ssl.SslConfiguration;
 import com.cloudhopper.smpp.type.SmppConnectionConfiguration;
 import com.cloudhopper.smpp.type.LoggingOptions;
 import com.cloudhopper.smpp.type.Address;
@@ -31,6 +32,9 @@ import com.cloudhopper.smpp.type.Address;
  */
 public class SmppSessionConfiguration extends SmppConnectionConfiguration {
 
+    // SSL
+    private boolean useSsl = false;
+    private SslConfiguration sslConfiguration;
     // other behavioral settings
     private String name;
     private int windowSize;
@@ -155,6 +159,25 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
 
     public long getWindowWaitTimeout() {
         return windowWaitTimeout;
+    }
+
+    public void setUseSsl(boolean value) {
+	// By default, make an SslConfiguration that will trust everything.
+	if (getSslConfiguration() == null) setSslConfiguration(new SslConfiguration());
+	this.useSsl = value;
+    }
+
+    public boolean isUseSsl() { 
+	return this.useSsl;
+    }
+
+    public void setSslConfiguration(SslConfiguration value) {
+	this.sslConfiguration = value;
+	setUseSsl(true);
+    }
+
+    public SslConfiguration getSslConfiguration() {
+	return this.sslConfiguration;
     }
 
     /**

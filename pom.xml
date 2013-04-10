@@ -11,8 +11,8 @@
   <inceptionYear>2009</inceptionYear>
     
   <scm>
-      <url>https://github.com/twitter/cloudhopper-smpp</url>
-      <connection>scm:git:https://github.com/twitter/cloudhopper-smpp.git</connection>
+    <url>https://github.com/twitter/cloudhopper-smpp</url>
+    <connection>scm:git:https://github.com/twitter/cloudhopper-smpp.git</connection>
     <tag>HEAD</tag>
   </scm>
   
@@ -44,7 +44,6 @@
       <artifactId>netty</artifactId>
       <version>${netty.version}</version>
     </dependency>
-
     <!-- provided scope -->
     <!-- runtime scope -->
     <!-- testing scope -->

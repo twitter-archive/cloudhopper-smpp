@@ -39,6 +39,8 @@ import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.pdu.BindReceiver;
 import com.cloudhopper.smpp.pdu.BindTransceiver;
 import com.cloudhopper.smpp.pdu.BindTransmitter;
+import com.cloudhopper.smpp.ssl.SslConfiguration;
+import com.cloudhopper.smpp.ssl.SslContextFactory;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.SmppBindException;
 import com.cloudhopper.smpp.type.SmppChannelConnectException;
@@ -47,6 +49,7 @@ import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.net.ssl.SSLEngine;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -54,6 +57,7 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -216,6 +220,20 @@ public class DefaultSmppClient implements SmppClient {
 
     protected DefaultSmppSession createSession(Channel channel, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.CLIENT, config, channel, sessionHandler, monitorExecutor);
+
+	// add SSL handler 
+        if (config.isUseSsl()) {
+	    SslConfiguration sslConfig = config.getSslConfiguration();
+	    if (sslConfig == null) throw new IllegalStateException("sslConfiguration must be set");
+	    try {
+		SslContextFactory factory = new SslContextFactory(sslConfig);
+		SSLEngine sslEngine = factory.newSslEngine();
+		sslEngine.setUseClientMode(true);
+		channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
+	    } catch (Exception e) {
+		throw new SmppChannelConnectException("Unable to create SSL session]: " + e.getMessage(), e);
+	    }
+	}
 
         // add the thread renamer portion to the pipeline
         if (config.getName() != null) {

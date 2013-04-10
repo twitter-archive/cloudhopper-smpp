@@ -23,12 +23,16 @@ package com.cloudhopper.smpp.channel;
 
 import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.impl.UnboundSmppSession;
+import com.cloudhopper.smpp.ssl.SslConfiguration;
+import com.cloudhopper.smpp.ssl.SslContextFactory;
+import javax.net.ssl.SSLEngine;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +73,16 @@ public class SmppServerConnector extends SimpleChannelUpstreamHandler {
         Thread.currentThread().setName(server.getConfiguration().getName());
         logger.info("New channel from [{}]", channelName);
         Thread.currentThread().setName(currentThreadName);
+
+	// add SSL handler
+        if (server.getConfiguration().isUseSsl()) {
+	    SslConfiguration sslConfig = server.getConfiguration().getSslConfiguration();
+	    if (sslConfig == null) throw new IllegalStateException("sslConfiguration must be set");
+	    SslContextFactory factory = new SslContextFactory(sslConfig);
+	    SSLEngine sslEngine = factory.newSslEngine();
+	    sslEngine.setUseClientMode(false);
+	    channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
+	}
 
         // add a new instance of a thread renamer
         channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(threadName));

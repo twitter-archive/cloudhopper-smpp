@@ -3,11 +3,13 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+## 5.0.2 - 2013-04-10
+ - Added SSL support for servers and clients with unit and integration tests.
 
 ## 5.0.1 - 2013-03-09
  - Added support for cancel_sm and query_sm SMPP messages. Added unit and 
    integration tests.
- - Cleaned up intermittent unit test failures by added delays befrore session
+ - Cleaned up intermittent unit test failures by added delays before session
    close.
 
 ## 5.0.0 - 2012-10-26
