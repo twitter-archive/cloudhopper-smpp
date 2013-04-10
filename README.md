@@ -30,6 +30,7 @@ Contributors
 ------------
 
 Joe Lauer (Twitter: [@jjlauer](http://twitter.com/jjlauer))
+Garth Patil
 
 Installation
 ------------
@@ -60,11 +61,13 @@ by Maven:
     make rebind
     make parser
     make dlr
+    make ssl-client
+    make ssl-server
 
 On Windows, the examples can run with `nmake` instead of `make`.
 
-The easiest way to get started is to try out our `server` and `client` examples.
-Open up two shells.  In the first shell, run:
+The easiest way to get started is to try out our `server` and `client` or `ssl-server`
+and `ssl-client` examples. Open up two shells.  In the first shell, run:
 
     make server
 
@@ -78,6 +81,6 @@ exchanged back and forth.
 License
 -------
 
-Copyright (C) 2010-2012 Twitter, Inc.
+Copyright (C) 2010-2013 Twitter, Inc.
 
 This work is licensed under the Apache License, Version 2.0. See LICENSE for details.
