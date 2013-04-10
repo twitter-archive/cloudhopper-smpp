@@ -16,7 +16,8 @@ This library's implementation takes advantage of non-blocking (NIO) sockets to
 support thousands of binds using minimal resources.  It can be used to
 implement either the server, client, or both sides of the SMPP protocol. We use
 it internally at Twitter for both.  Both synchronous or asynchronous request
-modes can be supported on an SMPP session.
+modes can be supported on an SMPP session. Clients and servers can use TLS/SSL to 
+provide communication transport security.
 
 The library has been tested and certified with hundreds of mobile operators
 and suppliers around the world.  It's effective at being flexible with SMPP
@@ -29,8 +30,8 @@ of vendor.
 Contributors
 ------------
 
-Joe Lauer (Twitter: [@jjlauer](http://twitter.com/jjlauer))
-Garth Patil
+- Joe Lauer (Twitter: [@jjlauer](http://twitter.com/jjlauer))
+- Garth Patil
 
 Installation
 ------------
