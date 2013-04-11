@@ -72,7 +72,7 @@ Generating Keys and Certificates with OpenSSL
 
 Generating a CSR from keytool
 
-    keytool -certreq -alias jetty -keystore keystore -file smpp.csr
+    keytool -certreq -alias smpp -keystore keystore -file smpp.csr
 
 Generating a CSR from OpenSSL
 
@@ -98,8 +98,11 @@ The following OpenSSL command combines the keys in smpp.key and the certificate 
 
 ## Appendix
 
-### Known issues
 ### Interop with stunnel
+
+This library has been tested with stunnel4 wrapping both client and servers. There is a sample stunnel.conf in src/test/resources that works with `make server` and `make ssl-client`. The SSL implementation should be compatible with other TLS/SSL encryption wrappers, assuming the JDK you are using supports the same cryptographic algorithms as the encryption wrapper.
+
+### Known issues
 
 
 

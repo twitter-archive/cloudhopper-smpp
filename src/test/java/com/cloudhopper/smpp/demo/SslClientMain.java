@@ -97,7 +97,7 @@ public class SslClientMain {
         config0.setName("Tester.Session.0");
         config0.setType(SmppBindType.TRANSCEIVER);
         config0.setHost("127.0.0.1");
-        config0.setPort(2776);
+        config0.setPort(2777);
         config0.setConnectTimeout(10000);
         config0.setSystemId("1234567890");
         config0.setPassword("password");
