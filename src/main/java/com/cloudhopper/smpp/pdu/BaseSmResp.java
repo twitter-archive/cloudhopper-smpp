@@ -63,7 +63,14 @@ public abstract class BaseSmResp extends PduResponse {
 
     @Override
     public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
-        ChannelBufferUtil.writeNullTerminatedString(buffer, this.messageId);
+        // when this PDU was parsed, it's possible it was missing the messageId instead
+        // of having a NULL messageId. If that's the case, the commandLength will be just
+        // enough for the headers (and theoretically any optional TLVs). Don't try to
+        // write the NULL byte for that case.
+        // See special note in 4.4.2 of SMPP 3.4 spec
+        if (!((buffer.writableBytes() == 0) && (this.messageId == null))) {
+            ChannelBufferUtil.writeNullTerminatedString(buffer, this.messageId);
+        }
     }
 
     @Override
