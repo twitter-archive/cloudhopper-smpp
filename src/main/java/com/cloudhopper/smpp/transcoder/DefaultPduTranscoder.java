@@ -164,6 +164,8 @@ public class DefaultPduTranscoder implements PduTranscoder {
                 pdu = new BindReceiver();
             } else if (commandId == SmppConstants.CMD_ID_UNBIND) {
                 pdu = new Unbind();
+            } else if (commandId == SmppConstants.CMD_ID_SUBMIT_MULTI) {
+                pdu = new SubmitMulti();
             } else {
                 pdu = new PartialPdu(commandId);
             }
@@ -190,6 +192,8 @@ public class DefaultPduTranscoder implements PduTranscoder {
                 pdu = new UnbindResp();
             } else if (commandId == SmppConstants.CMD_ID_GENERIC_NACK) {
                 pdu = new GenericNack();
+            } else if (commandId == SmppConstants.CMD_ID_SUBMIT_MULTI_RESP) {
+                pdu = new SubmitMultiResp();
             } else {
                 pdu = new PartialPduResp(commandId);
             }

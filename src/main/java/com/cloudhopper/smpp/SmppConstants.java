@@ -61,8 +61,8 @@ public class SmppConstants {
     //
     // SUBMIT_MULTI destination type flags
     //
-    //public static final int SME_ADDRESS = 1;
-    //public static final int DISTRIBUTION_LIST_NAME = 2;
+    public static final int SME_ADDRESS = 1;
+    public static final int DISTRIBUTION_LIST_NAME = 2;
 
     //
     // SMPP Command ID (Requests)
