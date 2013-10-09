@@ -55,6 +55,8 @@ public class DeliveryReceipt {
     public static final String FIELD_STAT = "stat:";
     public static final String FIELD_ERR = "err:";
     public static final String FIELD_TEXT = "text:";
+    
+    public static final int FIELD_ERR_MAX_LEN = 3;
 
     // field "id": id of message originally submitted
     private String messageId;
@@ -84,7 +86,7 @@ public class DeliveryReceipt {
         this.submitDate = submitDate;
         this.doneDate = doneDate;
         this.state = state;
-        this.errorCode = errorCode;
+        setErrorCode(errorCode);
         this.text = text;
     }
 
@@ -101,7 +103,10 @@ public class DeliveryReceipt {
     }
 
     public void setErrorCode(String errorCode) {
-        this.errorCode = errorCode;
+    	if ( errorCode.length() <= FIELD_ERR_MAX_LEN )
+    		this.errorCode = errorCode;
+    	else
+    		throw new RuntimeException(String.format("Error code cannnot be greater than %d", FIELD_ERR_MAX_LEN));
     }
 
     public DateTime getDoneDate() {
