@@ -3,6 +3,10 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+## 5.1.0-SNAPSHOT - Not Yet Released
+ - Added support for PDUEncoder to not include message_id in some edge cases.
+   Thx for Merge from chadselph.
+
 ## 5.0.2 - 2013-04-10
  - Added SSL support for servers and clients with unit and integration tests.
 
