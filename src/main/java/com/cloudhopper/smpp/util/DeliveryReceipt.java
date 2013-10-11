@@ -55,6 +55,8 @@ public class DeliveryReceipt {
     public static final String FIELD_STAT = "stat:";
     public static final String FIELD_ERR = "err:";
     public static final String FIELD_TEXT = "text:";
+    
+    public static final int FIELD_ERR_MAX_LEN = 3;
 
     // field "id": id of message originally submitted
     private String messageId;
@@ -69,7 +71,7 @@ public class DeliveryReceipt {
     // field "stat": final state of message
     private byte state;
     // field "err": network/smsc specific error code
-    private int errorCode;
+    private String errorCode;
     // field "text": first 20 characters of original message
     private String text;
 
@@ -77,14 +79,14 @@ public class DeliveryReceipt {
         // do nothing
     }
 
-    public DeliveryReceipt(String messageId, int submitCount, int deliveredCount, DateTime submitDate, DateTime doneDate, byte state, int errorCode, String text) {
+    public DeliveryReceipt(String messageId, int submitCount, int deliveredCount, DateTime submitDate, DateTime doneDate, byte state, String errorCode, String text) {
         this.messageId = messageId;
         this.submitCount = submitCount;
         this.deliveredCount = deliveredCount;
         this.submitDate = submitDate;
         this.doneDate = doneDate;
         this.state = state;
-        this.errorCode = errorCode;
+        setErrorCode(errorCode);
         this.text = text;
     }
 
@@ -96,12 +98,15 @@ public class DeliveryReceipt {
         this.deliveredCount = deliveredCount;
     }
 
-    public int getErrorCode() {
+    public String getErrorCode() {
         return errorCode;
     }
 
-    public void setErrorCode(int errorCode) {
-        this.errorCode = errorCode;
+    public void setErrorCode(String errorCode) {
+    	if ( errorCode.length() <= FIELD_ERR_MAX_LEN )
+    		this.errorCode = errorCode;
+    	else
+    		throw new RuntimeException(String.format("Error code cannnot be greater than %d", FIELD_ERR_MAX_LEN));
     }
 
     public DateTime getDoneDate() {
@@ -199,7 +204,7 @@ public class DeliveryReceipt {
         buf.append(toStateText(this.state));
         buf.append(" ");
         buf.append(FIELD_ERR);
-        buf.append(String.format("%03d", this.errorCode));
+        buf.append(this.errorCode);
         buf.append(" ");
         buf.append(FIELD_TEXT);
         if (this.text != null) {
@@ -277,7 +282,7 @@ public class DeliveryReceipt {
         String normalizedText = shortMessage.toLowerCase();
 
         // create a new DLR with fields set to "uninitialized" values
-        DeliveryReceipt dlr = new DeliveryReceipt(null, -1, -1, null, null, (byte)-1, -1, null);
+        DeliveryReceipt dlr = new DeliveryReceipt(null, -1, -1, null, null, (byte)-1, null, null);
         TreeMap<Integer,String> fieldsByStartPos = new TreeMap<Integer,String>();
 
         // find location of all possible fields in text of message and add to
@@ -343,7 +348,7 @@ public class DeliveryReceipt {
                     }
                 } else if (fieldLabel.equalsIgnoreCase(FIELD_ERR)) {
                     try {
-                        dlr.errorCode = Integer.parseInt(fieldValue);
+                        dlr.errorCode = fieldValue;
                     } catch (NumberFormatException e) {
                         throw new DeliveryReceiptException("Unable to convert [err] field with value [" + fieldValue + "] into an integer");
                     }
@@ -382,7 +387,7 @@ public class DeliveryReceipt {
                 throw new DeliveryReceiptException("Unable to find [stat] field or empty value in delivery receipt message");
             }
 
-            if (dlr.errorCode < 0) {
+            if (StringUtil.isEmpty(dlr.errorCode)) {
                 throw new DeliveryReceiptException("Unable to find [err] field or empty value in delivery receipt message");
             }
         }

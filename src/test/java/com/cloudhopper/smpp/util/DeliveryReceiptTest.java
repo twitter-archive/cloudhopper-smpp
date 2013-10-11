@@ -54,18 +54,18 @@ public class DeliveryReceiptTest {
         dlr.setSubmitDate(new DateTime(2010, 5, 23, 20, 39, 0, 0, DateTimeZone.UTC));
         dlr.setDoneDate(new DateTime(2010, 5, 24, 23, 39, 0, 0, DateTimeZone.UTC));
         dlr.setState(SmppConstants.STATE_DELIVERED);
-        dlr.setErrorCode(12);
+        dlr.setErrorCode(Integer.toString(12));
         dlr.setText("This is a sample message that I want to have added to the delivery receipt");
 
         String receipt0 = dlr.toShortMessage();
 
         //logger.debug(receipt0);
-        Assert.assertEquals("id:0123456789 sub:001 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", receipt0);
+        Assert.assertEquals("id:0123456789 sub:001 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:12 text:This is a sample mes", receipt0);
     }
 
     @Test
     public void parseShortMessage() throws Exception {
-        String receipt0 = "id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes";
+        String receipt0 = "id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:12 text:This is a sample mes";
 
         DeliveryReceipt dlr = DeliveryReceipt.parseShortMessage(receipt0, DateTimeZone.UTC);
 
@@ -75,7 +75,7 @@ public class DeliveryReceiptTest {
         Assert.assertEquals(new DateTime(2010, 5, 23, 20, 39, 0, 0, DateTimeZone.UTC), dlr.getSubmitDate());
         Assert.assertEquals(new DateTime(2010, 5, 24, 23, 39, 0, 0, DateTimeZone.UTC), dlr.getDoneDate());
         Assert.assertEquals(SmppConstants.STATE_DELIVERED, dlr.getState());
-        Assert.assertEquals(12, dlr.getErrorCode());
+        Assert.assertEquals("12", dlr.getErrorCode());
         Assert.assertEquals("This is a sample mes", dlr.getText());
 
 
@@ -89,7 +89,7 @@ public class DeliveryReceiptTest {
         Assert.assertEquals(new DateTime(2010, 6, 2, 0, 51, 0, 0, DateTimeZone.UTC), dlr.getSubmitDate());
         Assert.assertEquals(new DateTime(2010, 6, 2, 0, 51, 0, 0, DateTimeZone.UTC), dlr.getDoneDate());
         Assert.assertEquals(SmppConstants.STATE_DELIVERED, dlr.getState());
-        Assert.assertEquals(0, dlr.getErrorCode());
+        Assert.assertEquals("000", dlr.getErrorCode());
         Assert.assertEquals("Hello", dlr.getText());
     }
 
@@ -203,7 +203,7 @@ public class DeliveryReceiptTest {
         Assert.assertEquals(new DateTime(2011, 2, 6, 19, 30, 41, 0, DateTimeZone.UTC), dlr.getSubmitDate());
         Assert.assertEquals(new DateTime(2011, 2, 6, 19, 31, 10, 0, DateTimeZone.UTC), dlr.getDoneDate());
         Assert.assertEquals(SmppConstants.STATE_DELIVERED, dlr.getState());
-        Assert.assertEquals(0, dlr.getErrorCode());
+        Assert.assertEquals("000", dlr.getErrorCode());
         Assert.assertNull(dlr.getText());
     }
 
@@ -218,7 +218,7 @@ public class DeliveryReceiptTest {
         Assert.assertEquals(new DateTime(2011, 2, 6, 19, 30, 41, 0, DateTimeZone.UTC), dlr.getSubmitDate());
         Assert.assertEquals(new DateTime(2011, 2, 6, 19, 31, 10, 0, DateTimeZone.UTC), dlr.getDoneDate());
         Assert.assertEquals(SmppConstants.STATE_DELIVERED, dlr.getState());
-        Assert.assertEquals(0, dlr.getErrorCode());
+        Assert.assertEquals("000", dlr.getErrorCode());
         Assert.assertNull(dlr.getText());
     }
 
@@ -322,7 +322,7 @@ public class DeliveryReceiptTest {
         Assert.assertEquals(new DateTime(2011, 3, 14, 18, 15, 34, 0, DateTimeZone.UTC), dlr.getSubmitDate());
         Assert.assertEquals(new DateTime(2011, 3, 14, 18, 17, 41, 0, DateTimeZone.UTC), dlr.getDoneDate());
         Assert.assertEquals(SmppConstants.STATE_DELIVERED, dlr.getState());
-        Assert.assertEquals(0, dlr.getErrorCode());
+        Assert.assertEquals("000", dlr.getErrorCode());
         Assert.assertNull(dlr.getText());
     }
 }
