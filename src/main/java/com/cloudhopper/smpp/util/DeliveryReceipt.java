@@ -85,7 +85,7 @@ public class DeliveryReceipt {
 	private String text;
 
 	public DeliveryReceipt() {
-		// do nothing
+		setErrorCode(0);
 	}
 
 	public DeliveryReceipt(String messageId, int submitCount,
@@ -128,7 +128,9 @@ public class DeliveryReceipt {
 
 	public void setErrorCode(int errorCode) {
 		this.errorCode = errorCode;
-		this.rawErrorCode = String.format("%03d", errorCode);
+
+		if (StringUtil.isEmpty(this.rawErrorCode))
+			this.rawErrorCode = String.format("%03d", errorCode);
 	}
 
 	public String getRawErrorCode() {
