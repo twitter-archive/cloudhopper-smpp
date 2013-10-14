@@ -91,27 +91,27 @@ public class DeliveryReceipt {
 	public DeliveryReceipt(String messageId, int submitCount,
 			int deliveredCount, DateTime submitDate, DateTime doneDate,
 			byte state, int errorCode, String text) {
-		setMessageId(messageId);
-		setSubmitCount(submitCount);
-		setDeliveredCount(deliveredCount);
-		setSubmitDate(submitDate);
-		setDoneDate(doneDate);
-		setState(state);
-		setErrorCode(errorCode);
-		setText(text);
+		this.messageId = messageId;
+		this.submitCount = submitCount;
+		this.deliveredCount = deliveredCount;
+		this.submitDate = submitDate;
+		this.doneDate = doneDate;
+		this.state = state;
+		this.errorCode = errorCode;
+		this.text = text;
 	}
 
 	public DeliveryReceipt(String messageId, int submitCount,
 			int deliveredCount, DateTime submitDate, DateTime doneDate,
 			byte state, String errorCode, String text) {
-		setMessageId(messageId);
-		setSubmitCount(submitCount);
-		setDeliveredCount(deliveredCount);
-		setSubmitDate(submitDate);
-		setDoneDate(doneDate);
-		setState(state);
+		this.messageId = messageId;
+		this.submitCount = submitCount;
+		this.deliveredCount = deliveredCount;
+		this.submitDate = submitDate;
+		this.doneDate = doneDate;
+		this.state = state;
 		setRawErrorCode(errorCode);
-		setText(text);
+		this.text = text;
 	}
 
 	public int getDeliveredCount() {
@@ -129,8 +129,7 @@ public class DeliveryReceipt {
 	public void setErrorCode(int errorCode) {
 		this.errorCode = errorCode;
 
-		if (StringUtil.isEmpty(this.rawErrorCode))
-			this.rawErrorCode = String.format("%03d", errorCode);
+		this.rawErrorCode = String.format("%03d", errorCode);
 	}
 
 	public String getRawErrorCode() {
@@ -148,9 +147,8 @@ public class DeliveryReceipt {
 		this.rawErrorCode = rawErrorCode;
 
 		try {
-			setErrorCode(Integer.parseInt(rawErrorCode));
+			this.errorCode = Integer.parseInt(rawErrorCode);
 		} catch (Exception e) {
-			setErrorCode(0);
 		}
 	}
 

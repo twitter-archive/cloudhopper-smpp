@@ -335,7 +335,7 @@ public class DeliveryReceiptTest {
         Assert.assertEquals("21b", dlr.getRawErrorCode());
         
         // being set if we cannot parse value
-        Assert.assertEquals(0, dlr.getErrorCode());
+        Assert.assertEquals(-1, dlr.getErrorCode());
         
         Assert.assertEquals(receipt0, dlr.toShortMessage());
     }
