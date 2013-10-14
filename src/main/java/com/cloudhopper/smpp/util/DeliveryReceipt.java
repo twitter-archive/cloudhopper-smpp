@@ -35,6 +35,12 @@ import org.slf4j.LoggerFactory;
  * Utility class to represent a Delivery Receipt that may be contained within a
  * DataSm or DeliverSm PDU. A delivery receipt has a specific message text and a
  * few specific optional parameters.
+ * <p>
+ * If the {@link #setRawErrorCode(String)} method takes in a String that is not
+ * parseable to an int via {@link Integer#parseInt(String)} then the
+ * {@link #errorCode} property will remain what it was originally set as,
+ * default(int) or in the case of
+ * {@link #parseShortMessage(String, DateTimeZone)} -1.
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer"
  *         target=window>http://twitter.com/jjlauer</a>)
