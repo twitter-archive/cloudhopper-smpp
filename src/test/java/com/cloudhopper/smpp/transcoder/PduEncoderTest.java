@@ -82,12 +82,23 @@ public class PduEncoderTest {
     }
 
     @Test
-    public void encodeSubmitSmRespWithNoMessageId() throws Exception {
+    public void encodeSubmitSmRespWithNullMessageId() throws Exception {
         SubmitSmResp pdu0 = new SubmitSmResp();
         pdu0.setSequenceNumber(171192033);
 
         ChannelBuffer buffer = transcoder.encode(pdu0);
         Assert.assertArrayEquals(HexUtil.toByteArray("0000001180000004000000000a342ee100"), BufferHelper.createByteArray(buffer));
+    }
+
+    @Test
+    public void encodeSubmitSmRespWithOmittedMesageId() throws Exception {
+        SubmitSmResp pdu0 = new SubmitSmResp();
+        pdu0.setSequenceNumber(171192033);
+        pdu0.setCommandStatus(0x30);
+        pdu0.setCommandLength(16);
+
+        ChannelBuffer buffer = transcoder.encode(pdu0);
+        Assert.assertArrayEquals(HexUtil.toByteArray("0000001080000004000000300a342ee1"), BufferHelper.createByteArray(buffer));
     }
 
     @Test

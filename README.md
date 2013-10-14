@@ -27,11 +27,19 @@ SMPP is notorious for having slight differences depending on the vendor. This
 library attempts to ensure that the internal PDU parser never breaks regardless
 of vendor.
 
-Contributors
-------------
+Background and Contributors
+---------------------------
+
+This library was originally developed by Cloudhopper, Inc. in 2008. Cloudhopper
+was acquired by Twitter in April 2010. The main author of this library,
+Joe Lauer, left Twitter in April 2013. While folks at Twitter still contribute
+and maintain this library, Joe is now with [Mfizz, Inc](http://mfizz.com).
+Mfizz actively sponsors this project in conjunction with Twitter. If you have
+any commercial questions/ideas pertaining to this library, feel free to reach
+out to [Mfizz](http://mfizz.com).
 
 - Joe Lauer (Twitter: [@jjlauer](http://twitter.com/jjlauer))
-- Garth Patil
+- Garth Patil (Twitter: [@trg](http://twitter.com/trg))
 
 Installation
 ------------
