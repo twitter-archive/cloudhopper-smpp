@@ -517,8 +517,13 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             }
         }
 
-        // write the pdu out & wait till its written
-        ChannelFuture channelFuture = this.channel.write(buffer).await();
+        // write the pdu out & wait timeout amount of time
+        ChannelFuture channelFuture = this.channel.write(buffer);
+	if(configuration.getWriteTimeout() > 0){
+	    channelFuture.await(configuration.getWriteTimeout());
+	} else {
+	    channelFuture.await();
+	}
 
         // check if the write was a success
         if (!channelFuture.isSuccess()) {
@@ -556,8 +561,13 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             logger.info("send PDU: {}", pdu);
         }
 
-        // write the pdu out & wait till its written
-        ChannelFuture channelFuture = this.channel.write(buffer).await();
+        // write the pdu out & wait timeout amount of time
+        ChannelFuture channelFuture = this.channel.write(buffer);
+	if(configuration.getWriteTimeout() > 0){
+	    channelFuture.await(configuration.getWriteTimeout());
+	} else {
+	    channelFuture.await();
+	}
 
         // check if the write was a success
         if (!channelFuture.isSuccess()) {

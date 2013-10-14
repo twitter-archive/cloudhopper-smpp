@@ -3,6 +3,9 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+## 5.0.3 - 2013-10-13
+ - Added support for a "writeTimeout" to channel writes.
+
 ## 5.0.2 - 2013-04-10
  - Added SSL support for servers and clients with unit and integration tests.
 

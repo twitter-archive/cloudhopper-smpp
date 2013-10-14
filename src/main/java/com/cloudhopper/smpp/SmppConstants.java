@@ -49,6 +49,7 @@ public class SmppConstants {
 
     public static final int DEFAULT_WINDOW_SIZE = 1;
     public static final long DEFAULT_WINDOW_WAIT_TIMEOUT = 60000;
+    public static final long DEFAULT_WRITE_TIMEOUT = 0; // For backwards compatibility, default to no timeout
     public static final long DEFAULT_CONNECT_TIMEOUT = 10000;
     public static final long DEFAULT_BIND_TIMEOUT = 5000;
     public static final long DEFAULT_REQUEST_EXPIRY_TIMEOUT = -1;   // disabled

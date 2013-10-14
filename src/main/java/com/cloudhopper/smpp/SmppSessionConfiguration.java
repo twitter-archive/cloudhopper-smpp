@@ -52,6 +52,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
     // if > 0, then activated
     private long requestExpiryTimeout;
     private long windowMonitorInterval;
+    private long writeTimeout;
     private boolean countersEnabled;
 
     public SmppSessionConfiguration() {
@@ -74,6 +75,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
         this.windowWaitTimeout = SmppConstants.DEFAULT_WINDOW_WAIT_TIMEOUT;
         this.requestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
         this.windowMonitorInterval = SmppConstants.DEFAULT_WINDOW_MONITOR_INTERVAL;
+        this.writeTimeout = SmppConstants.DEFAULT_WRITE_TIMEOUT;
         this.countersEnabled = false;
     }
 
@@ -218,6 +220,14 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
      */
     public void setWindowMonitorInterval(long windowMonitorInterval) {
         this.windowMonitorInterval = windowMonitorInterval;
+    }
+
+    public long getWriteTimeout() {
+        return writeTimeout;
+    }
+
+    public void setWriteTimeout(long writeTimeout) {
+        this.writeTimeout = writeTimeout;
     }
 
     public boolean isCountersEnabled() {
