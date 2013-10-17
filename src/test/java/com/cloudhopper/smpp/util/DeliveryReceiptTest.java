@@ -325,4 +325,32 @@ public class DeliveryReceiptTest {
         Assert.assertEquals(0, dlr.getErrorCode());
         Assert.assertNull(dlr.getText());
     }
+    
+    @Test
+    public void parseShortMessageWithSmpp3_4SpecCompliantErrAsStringValue() throws Exception {
+        String receipt0 = "id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:21b text:This is a sample mes";
+        
+        DeliveryReceipt dlr = DeliveryReceipt.parseShortMessage(receipt0, DateTimeZone.UTC);
+        
+        Assert.assertEquals("21b", dlr.getRawErrorCode());
+        
+        // being set if we cannot parse value
+        Assert.assertEquals(-1, dlr.getErrorCode());
+        
+        Assert.assertEquals(receipt0, dlr.toShortMessage());
+    }
+    
+    @Test
+    public void parseShortMessageWithSmpp3_4SpecCompliantErrAsIntValue() throws Exception {
+        String receipt0 = "id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:010 text:This is a sample mes";
+        
+        DeliveryReceipt dlr = DeliveryReceipt.parseShortMessage(receipt0, DateTimeZone.UTC);
+        
+        Assert.assertEquals("010", dlr.getRawErrorCode());
+        
+        // being set if we cannot parse value
+        Assert.assertEquals(10, dlr.getErrorCode());
+        
+        Assert.assertEquals(receipt0, dlr.toShortMessage());
+    }
 }
