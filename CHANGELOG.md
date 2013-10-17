@@ -3,10 +3,20 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+## 5.0.4 - 2013-10-17
+ - Tweaked delivery receipt helper class to be more compliant w/ SMPP 3.4
+   specs by parsing err code as String rather than as an int. Previous int
+   methods were retained for backwards compatability, but accessing the raw
+   error code as a String is now possible.
+   Thx to williamd1618 for pull request:
+     https://github.com/twitter/cloudhopper-smpp/pull/42
+
 ## 5.0.3 - 2013-10-13
+ - Netty dependency bumped from 3.5.8.Final to 3.7.0.Final
  - Added support for a "writeTimeout" to channel writes.
  - Added support for PDUEncoder to not include message_id in some edge cases.
-   Thx for Merge from chadselph.
+   Thx to chadselph for pull request:
+     https://github.com/twitter/cloudhopper-smpp/pull/31
 
 ## 5.0.2 - 2013-04-10
  - Added SSL support for servers and clients with unit and integration tests.
