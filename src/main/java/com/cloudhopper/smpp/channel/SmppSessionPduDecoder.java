@@ -20,11 +20,13 @@ package com.cloudhopper.smpp.channel;
  * #L%
  */
 
+import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.frame.FrameDecoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
+
+import java.util.List;
 
 /**
  * Channel handler responsible for decoding a ChannelBuffer into a PDU.  A
@@ -32,7 +34,7 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder;
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-public class SmppSessionPduDecoder extends FrameDecoder {
+public class SmppSessionPduDecoder extends ByteToMessageDecoder {
 
     private final PduTranscoder transcoder;
 
@@ -41,10 +43,12 @@ public class SmppSessionPduDecoder extends FrameDecoder {
     }
 
     @Override
-    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         // try to decode the frame into a PDU
         // NOTE: this already returns null if there isn't enough data yet
-        return transcoder.decode(buffer);
+        Pdu pdu = transcoder.decode(in);
+
+        if (pdu != null)
+            out.add(pdu);
     }
-    
 }

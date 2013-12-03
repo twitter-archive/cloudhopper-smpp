@@ -21,14 +21,14 @@ package com.cloudhopper.smpp.pdu;
  */
 
 import com.cloudhopper.commons.util.HexUtil;
-import com.cloudhopper.smpp.type.Address;
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.commons.util.StringUtil;
+import com.cloudhopper.smpp.type.Address;
+import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
+import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.ChannelBufferUtil;
 import com.cloudhopper.smpp.util.PduUtil;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Base "short message" PDU as a super class for submit_sm, deliver_sm, and
@@ -170,7 +170,7 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
     }
 
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         this.serviceType = ChannelBufferUtil.readNullTerminatedString(buffer);
         this.sourceAddress = ChannelBufferUtil.readAddress(buffer);
         this.destAddress = ChannelBufferUtil.readAddress(buffer);
@@ -204,7 +204,7 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         ChannelBufferUtil.writeNullTerminatedString(buffer, this.serviceType);
         ChannelBufferUtil.writeAddress(buffer, this.sourceAddress);
         ChannelBufferUtil.writeAddress(buffer, this.destAddress);

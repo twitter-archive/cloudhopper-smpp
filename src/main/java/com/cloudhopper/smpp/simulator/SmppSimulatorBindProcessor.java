@@ -25,7 +25,7 @@ import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduRequest;
-import org.jboss.netty.channel.Channel;
+import io.netty.channel.Channel;
 
 /**
  *

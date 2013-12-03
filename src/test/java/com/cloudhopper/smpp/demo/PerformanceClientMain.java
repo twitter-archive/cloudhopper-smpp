@@ -23,23 +23,20 @@ package com.cloudhopper.smpp.demo;
 import com.cloudhopper.commons.charset.CharsetUtil;
 import com.cloudhopper.commons.util.DecimalUtil;
 import com.cloudhopper.smpp.PduAsyncResponse;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppSession;
+import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
-import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.pdu.SubmitSm;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.cloudhopper.smpp.type.Address;
+import io.netty.channel.nio.NioEventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
@@ -95,7 +92,7 @@ public class PerformanceClientMain {
         // used for NIO sockets essentially uses this value as the max number of
         // threads it will ever use, despite the "max pool size", etc. set on
         // the executor passed in here
-        DefaultSmppClient clientBootstrap = new DefaultSmppClient(Executors.newCachedThreadPool(), SESSION_COUNT, monitorExecutor);
+        DefaultSmppClient clientBootstrap = new DefaultSmppClient(new NioEventLoopGroup(1), monitorExecutor);
 
         // same configuration for each client runner
         SmppSessionConfiguration config = new SmppSessionConfiguration();

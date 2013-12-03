@@ -20,22 +20,18 @@ package com.cloudhopper.smpp.simulator;
  * #L%
  */
 
-import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.handler.codec.frame.FrameDecoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static org.jboss.netty.buffer.ChannelBuffers.*;
+
+import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * Basically turns the event-driven handler into a "queued" handler by queuing
@@ -45,7 +41,7 @@ import static org.jboss.netty.buffer.ChannelBuffers.*;
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-public class SmppSimulatorSessionHandler extends FrameDecoder {
+public class SmppSimulatorSessionHandler extends ByteToMessageDecoder {
     private static final Logger logger = LoggerFactory.getLogger(SmppSimulatorSessionHandler.class);
 
     private final Channel channel;
@@ -101,22 +97,22 @@ public class SmppSimulatorSessionHandler extends FrameDecoder {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        logger.info("Received new throwable on channel 0x" + HexUtil.toHexString(channel.getId()) );
-        this.exceptionQueue.add(e.getCause());
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        logger.info("Received new throwable on channel {}", channel.toString());
+        this.exceptionQueue.add(cause);
     }
 
     public void sendPdu(Pdu pdu) throws Exception {
-        logger.info("Sending on channel 0x" + HexUtil.toHexString(channel.getId()) + " PDU: {}", pdu);
-        ChannelBuffer writeBuffer = this.transcoder.encode(pdu);
-        channel.write(writeBuffer).await();
+        logger.info("Sending on channel {} PDU: {}", channel.toString(), pdu);
+        ByteBuf writeBuffer = this.transcoder.encode(pdu);
+        channel.writeAndFlush(writeBuffer).await();
     }
 
     @Override
-    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
         // ignore requests with zero bytes
         if (buffer.readableBytes() <= 0) {
-            return null;
+            return;
         }
 
         // decode the buffer into a pdu
@@ -124,12 +120,12 @@ public class SmppSimulatorSessionHandler extends FrameDecoder {
 
         // if the pdu was null, we don't have enough data yet
         if (pdu == null) {
-            logger.info("Received data on channel 0x" + HexUtil.toHexString(channel.getId()) + ", but not enough to parse PDU fully yet");
-            logger.info("Bytes in buffer: [{}]", hexDump(buffer));
-            return null;
+            logger.info("Received data on channel {}, but not enough to parse PDU fully yet", channel.toString());
+            logger.info("Bytes in buffer: [{}]", ByteBufUtil.hexDump(buffer));
+            return;
         }
 
-        logger.info("Decoded buffer on channel 0x" + HexUtil.toHexString(channel.getId()) + " into PDU: {}", pdu);
+        logger.info("Decoded buffer on channel {} into PDU: {}", channel.toString(), pdu);
 
         // if we have a pdu procesor registered, let's see if it handles it
         boolean processed = false;
@@ -146,12 +142,12 @@ public class SmppSimulatorSessionHandler extends FrameDecoder {
         // is there a PDU someone wants us to write in response?
         if (this.writePduQueue.size() > 0) {
             Pdu pduToWrite = this.writePduQueue.remove();
-            logger.info("Automatically writing back on channel 0x" + HexUtil.toHexString(channel.getId()) + " the PDU: {}", pduToWrite);
-            ChannelBuffer writeBuffer = this.transcoder.encode(pduToWrite);
-            channel.write(writeBuffer);
+            logger.info("Automatically writing back on channel {} the PDU: {}", channel.toString(), pduToWrite);
+            ByteBuf writeBuffer = this.transcoder.encode(pduToWrite);
+            channel.writeAndFlush(writeBuffer);
         }
 
-        return pdu;
+        out.add(pdu);
     }
     
 }

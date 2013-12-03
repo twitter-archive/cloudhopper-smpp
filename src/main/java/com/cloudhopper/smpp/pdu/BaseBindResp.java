@@ -20,12 +20,12 @@ package com.cloudhopper.smpp.pdu;
  * #L%
  */
 
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.commons.util.StringUtil;
+import com.cloudhopper.smpp.type.RecoverablePduException;
+import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.ChannelBufferUtil;
 import com.cloudhopper.smpp.util.PduUtil;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * 
@@ -48,7 +48,7 @@ public abstract class BaseBindResp extends PduResponse {
     }
 
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         // the body may or may not contain a systemId -- the helper utility
         // method will take care of returning null if there aren't any readable bytes
         this.systemId = ChannelBufferUtil.readNullTerminatedString(buffer);
@@ -62,7 +62,7 @@ public abstract class BaseBindResp extends PduResponse {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         ChannelBufferUtil.writeNullTerminatedString(buffer, this.systemId);
     }
 

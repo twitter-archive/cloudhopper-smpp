@@ -21,23 +21,19 @@ package com.cloudhopper.smpp.impl;
  */
 
 // third party imports
-import com.cloudhopper.smpp.SmppBindType;
-import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.SmppServerConfiguration;
-import com.cloudhopper.smpp.SmppServerHandler;
-import com.cloudhopper.smpp.SmppServerSession;
-import com.cloudhopper.smpp.SmppSession;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
+import com.cloudhopper.smpp.*;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.tlv.Tlv;
 import com.cloudhopper.smpp.type.SmppBindException;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppProcessingException;
-import java.util.HashSet;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
 
 // my imports
 
@@ -510,7 +506,7 @@ public class DefaultSmppServerTest {
             // to create beforehand with starvation only Runtime.getRuntime().availableProcessors()
             // worker threads are created by default!!! (yikes)
             int workersToStarveWith = Runtime.getRuntime().availableProcessors();
-            
+
             // initiate bind requests on all sessions we care about -- this should
             // technicaly "starve" the server of worker threads since they'll all
             // be blocked in a Thread.sleep
@@ -526,10 +522,10 @@ public class DefaultSmppServerTest {
                     // just send the request without caring if it succeeds
                     session0.sendRequestPdu(bindRequest, 2000, false);
                 } catch (SmppChannelException e) {
-                    // correct behavior
+                    System.out.println(e.getMessage());
                 }
             }
-            
+
             // now try to bind normally -- since all previous workers are "starved"
             // this should fail to bind and the socket closed by the "BindTimer"
             DefaultSmppClient client0 = new DefaultSmppClient();

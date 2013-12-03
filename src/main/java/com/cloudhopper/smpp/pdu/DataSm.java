@@ -25,7 +25,7 @@ import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.ChannelBufferUtil;
 import com.cloudhopper.smpp.util.PduUtil;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class DataSm extends BaseSm<DataSmResp> {
 
@@ -46,7 +46,7 @@ public class DataSm extends BaseSm<DataSmResp> {
     }
     
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         this.serviceType = ChannelBufferUtil.readNullTerminatedString(buffer);
         this.sourceAddress = ChannelBufferUtil.readAddress(buffer);
         this.destAddress = ChannelBufferUtil.readAddress(buffer);
@@ -66,7 +66,7 @@ public class DataSm extends BaseSm<DataSmResp> {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         ChannelBufferUtil.writeNullTerminatedString(buffer, this.serviceType);
         ChannelBufferUtil.writeAddress(buffer, this.sourceAddress);
         ChannelBufferUtil.writeAddress(buffer, this.destAddress);

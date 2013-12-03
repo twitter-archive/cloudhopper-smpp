@@ -23,7 +23,7 @@ package com.cloudhopper.smpp.transcoder;
 import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.type.RecoverablePduException;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Interface for encoding/decoding PDUs to/from ChannelBuffers.
@@ -36,26 +36,26 @@ public interface PduTranscoder {
      * Encodes a PDU into a new ChannelBuffer.
      * @param pdu The PDU to convert into a buffer
      * @return The new ChannelBuffer ready to send on a Channel
-     * @throws UnrecoverablePduEncodingException Thrown if there is an unrecoverable
+     * @throws UnrecoverablePduException Thrown if there is an unrecoverable
      *      error while encoding the buffer.  Recommended action is to rebind
      *      the session.
-     * @throws RecoverablePduEncodingException Thrown if there is recoverable
+     * @throws RecoverablePduException Thrown if there is recoverable
      *      error while encoding the buffer. A good example is an optional parameter
      *      that is invalid or a terminating null byte wasn't found.
      */
-    public ChannelBuffer encode(Pdu pdu) throws UnrecoverablePduException, RecoverablePduException;
+    public ByteBuf encode(Pdu pdu) throws UnrecoverablePduException, RecoverablePduException;
 
     /**
      * Decodes a ChannelBuffer into a new PDU.
      * @param buffer The buffer to read data from
      * @return The new PDU created from the data
-     * @throws UnrecoverablePduEncodingException Thrown if there is an unrecoverable
+     * @throws UnrecoverablePduException Thrown if there is an unrecoverable
      *      error while decoding the buffer.  Recommended action is to rebind
      *      the session.
-     * @throws RecoverablePduEncodingException Thrown if there is recoverable
+     * @throws RecoverablePduException Thrown if there is recoverable
      *      error while decoding the buffer. A good example is an optional parameter
      *      that is invalid or a terminating null byte wasn't found.
      */
-    public Pdu decode(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException;
+    public Pdu decode(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException;
     
 }

@@ -20,16 +20,16 @@ package com.cloudhopper.smpp.pdu;
  * #L%
  */
 
-import com.cloudhopper.smpp.type.Address;
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.type.RecoverablePduException;
-import com.cloudhopper.smpp.type.NotEnoughDataInBufferException;
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.commons.util.StringUtil;
 import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.type.Address;
+import com.cloudhopper.smpp.type.NotEnoughDataInBufferException;
+import com.cloudhopper.smpp.type.RecoverablePduException;
+import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.ChannelBufferUtil;
 import com.cloudhopper.smpp.util.PduUtil;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * 
@@ -88,7 +88,7 @@ public abstract class BaseBind<R extends PduResponse> extends PduRequest<R> {
     }
 
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         this.systemId = ChannelBufferUtil.readNullTerminatedString(buffer);
         this.password = ChannelBufferUtil.readNullTerminatedString(buffer);
         this.systemType = ChannelBufferUtil.readNullTerminatedString(buffer);
@@ -112,7 +112,7 @@ public abstract class BaseBind<R extends PduResponse> extends PduRequest<R> {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         ChannelBufferUtil.writeNullTerminatedString(buffer, this.systemId);
         ChannelBufferUtil.writeNullTerminatedString(buffer, this.password);
         ChannelBufferUtil.writeNullTerminatedString(buffer, this.systemType);

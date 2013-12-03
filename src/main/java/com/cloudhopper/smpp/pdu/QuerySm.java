@@ -27,7 +27,7 @@ import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.ChannelBufferUtil;
 import com.cloudhopper.smpp.util.PduUtil;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * SMPP query_sm implementation.
@@ -61,7 +61,7 @@ public class QuerySm extends PduRequest<QuerySmResp> {
 
 
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         this.messageId = ChannelBufferUtil.readNullTerminatedString(buffer);
         this.sourceAddress = ChannelBufferUtil.readAddress(buffer);
     }
@@ -75,7 +75,7 @@ public class QuerySm extends PduRequest<QuerySmResp> {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         ChannelBufferUtil.writeNullTerminatedString(buffer, this.messageId);
         ChannelBufferUtil.writeAddress(buffer, this.sourceAddress);
     }

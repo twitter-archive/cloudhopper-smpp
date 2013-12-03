@@ -20,28 +20,24 @@ package com.cloudhopper.smpp.demo;
  * #L%
  */
 
-import com.cloudhopper.smpp.SmppServerConfiguration;
-import com.cloudhopper.smpp.SmppServerHandler;
-import com.cloudhopper.smpp.SmppServerSession;
-import com.cloudhopper.smpp.SmppSession;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
+import com.cloudhopper.smpp.*;
 import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
-import com.cloudhopper.smpp.pdu.BaseSm;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.ssl.SslConfiguration;
 import com.cloudhopper.smpp.type.SmppProcessingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Demonstration of a simple SMPP server using SSL
@@ -97,7 +93,7 @@ public class SslServerMain {
 	configuration.setSslConfiguration(sslConfig);
 
         // create a server, start it up
-        DefaultSmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler(), executor, monitorExecutor);
+        DefaultSmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler(), monitorExecutor);
 
         logger.info("Starting SMPP server...");
         smppServer.start();
