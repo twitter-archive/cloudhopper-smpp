@@ -21,6 +21,7 @@ package com.cloudhopper.smpp.impl;
  */
 
 // third party imports
+
 import com.cloudhopper.smpp.*;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
@@ -28,6 +29,7 @@ import com.cloudhopper.smpp.tlv.Tlv;
 import com.cloudhopper.smpp.type.SmppBindException;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppProcessingException;
+import com.cloudhopper.smpp.type.SmppTimeoutException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -536,13 +538,15 @@ public class DefaultSmppServerTest {
             try {
                 client0.bind(sessionConfig0);
                 Assert.fail();
-            } catch (SmppChannelException e) {
+            } catch (SmppTimeoutException e) {
                 // the BindTimer should end up closing the connection since the
                 // worker thread were "starved"
                 logger.debug("Correctly received SmppChannelException during bind");
             }
             
         } finally {
+            Assert.assertEquals(0, server0.getChannels().size());
+            Assert.assertEquals(3, server0.getCounters().getBindTimeouts());
             server0.destroy();
         }
     }
