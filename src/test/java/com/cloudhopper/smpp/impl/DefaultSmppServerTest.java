@@ -545,6 +545,7 @@ public class DefaultSmppServerTest {
             }
             
         } finally {
+            Thread.sleep(10500);
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(3, server0.getCounters().getBindTimeouts());
             server0.destroy();

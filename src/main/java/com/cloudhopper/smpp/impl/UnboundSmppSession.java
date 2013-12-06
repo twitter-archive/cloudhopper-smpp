@@ -207,7 +207,6 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
         public void run() {
             logger.warn("Channel not bound within [{}] ms, closing connection [{}]", server.getConfiguration().getBindTimeout(), channelName);
             channel.close();
-            server.getChannels().remove(channel);
             this.cancel();
             server.getCounters().incrementBindTimeoutsAndGet();
         }
