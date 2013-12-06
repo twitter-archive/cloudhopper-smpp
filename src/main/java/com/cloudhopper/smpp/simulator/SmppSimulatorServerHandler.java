@@ -20,30 +20,28 @@ package com.cloudhopper.smpp.simulator;
  * #L%
  */
 
+import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.cloudhopper.smpp.transcoder.PduTranscoderContext;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.ChildChannelStateEvent;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
-import org.jboss.netty.channel.group.ChannelGroup;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import static io.netty.channel.ChannelHandler.Sharable;
 
 /**
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelPipelineCoverage("one")
-public class SmppSimulatorServerHandler extends SimpleChannelHandler {
+@Sharable
+public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu> {
     private static final Logger logger = LoggerFactory.getLogger(SmppSimulatorServerHandler.class);
 
     private final ChannelGroup sessionChannels;
@@ -69,105 +67,56 @@ public class SmppSimulatorServerHandler extends SimpleChannelHandler {
     }
 
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-    	logger.info(e.toString());
-        /**
-        if (e.getMessage() instanceof Pdu) {
-            Pdu pdu = (Pdu)e.getMessage();
-            this.listener.firePduReceived(pdu);
-    	}
-         */
+    protected void channelRead0(ChannelHandlerContext ctx, Pdu msg) throws Exception {
+        logger.info("Read message {} from channel {}", msg.toString(), ctx.channel());
+        //if (msg instanceof Pdu) {
+        //    Pdu pdu = (Pdu)msg;
+        //    this.listener.firePduReceived(pdu);
+        //}
     }
 
     @Override
-    public void childChannelOpen(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
-        logger.info("childChannelOpen: {}", e);
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        logger.info("childChannelRegistered {}", ctx.channel());
 
         // modify its pipeline
         PduTranscoderContext context = new DefaultPduTranscoderContext();
         PduTranscoder transcoder = new DefaultPduTranscoder(context);
 
         // create a new "smsc" session instance (which is just a handler)
-        SmppSimulatorSessionHandler session = new SmppSimulatorSessionHandler(e.getChildChannel(), transcoder);
+        SmppSimulatorSessionHandler session = new SmppSimulatorSessionHandler(ctx.channel(), transcoder);
 
         // add this channel's new processing pipeline
-        e.getChildChannel().getPipeline().addLast(SmppSimulatorServer.PIPELINE_SESSION_NAME, session);
+        ctx.channel().pipeline().addLast(SmppSimulatorServer.PIPELINE_SESSION_NAME, session);
 
         session.setPduProcessor(defaultPduProcessor);
 
         // store this in our internal queue
-        this.sessionChannels.add(e.getChildChannel());
+        this.sessionChannels.add(ctx.channel());
         this.sessionQueue.add(session);
     }
 
     /**
-     * Invoked when a child {@link Channel} was closed.
+     * Invoked when a child {@link io.netty.channel.Channel} was closed.
      * (e.g. the accepted connection was closed)
      */
     @Override
-    public void childChannelClosed(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
-        logger.info("childChannelClosed: {}", e);
-        ctx.sendUpstream(e);
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("childChannelClosed {}", ctx.channel());
+        super.channelInactive(ctx);
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("childChannelOpened {}", ctx.channel());
+        super.channelActive(ctx);
     }
 
     /**
      * Invoked when an exception was raised by an I/O thread or an upstream handler.
      */
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        logger.warn("Exception triggered in upstream ChannelHandler: {}", e.getCause());
-        //this.listener.fireExceptionThrown(e.getCause());
-    }
-
-    /**
-     * Invoked when a Channel was disconnected from its remote peer.
-     */
-    @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
-        //ctx.sendUpstream(e);
-    }
-
-    /**
-     * Invoked when a Channel was unbound from the current local address.
-     */
-    @Override
-    public void channelBound(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
-    }
-
-    /**
-     * Invoked when a Channel was closed and all its related resources were released.
-     */
-    @Override
-    public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
-        //this.listener.fireChannelClosed();
-    }
-
-    /**
-     * Invoked when a Channel was disconnected from its remote peer.
-     */
-    @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
-        //ctx.sendUpstream(e);
-    }
-
-    /**
-     * Invoked when a Channel was unbound from the current local address.
-     */
-    @Override
-    public void channelUnbound(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
-    }
-
-    /**
-     * Invoked when a Channel was closed and all its related resources were released.
-     */
-    @Override
-    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
-        //this.listener.fireChannelClosed();
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        logger.warn("Exception triggered in upstream ChannelHandler: {}", cause);
     }
 }

@@ -21,10 +21,10 @@ package com.cloudhopper.smpp.channel;
  */
 
 
-import org.jboss.netty.channel.ChannelEvent;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
-import org.jboss.netty.channel.ChannelUpstreamHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+
+import static io.netty.channel.ChannelHandler.Sharable;
 
 /**
  * Channel handler responsible for renaming the current thread, passing the
@@ -34,8 +34,8 @@ import org.jboss.netty.channel.ChannelUpstreamHandler;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelPipelineCoverage("one")
-public class SmppSessionThreadRenamer implements ChannelUpstreamHandler {
+@Sharable
+public class SmppSessionThreadRenamer extends ChannelInboundHandlerAdapter {
 
     private String threadName;
 
@@ -52,11 +52,11 @@ public class SmppSessionThreadRenamer implements ChannelUpstreamHandler {
     }
 
     @Override
-    public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         // always rename the current thread and then rename it back
         String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
-        ctx.sendUpstream(e);
+        ctx.fireChannelRead(msg);
         Thread.currentThread().setName(currentThreadName);
     }
 }

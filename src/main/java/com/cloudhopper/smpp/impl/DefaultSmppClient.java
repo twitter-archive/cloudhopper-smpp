@@ -20,46 +20,30 @@ package com.cloudhopper.smpp.impl;
  * #L%
  */
 
-import com.cloudhopper.smpp.SmppClient;
-import com.cloudhopper.smpp.util.DaemonExecutors;
-import com.cloudhopper.smpp.SmppBindType;
-import com.cloudhopper.smpp.type.SmppChannelException;
-import com.cloudhopper.smpp.SmppSession;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
-import com.cloudhopper.smpp.SmppSessionHandler;
-import com.cloudhopper.smpp.channel.SmppChannelConstants;
-import com.cloudhopper.smpp.type.SmppTimeoutException;
-import com.cloudhopper.smpp.channel.SmppClientConnector;
-import com.cloudhopper.smpp.channel.SmppSessionPduDecoder;
-import com.cloudhopper.smpp.channel.SmppSessionLogger;
-import com.cloudhopper.smpp.channel.SmppSessionWrapper;
-import com.cloudhopper.smpp.channel.SmppSessionThreadRenamer;
-import com.cloudhopper.smpp.pdu.BaseBind;
-import com.cloudhopper.smpp.pdu.BaseBindResp;
-import com.cloudhopper.smpp.pdu.BindReceiver;
-import com.cloudhopper.smpp.pdu.BindTransceiver;
-import com.cloudhopper.smpp.pdu.BindTransmitter;
+import com.cloudhopper.smpp.*;
+import com.cloudhopper.smpp.channel.*;
+import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.ssl.SslConfiguration;
 import com.cloudhopper.smpp.ssl.SslContextFactory;
-import com.cloudhopper.smpp.type.RecoverablePduException;
-import com.cloudhopper.smpp.type.SmppBindException;
-import com.cloudhopper.smpp.type.SmppChannelConnectException;
-import com.cloudhopper.smpp.type.SmppChannelConnectTimeoutException;
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import javax.net.ssl.SSLEngine;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.ssl.SslHandler;
+import com.cloudhopper.smpp.type.*;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLEngine;
+import java.net.InetSocketAddress;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Default implementation to "bootstrap" client SMPP sessions (create & bind).
@@ -69,12 +53,11 @@ import org.slf4j.LoggerFactory;
 public class DefaultSmppClient implements SmppClient {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppClient.class);
 
-    private ChannelGroup channels;
-    private SmppClientConnector clientConnector;
-    private ExecutorService executors;
-    private ClientSocketChannelFactory channelFactory;
-    private ClientBootstrap clientBootstrap;
-    private ScheduledExecutorService monitorExecutor;
+    private final ChannelGroup channels;
+    private final SmppClientConnector clientConnector;
+    private Bootstrap clientBootstrap;
+    private final NioEventLoopGroup workerGroup;
+    private final ScheduledExecutorService monitorExecutor;
 
     /**
      * Creates a new default SmppClient. Window monitoring and automatic
@@ -84,7 +67,7 @@ public class DefaultSmppClient implements SmppClient {
      * An Executors.newCachedDaemonThreadPool will be used for IO worker threads.
      */
     public DefaultSmppClient() {
-        this(DaemonExecutors.newCachedDaemonThreadPool());
+        this(new NioEventLoopGroup());
     }
 
     /**
@@ -92,36 +75,17 @@ public class DefaultSmppClient implements SmppClient {
      * expiration of requests will be disabled with no monitorExecutors.
      * The maximum number of IO worker threads across any client sessions
      * created with this SmppClient will be Runtime.getRuntime().availableProcessors().
-     * @param executor The executor that IO workers will be executed with. An
-     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than expectedSessions if NIO sockets are used.
+     * @param workerGroup The {@link EventLoopGroup} which is used to handle all the events
+     *     for the to-be-creates {@link Channel}. The max threads will never grow more
+     *     than expectedSessions if NIO sockets are used.
      */
-    public DefaultSmppClient(ExecutorService executors) {
-        this(executors, Runtime.getRuntime().availableProcessors());
-    }
-
-    /**
-     * Creates a new default SmppClient. Window monitoring and automatic
-     * expiration of requests will be disabled with no monitorExecutors.
-     * @param executor The executor that IO workers will be executed with. An
-     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than expectedSessions if NIO sockets are used.
-     * @param expectedSessions The max number of concurrent sessions expected
-     *      to be active at any time.  This number controls the max number of worker
-     *      threads that the underlying Netty library will use.  If processing
-     *      occurs in a sessionHandler (a blocking op), be <b>VERY</b> careful
-     *      setting this to the correct number of concurrent sessions you expect.
-     */
-    public DefaultSmppClient(ExecutorService executors, int expectedSessions) {
-        this(executors, expectedSessions, null);
+    public DefaultSmppClient(NioEventLoopGroup workerGroup) {
+        this(workerGroup, null);
     }
     
     /**
      * Creates a new default SmppClient.
-     * @param executor The executor that IO workers will be executed with. An
-     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than expectedSessions if NIO sockets are used.
-     * @param expectedSessions The max number of concurrent sessions expected
+     * @param workerGroup The max number of concurrent sessions expected
      *      to be active at any time.  This number controls the max number of worker
      *      threads that the underlying Netty library will use.  If processing
      *      occurs in a sessionHandler (a blocking op), be <b>VERY</b> careful
@@ -130,14 +94,22 @@ public class DefaultSmppClient implements SmppClient {
      *      to monitor themselves and expire requests.  If null monitoring will
      *      be disabled.
      */
-    public DefaultSmppClient(ExecutorService executors, int expectedSessions, ScheduledExecutorService monitorExecutor) {
-        this.channels = new DefaultChannelGroup();
-        this.executors = executors;
-        this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
-        this.clientBootstrap = new ClientBootstrap(channelFactory);
+    public DefaultSmppClient(NioEventLoopGroup workerGroup, ScheduledExecutorService monitorExecutor) {
+        this.channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+        this.workerGroup = workerGroup;
+        this.clientBootstrap = new Bootstrap();
+        this.clientBootstrap.group(this.workerGroup);
+        this.clientBootstrap.channel(NioSocketChannel.class);
         // we use the same default pipeline for all new channels - no need for a factory
         this.clientConnector = new SmppClientConnector(this.channels);
-        this.clientBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, this.clientConnector);
+
+        this.clientBootstrap.handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, clientConnector);
+            }
+        });
+
         this.monitorExecutor = monitorExecutor;
     }
     
@@ -149,8 +121,8 @@ public class DefaultSmppClient implements SmppClient {
     public void destroy() {
         // close all channels still open within this session "bootstrap"
         this.channels.close().awaitUninterruptibly();
-        // clean up all external resources
-        this.clientBootstrap.releaseExternalResources();
+        // @todo clean up all external resources
+        //this.workerGroup.shutdownGracefully();//??? close all channels in event loop?
     }
 
     protected BaseBind createBindRequest(SmppSessionConfiguration config) throws UnrecoverablePduException {
@@ -221,36 +193,36 @@ public class DefaultSmppClient implements SmppClient {
     protected DefaultSmppSession createSession(Channel channel, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.CLIENT, config, channel, sessionHandler, monitorExecutor);
 
-	// add SSL handler 
+        // add SSL handler
         if (config.isUseSsl()) {
-	    SslConfiguration sslConfig = config.getSslConfiguration();
-	    if (sslConfig == null) throw new IllegalStateException("sslConfiguration must be set");
-	    try {
-		SslContextFactory factory = new SslContextFactory(sslConfig);
-		SSLEngine sslEngine = factory.newSslEngine();
-		sslEngine.setUseClientMode(true);
-		channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
-	    } catch (Exception e) {
-		throw new SmppChannelConnectException("Unable to create SSL session]: " + e.getMessage(), e);
-	    }
-	}
+            SslConfiguration sslConfig = config.getSslConfiguration();
+        if (sslConfig == null) throw new IllegalStateException("sslConfiguration must be set");
+            try {
+                SslContextFactory factory = new SslContextFactory(sslConfig);
+                SSLEngine sslEngine = factory.newSslEngine();
+                sslEngine.setUseClientMode(true);
+                channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
+            } catch (Exception e) {
+                throw new SmppChannelConnectException("Unable to create SSL session]: " + e.getMessage(), e);
+            }
+        }
 
         // add the thread renamer portion to the pipeline
         if (config.getName() != null) {
-            channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(config.getName()));
+            channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(config.getName()));
         } else {
             logger.warn("Session configuration did not have a name set - skipping threadRenamer in pipeline");
         }
 
         // create the logging handler (for bytes sent/received on wire)
         SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
 
         // add a new instance of a decoder (that takes care of handling frames)
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_PDU_DECODER_NAME, new SmppSessionPduDecoder(session.getTranscoder()));
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_PDU_DECODER_NAME, new SmppSessionPduDecoder(session.getTranscoder()));
 
         // create a new wrapper around a session to pass the pdu up the chain
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
 
         return session;
     }
@@ -270,11 +242,11 @@ public class DefaultSmppClient implements SmppClient {
         }
 
         if (!connectFuture.isSuccess()) {
-            throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " + connectFuture.getCause().getMessage(), connectFuture.getCause());
+            throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " + connectFuture.cause().getMessage(), connectFuture.cause());
         }
 
         // if we get here, then we were able to connect and get a channel
-        return connectFuture.getChannel();
+        return connectFuture.channel();
     }
 
 }

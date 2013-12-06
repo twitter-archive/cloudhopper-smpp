@@ -22,26 +22,21 @@ package com.cloudhopper.smpp.demo;
 
 import com.cloudhopper.commons.charset.CharsetUtil;
 import com.cloudhopper.commons.util.windowing.WindowFuture;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppSession;
+import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
+import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.type.Address;
-import com.cloudhopper.smpp.pdu.EnquireLink;
-import com.cloudhopper.smpp.pdu.EnquireLinkResp;
-import com.cloudhopper.smpp.pdu.PduRequest;
-import com.cloudhopper.smpp.pdu.PduResponse;
-import com.cloudhopper.smpp.pdu.SubmitSm;
-import com.cloudhopper.smpp.pdu.SubmitSmResp;
-import com.cloudhopper.smpp.ssl.SslConfiguration;
+import io.netty.channel.nio.NioEventLoopGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Demonstration of a simple SMPP client using SSL
@@ -54,13 +49,10 @@ public class SslClientMain {
         //
         // setup 3 things required for any session we plan on creating
         //
-        
-        // for monitoring thread use, it's preferable to create your own instance
-        // of an executor with Executors.newCachedThreadPool() and cast it to ThreadPoolExecutor
-        // this permits exposing thinks like executor.getActiveCount() via JMX possible
-        // no point renaming the threads in a factory since underlying Netty 
-        // framework does not easily allow you to customize your thread names
-        ThreadPoolExecutor executor = (ThreadPoolExecutor)Executors.newCachedThreadPool();
+
+        // create and assign the NioEventLoopGroup instances to handle event processing,
+        // such as accepting new connections, receiving data, writing data, and so on.
+        NioEventLoopGroup group = new NioEventLoopGroup(1);
         
         // to enable automatic expiration of requests, a second scheduled executor
         // is required which is what a monitor task will be executed with - this
@@ -85,7 +77,7 @@ public class SslClientMain {
         // used for NIO sockets essentially uses this value as the max number of
         // threads it will ever use, despite the "max pool size", etc. set on
         // the executor passed in here
-        DefaultSmppClient clientBootstrap = new DefaultSmppClient(Executors.newCachedThreadPool(), 1, monitorExecutor);
+        DefaultSmppClient clientBootstrap = new DefaultSmppClient(group);
 
         //
         // setup configuration for a client session
@@ -191,7 +183,6 @@ public class SslClientMain {
         // this also makes sure all open Channels are closed to I *think*
         logger.info("Shutting down client bootstrap and executors...");
         clientBootstrap.destroy();
-        executor.shutdownNow();
         monitorExecutor.shutdownNow();
         
         logger.info("Done. Exiting");

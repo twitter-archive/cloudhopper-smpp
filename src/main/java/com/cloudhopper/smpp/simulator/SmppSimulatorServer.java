@@ -20,17 +20,20 @@ package com.cloudhopper.smpp.simulator;
  * #L%
  */
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -43,34 +46,38 @@ public class SmppSimulatorServer {
 
     private Channel serverChannel;
     private ChannelGroup sessionChannels;
-    private ExecutorService bossThreadPool;
-    private NioServerSocketChannelFactory channelFactory;
+    private EventLoopGroup bossGroup;
+    private EventLoopGroup workerGroup;
     private ServerBootstrap serverBootstrap;
     
     private SmppSimulatorServerHandler serverHandler;
 
-    public SmppSimulatorServer() {
-        this(Executors.newCachedThreadPool());
-    }
+//    public SmppSimulatorServer() {
+//        this(Executors.newCachedThreadPool());
+//    }
 
-    public SmppSimulatorServer(ExecutorService executors) {
+    public SmppSimulatorServer() {
         // used for tracking any child channels (sessions)
-        this.sessionChannels = new DefaultChannelGroup();
+        this.sessionChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         // we'll put the "boss" worker for a server in its own pool
-        this.bossThreadPool = Executors.newCachedThreadPool();
-        // a factory for creating channels (connections)
-        this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executors);
+        bossGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup();
+
         // tie the server bootstrap to this server socket channel factory
-        this.serverBootstrap = new ServerBootstrap(this.channelFactory);
+        this.serverBootstrap = new ServerBootstrap();
+        this.serverBootstrap.channel(NioServerSocketChannel.class);
+        this.serverBootstrap.group(bossGroup, workerGroup);
+
         // the handler to use when new child connections are accepted
         this.serverHandler = new SmppSimulatorServerHandler(this.sessionChannels);
         // set up the event pipeline factory for new connections
-        this.serverBootstrap.setParentHandler(serverHandler);
+        this.serverBootstrap.childHandler(serverHandler);
     }
     
     public void start(int port) {
         logger.info("Simulator server starting on port " + port + "...");
-        serverChannel = this.serverBootstrap.bind(new InetSocketAddress(port));
+        ChannelFuture f = this.serverBootstrap.bind(new InetSocketAddress(port)).syncUninterruptibly();
+        serverChannel = f.channel();
         logger.info("Simulator server started");
     }
 
@@ -82,7 +89,18 @@ public class SmppSimulatorServer {
 
         logger.info("Releasing server external resources...");
         // NOTE: all this does is "terminate()" the executors
-        this.serverBootstrap.releaseExternalResources();
+
+        // Shut down all event loops to terminate all threads.
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
+
+        // Wait until all threads are terminated.
+        try {
+            bossGroup.terminationFuture().sync();
+            workerGroup.terminationFuture().sync();
+        } catch (InterruptedException e) {
+            //is ok
+        }
 
         logger.info("Simulator server stopped");
     }

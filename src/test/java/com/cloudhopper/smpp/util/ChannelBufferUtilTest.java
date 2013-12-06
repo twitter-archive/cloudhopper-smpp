@@ -21,15 +21,17 @@ package com.cloudhopper.smpp.util;
  */
 
 // third party imports
-import com.cloudhopper.smpp.type.Address;
-import com.cloudhopper.smpp.type.TerminatingNullByteNotFoundException;
-import com.cloudhopper.smpp.type.NotEnoughDataInBufferException;
+
 import com.cloudhopper.commons.util.HexUtil;
-import com.cloudhopper.smpp.pdu.*;
+import com.cloudhopper.smpp.pdu.BufferHelper;
 import com.cloudhopper.smpp.tlv.Tlv;
-import org.junit.*;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
+import com.cloudhopper.smpp.type.Address;
+import com.cloudhopper.smpp.type.NotEnoughDataInBufferException;
+import com.cloudhopper.smpp.type.TerminatingNullByteNotFoundException;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import org.junit.Assert;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +47,7 @@ public class ChannelBufferUtilTest {
     @Test
     public void readNullTerminatedString() throws Exception {
         // normal case with a termination zero
-        ChannelBuffer buffer0 = BufferHelper.createBuffer("343439353133363139323000");
+        ByteBuf buffer0 = BufferHelper.createBuffer("343439353133363139323000");
         String str0 = ChannelBufferUtil.readNullTerminatedString(buffer0);
         Assert.assertEquals("44951361920", str0);
         // make sure the entire buffer is still there we started with
@@ -113,7 +115,7 @@ public class ChannelBufferUtilTest {
 
     @Test
     public void writeNullTerminatedString() throws Exception {
-        ChannelBuffer buffer0 = ChannelBuffers.dynamicBuffer(10);
+        ByteBuf buffer0 = Unpooled.buffer().capacity(10);
 
         // handle null case
         buffer0.clear();
@@ -132,7 +134,7 @@ public class ChannelBufferUtilTest {
     @Test
     public void readTlv() throws Exception {
         Tlv tlv0 = null;
-        ChannelBuffer buffer0 = null;
+        ByteBuf buffer0 = null;
 
         // a single byte TLV
         buffer0 = BufferHelper.createBuffer("0210000134");
@@ -223,9 +225,9 @@ public class ChannelBufferUtilTest {
     @Test
     public void writeTlv() throws Exception {
         Tlv tlv0 = null;
-        ChannelBuffer buffer0 = null;
+        ByteBuf buffer0 = null;
 
-        buffer0 = ChannelBuffers.dynamicBuffer(10);
+        buffer0 = Unpooled.buffer().capacity(10);
 
         // handle null case
         buffer0.clear();
@@ -241,7 +243,7 @@ public class ChannelBufferUtilTest {
     @Test
     public void readAddress() throws Exception {
         Address addr0 = null;
-        ChannelBuffer buffer0 = null;
+        ByteBuf buffer0 = null;
 
         buffer0 = BufferHelper.createBuffer("021000");
         addr0 = ChannelBufferUtil.readAddress(buffer0);
@@ -269,9 +271,9 @@ public class ChannelBufferUtilTest {
     @Test
     public void writeAddress() throws Exception {
         Address addr0 = null;
-        ChannelBuffer buffer0 = null;
+        ByteBuf buffer0 = null;
 
-        buffer0 = ChannelBuffers.dynamicBuffer(10);
+        buffer0 = Unpooled.buffer().capacity(10);
 
         // handle null case
         buffer0.clear();

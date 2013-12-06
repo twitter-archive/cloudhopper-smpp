@@ -20,8 +20,9 @@ package com.cloudhopper.smpp.channel;
  * #L%
  */
 
+import io.netty.channel.Channel;
+
 import java.net.InetSocketAddress;
-import org.jboss.netty.channel.Channel;
 
 /**
  * Utility methods for working with Netty Channels.
@@ -35,28 +36,28 @@ public class ChannelUtil {
      */
     static public String createChannelName(Channel channel) {
         // check if anything is null
-        if (channel == null || channel.getRemoteAddress() == null) {
+        if (channel == null || channel.remoteAddress() == null) {
             return "ChannelWasNull";
         }
         // create a channel name
-        if (channel.getRemoteAddress() instanceof InetSocketAddress) {
-            InetSocketAddress addr = (InetSocketAddress)channel.getRemoteAddress();
+        if (channel.remoteAddress() instanceof InetSocketAddress) {
+            InetSocketAddress addr = (InetSocketAddress)channel.remoteAddress();
             // just get the raw IP address
             String remoteHostAddr = addr.getAddress().getHostAddress();
             int remoteHostPort = addr.getPort();
             return remoteHostAddr + ":" + remoteHostPort;
         } else {
-            return channel.getRemoteAddress().toString();
+            return channel.remoteAddress().toString();
         }        
     }
 
     static public String getChannelRemoteHost(Channel channel) {
-        if (channel == null || channel.getRemoteAddress() == null) {
+        if (channel == null || channel.remoteAddress() == null) {
             return null;
         }
         // create a channel name
-        if (channel.getRemoteAddress() instanceof InetSocketAddress) {
-            InetSocketAddress addr = (InetSocketAddress)channel.getRemoteAddress();
+        if (channel.remoteAddress() instanceof InetSocketAddress) {
+            InetSocketAddress addr = (InetSocketAddress)channel.remoteAddress();
             // just get the raw IP address
             return addr.getAddress().getHostAddress();
         }
@@ -64,12 +65,12 @@ public class ChannelUtil {
     }
 
     static public int getChannelRemotePort(Channel channel) {
-        if (channel == null || channel.getRemoteAddress() == null) {
+        if (channel == null || channel.remoteAddress() == null) {
             return 0;
         }
         // create a channel name
-        if (channel.getRemoteAddress() instanceof InetSocketAddress) {
-            InetSocketAddress addr = (InetSocketAddress)channel.getRemoteAddress();
+        if (channel.remoteAddress() instanceof InetSocketAddress) {
+            InetSocketAddress addr = (InetSocketAddress)channel.remoteAddress();
             // just get the raw IP address
             return addr.getPort();
         }

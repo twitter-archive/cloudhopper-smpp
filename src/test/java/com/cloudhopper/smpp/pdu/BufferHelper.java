@@ -21,8 +21,10 @@ package com.cloudhopper.smpp.pdu;
  */
 
 import com.cloudhopper.commons.util.HexUtil;
-import org.jboss.netty.buffer.BigEndianHeapChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+
+import java.nio.ByteOrder;
 
 /**
  *
@@ -31,23 +33,22 @@ import org.jboss.netty.buffer.ChannelBuffer;
 public class BufferHelper
 {
 
-    static public ChannelBuffer createBuffer(byte[] bytes) throws Exception {
-        return new BigEndianHeapChannelBuffer(bytes);
+    static public ByteBuf createBuffer(byte[] bytes) throws Exception {
+        return Unpooled.wrappedBuffer(bytes).order(ByteOrder.BIG_ENDIAN);
     }
 
-    static public ChannelBuffer createBuffer(String hexString) throws Exception {
+    static public ByteBuf createBuffer(String hexString) throws Exception {
         return createBuffer(HexUtil.toByteArray(hexString));
     }
 
-    static public byte[] createByteArray(ChannelBuffer buffer) throws Exception {
+    static public byte[] createByteArray(ByteBuf buffer) throws Exception {
         byte[] bytes = new byte[buffer.readableBytes()];
         // temporarily read bytes from the buffer
         buffer.getBytes(buffer.readerIndex(), bytes);
         return bytes;
     }
 
-    static public String createHexString(ChannelBuffer buffer) throws Exception {
-	return HexUtil.toHexString(createByteArray(buffer));
+    static public String createHexString(ByteBuf buffer) throws Exception {
+        return HexUtil.toHexString(createByteArray(buffer));
     }
-
 }

@@ -23,7 +23,7 @@ package com.cloudhopper.smpp.pdu;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * SMPP cancel_sm_resp implementation.
@@ -37,7 +37,7 @@ public class CancelSmResp extends PduResponse {
     }
 
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         // nothing
     }
 
@@ -47,7 +47,7 @@ public class CancelSmResp extends PduResponse {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         // do nothing
     }
 
