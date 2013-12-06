@@ -85,7 +85,9 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
      *      and creating/destroying sessions.
      */
     public DefaultSmppServer(SmppServerConfiguration configuration, SmppServerHandler serverHandler) {
-        this(configuration, serverHandler, null);
+        this(configuration, serverHandler, null,
+                configuration.isNonBlockingSocketsEnabled() ? new NioEventLoopGroup() : new OioEventLoopGroup(),
+                configuration.isNonBlockingSocketsEnabled() ? new NioEventLoopGroup() : new OioEventLoopGroup());
     }
 
     /**
@@ -96,8 +98,15 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
      * @param monitorExecutor The scheduled executor that all sessions will share
      *      to monitor themselves and expire requests. If null monitoring will
      *      be disabled.
+     * @param bossGroup Specify the EventLoopGroup to accept new connections and
+     *      handle accepted connections. The {@link EventLoopGroup} is used to handle
+     *      all the events and IO for {@link SocketChannel}.
+     * @param workerGroup The {@link EventLoopGroup} is used to handle all the events
+     *      and IO for {@link Channel}.
      */
-    public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler, ScheduledExecutorService monitorExecutor) {
+    public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler,
+                             ScheduledExecutorService monitorExecutor, EventLoopGroup bossGroup,
+                             EventLoopGroup workerGroup) {
         this.configuration = configuration;
         // the same group we'll put every server channel
         this.channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
@@ -108,17 +117,15 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
 
         // a factory for creating channels (connections)
         if (configuration.isNonBlockingSocketsEnabled()) {
-            bossGroup = new NioEventLoopGroup();
-            workerGroup = new NioEventLoopGroup();
             this.serverBootstrap.channel(NioServerSocketChannel.class);
         } else {
-            bossGroup = new OioEventLoopGroup();
-            workerGroup = new OioEventLoopGroup();
             this.serverBootstrap.channel(OioServerSocketChannel.class);
         }
 
-        this.serverBootstrap.group(bossGroup, workerGroup);
-        
+        this.bossGroup = bossGroup;
+        this.workerGroup = workerGroup;
+        this.serverBootstrap.group(this.bossGroup, this.workerGroup);
+
         // set options for the server socket that are useful
         this.serverBootstrap.option(ChannelOption.SO_REUSEADDR, configuration.isReuseAddress());
         

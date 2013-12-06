@@ -61,13 +61,10 @@ public class PerformanceClientMain {
         //
         // setup 3 things required for any session we plan on creating
         //
-        
-        // for monitoring thread use, it's preferable to create your own instance
-        // of an executor with Executors.newCachedThreadPool() and cast it to ThreadPoolExecutor
-        // this permits exposing thinks like executor.getActiveCount() via JMX possible
-        // no point renaming the threads in a factory since underlying Netty 
-        // framework does not easily allow you to customize your thread names
-        ThreadPoolExecutor executor = (ThreadPoolExecutor)Executors.newCachedThreadPool();
+
+        // create and assign the NioEventLoopGroup instances to handle event processing,
+        // such as accepting new connections, receiving data, writing data, and so on.
+        NioEventLoopGroup group = new NioEventLoopGroup(1);
         
         // to enable automatic expiration of requests, a second scheduled executor
         // is required which is what a monitor task will be executed with - this
@@ -92,7 +89,7 @@ public class PerformanceClientMain {
         // used for NIO sockets essentially uses this value as the max number of
         // threads it will ever use, despite the "max pool size", etc. set on
         // the executor passed in here
-        DefaultSmppClient clientBootstrap = new DefaultSmppClient(new NioEventLoopGroup(1), monitorExecutor);
+        DefaultSmppClient clientBootstrap = new DefaultSmppClient(group, monitorExecutor);
 
         // same configuration for each client runner
         SmppSessionConfiguration config = new SmppSessionConfiguration();
@@ -169,7 +166,6 @@ public class PerformanceClientMain {
         // this also makes sure all open Channels are closed to I *think*
         logger.info("Shutting down client bootstrap and executors...");
         clientBootstrap.destroy();
-        executor.shutdownNow();
         monitorExecutor.shutdownNow();
         
         logger.info("Done. Exiting");

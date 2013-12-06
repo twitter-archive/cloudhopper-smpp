@@ -53,11 +53,11 @@ import java.util.concurrent.ScheduledExecutorService;
 public class DefaultSmppClient implements SmppClient {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppClient.class);
 
-    private ChannelGroup channels;
-    private SmppClientConnector clientConnector;
+    private final ChannelGroup channels;
+    private final SmppClientConnector clientConnector;
     private Bootstrap clientBootstrap;
-    private EventLoopGroup workerGroup;
-    private ScheduledExecutorService monitorExecutor;
+    private final NioEventLoopGroup workerGroup;
+    private final ScheduledExecutorService monitorExecutor;
 
     /**
      * Creates a new default SmppClient. Window monitoring and automatic
@@ -75,9 +75,9 @@ public class DefaultSmppClient implements SmppClient {
      * expiration of requests will be disabled with no monitorExecutors.
      * The maximum number of IO worker threads across any client sessions
      * created with this SmppClient will be Runtime.getRuntime().availableProcessors().
-     * @param workerGroup The executor that IO workers will be executed with. An
-     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than expectedSessions if NIO sockets are used.
+     * @param workerGroup The {@link EventLoopGroup} which is used to handle all the events
+     *     for the to-be-creates {@link Channel}. The max threads will never grow more
+     *     than expectedSessions if NIO sockets are used.
      */
     public DefaultSmppClient(NioEventLoopGroup workerGroup) {
         this(workerGroup, null);

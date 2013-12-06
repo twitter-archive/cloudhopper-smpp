@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -51,13 +50,10 @@ public class QueryCancelMain {
         //
         // setup 3 things required for any session we plan on creating
         //
-        
-        // for monitoring thread use, it's preferable to create your own instance
-        // of an executor with Executors.newCachedThreadPool() and cast it to ThreadPoolExecutor
-        // this permits exposing thinks like executor.getActiveCount() via JMX possible
-        // no point renaming the threads in a factory since underlying Netty 
-        // framework does not easily allow you to customize your thread names
-        ThreadPoolExecutor executor = (ThreadPoolExecutor)Executors.newCachedThreadPool();
+
+        // create and assign the NioEventLoopGroup instances to handle event processing,
+        // such as accepting new connections, receiving data, writing data, and so on.
+        NioEventLoopGroup group = new NioEventLoopGroup(1);
         
         // to enable automatic expiration of requests, a second scheduled executor
         // is required which is what a monitor task will be executed with - this
@@ -82,7 +78,7 @@ public class QueryCancelMain {
         // used for NIO sockets essentially uses this value as the max number of
         // threads it will ever use, despite the "max pool size", etc. set on
         // the executor passed in here
-        DefaultSmppClient clientBootstrap = new DefaultSmppClient(new NioEventLoopGroup(1), monitorExecutor);
+        DefaultSmppClient clientBootstrap = new DefaultSmppClient(group, monitorExecutor);
 
         //
         // setup configuration for a client session
@@ -209,7 +205,6 @@ public class QueryCancelMain {
         // this also makes sure all open Channels are closed to I *think*
         logger.info("Shutting down client bootstrap and executors...");
         clientBootstrap.destroy();
-        executor.shutdownNow();
         monitorExecutor.shutdownNow();
         
         logger.info("Done. Exiting");
