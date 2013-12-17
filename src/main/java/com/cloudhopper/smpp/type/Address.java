@@ -22,9 +22,9 @@ package com.cloudhopper.smpp.type;
 
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.commons.util.StringUtil;
-import com.cloudhopper.smpp.util.ChannelBufferUtil;
+import com.cloudhopper.smpp.util.ByteBufUtil;
 import com.cloudhopper.smpp.util.PduUtil;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Simple representation of an Address in SMPP.
@@ -75,16 +75,16 @@ public class Address {
         return 2 + PduUtil.calculateByteSizeOfNullTerminatedString(this.address);
     }
 
-    public void read(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void read(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         this.ton = buffer.readByte();
         this.npi = buffer.readByte();
-        this.address = ChannelBufferUtil.readNullTerminatedString(buffer);
+        this.address = ByteBufUtil.readNullTerminatedString(buffer);
     }
 
-    public void write(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void write(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         buffer.writeByte(this.ton);
         buffer.writeByte(this.npi);
-        ChannelBufferUtil.writeNullTerminatedString(buffer, this.address);
+        ByteBufUtil.writeNullTerminatedString(buffer, this.address);
     }
 
     @Override

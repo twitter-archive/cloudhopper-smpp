@@ -26,9 +26,9 @@ import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.tlv.Tlv;
 import com.cloudhopper.smpp.transcoder.PduTranscoderContext;
-import com.cloudhopper.smpp.util.ChannelBufferUtil;
+import com.cloudhopper.smpp.util.ByteBufUtil;
 import java.util.ArrayList;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 public abstract class Pdu {
     
@@ -247,9 +247,9 @@ public abstract class Pdu {
     
     abstract protected int calculateByteSizeOfBody();
 
-    abstract public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException;
+    abstract public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException;
 
-    abstract public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException;
+    abstract public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException;
 
     abstract protected void appendBodyToString(StringBuilder buffer);
 
@@ -269,10 +269,10 @@ public abstract class Pdu {
         return optParamLength;
     }
 
-    public void readOptionalParameters(ChannelBuffer buffer, PduTranscoderContext context) throws UnrecoverablePduException, RecoverablePduException {
+    public void readOptionalParameters(ByteBuf buffer, PduTranscoderContext context) throws UnrecoverablePduException, RecoverablePduException {
         // if there is any data left, it's part of an optional parameter
         while (buffer.readableBytes() > 0) {
-            Tlv tlv = ChannelBufferUtil.readTlv(buffer);
+            Tlv tlv = ByteBufUtil.readTlv(buffer);
             if (tlv.getTagName() == null) {
                 tlv.setTagName(context.lookupTlvTagName(tlv.getTag()));
             }
@@ -280,7 +280,7 @@ public abstract class Pdu {
         }
     }
 
-    public void writeOptionalParameters(ChannelBuffer buffer, PduTranscoderContext context) throws UnrecoverablePduException, RecoverablePduException {
+    public void writeOptionalParameters(ByteBuf buffer, PduTranscoderContext context) throws UnrecoverablePduException, RecoverablePduException {
         if (this.optionalParameters == null) {
             return;
         }
@@ -288,7 +288,7 @@ public abstract class Pdu {
             if (tlv.getTagName() == null) {
                 tlv.setTagName(context.lookupTlvTagName(tlv.getTag()));
             }
-            ChannelBufferUtil.writeTlv(buffer, tlv);
+            ByteBufUtil.writeTlv(buffer, tlv);
         }
     }
 

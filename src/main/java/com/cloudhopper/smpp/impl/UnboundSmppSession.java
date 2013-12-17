@@ -35,9 +35,9 @@ import com.cloudhopper.smpp.type.LoggingOptions;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppProcessingException;
 import java.util.TimerTask;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -186,7 +186,7 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
     public void sendResponsePdu(PduResponse pdu) {
         try {
             // encode the pdu into a buffer
-            ChannelBuffer buffer = server.getTranscoder().encode(pdu);
+            ByteBuf buffer = server.getTranscoder().encode(pdu);
 
             // always log the PDU
             logger.info("send PDU: {}", pdu);

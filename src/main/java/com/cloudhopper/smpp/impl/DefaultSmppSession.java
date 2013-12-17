@@ -64,9 +64,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.ObjectName;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -496,7 +496,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
 
         // encode the pdu into a buffer
-        ChannelBuffer buffer = transcoder.encode(pdu);
+        ByteBuf buffer = transcoder.encode(pdu);
 
         WindowFuture<Integer,PduRequest,PduResponse> future = null;
         try {
@@ -553,7 +553,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
 
         // encode the pdu into a buffer
-        ChannelBuffer buffer = transcoder.encode(pdu);
+        ByteBuf buffer = transcoder.encode(pdu);
 
         // we need to log the PDU after encoding since some things only happen
         // during the encoding process such as looking up the result message

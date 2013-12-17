@@ -23,9 +23,9 @@ package com.cloudhopper.smpp.pdu;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.util.ChannelBufferUtil;
+import com.cloudhopper.smpp.util.ByteBufUtil;
 import com.cloudhopper.smpp.util.PduUtil;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class DataSm extends BaseSm<DataSmResp> {
 
@@ -46,10 +46,10 @@ public class DataSm extends BaseSm<DataSmResp> {
     }
     
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
-        this.serviceType = ChannelBufferUtil.readNullTerminatedString(buffer);
-        this.sourceAddress = ChannelBufferUtil.readAddress(buffer);
-        this.destAddress = ChannelBufferUtil.readAddress(buffer);
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
+        this.serviceType = ByteBufUtil.readNullTerminatedString(buffer);
+        this.sourceAddress = ByteBufUtil.readAddress(buffer);
+        this.destAddress = ByteBufUtil.readAddress(buffer);
         this.esmClass = buffer.readByte();
         this.registeredDelivery = buffer.readByte();
         this.dataCoding = buffer.readByte();
@@ -66,10 +66,10 @@ public class DataSm extends BaseSm<DataSmResp> {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
-        ChannelBufferUtil.writeNullTerminatedString(buffer, this.serviceType);
-        ChannelBufferUtil.writeAddress(buffer, this.sourceAddress);
-        ChannelBufferUtil.writeAddress(buffer, this.destAddress);
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
+        ByteBufUtil.writeNullTerminatedString(buffer, this.serviceType);
+        ByteBufUtil.writeAddress(buffer, this.sourceAddress);
+        ByteBufUtil.writeAddress(buffer, this.destAddress);
         buffer.writeByte(this.esmClass);
         buffer.writeByte(this.registeredDelivery);
         buffer.writeByte(this.dataCoding);

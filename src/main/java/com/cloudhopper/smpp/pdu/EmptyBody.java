@@ -22,7 +22,7 @@ package com.cloudhopper.smpp.pdu;
 
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.type.RecoverablePduException;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 public abstract class EmptyBody<R extends PduResponse> extends PduRequest<R> {
     
@@ -31,7 +31,7 @@ public abstract class EmptyBody<R extends PduResponse> extends PduRequest<R> {
     }
 
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         // no body
     }
 
@@ -41,7 +41,7 @@ public abstract class EmptyBody<R extends PduResponse> extends PduRequest<R> {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         /// no body
     }
 

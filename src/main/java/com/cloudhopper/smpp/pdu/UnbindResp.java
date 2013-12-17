@@ -23,7 +23,7 @@ package com.cloudhopper.smpp.pdu;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.SmppConstants;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class UnbindResp extends EmptyBodyResp {
 

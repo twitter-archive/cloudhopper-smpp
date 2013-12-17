@@ -21,15 +21,15 @@ package com.cloudhopper.smpp.channel;
  */
 
 import com.cloudhopper.smpp.type.LoggingOptions;
-import static org.jboss.netty.buffer.ChannelBuffers.*;
+import static io.netty.buffer.ByteBufs.*;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.ChannelDownstreamHandler;
-import org.jboss.netty.channel.ChannelEvent;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
-import org.jboss.netty.channel.ChannelUpstreamHandler;
-import org.jboss.netty.channel.MessageEvent;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelDownstreamHandler;
+import io.netty.channel.ChannelEvent;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipelineCoverage;
+import io.netty.channel.ChannelUpstreamHandler;
+import io.netty.channel.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,16 +79,16 @@ public class SmppSessionLogger implements ChannelUpstreamHandler, ChannelDownstr
     /**
      * Logs the specified event to the {@link InternalLogger} returned by
      * {@link #getLogger()}. If hex dump has been enabled for this handler,
-     * the hex dump of the {@link ChannelBuffer} in a {@link MessageEvent} will
+     * the hex dump of the {@link ByteBuf} in a {@link MessageEvent} will
      * be logged together.
      */
     protected void log(Direction direction, ChannelEvent evt) {
-        // handle logging of message events (PDU, ChannelBuffer, etc.)
+        // handle logging of message events (PDU, ByteBuf, etc.)
         if (evt instanceof MessageEvent) {
             MessageEvent me = (MessageEvent)evt;
             // handle logging of bytes write/read
-            if ((me.getMessage() instanceof ChannelBuffer) && this.options.isLogBytesEnabled()) {
-                ChannelBuffer buffer = (ChannelBuffer)me.getMessage();
+            if ((me.getMessage() instanceof ByteBuf) && this.options.isLogBytesEnabled()) {
+                ByteBuf buffer = (ByteBuf)me.getMessage();
                 if (direction == Direction.UP) {
                     logger.info("read bytes: [{}]", hexDump(buffer));
                 } else if (direction == Direction.DOWN) {

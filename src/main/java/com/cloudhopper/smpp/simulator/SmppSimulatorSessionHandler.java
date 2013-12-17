@@ -28,14 +28,14 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.handler.codec.frame.FrameDecoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ExceptionEvent;
+import io.netty.handler.codec.frame.FrameDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static org.jboss.netty.buffer.ChannelBuffers.*;
+import static io.netty.buffer.ByteBufs.*;
 
 /**
  * Basically turns the event-driven handler into a "queued" handler by queuing
@@ -108,12 +108,12 @@ public class SmppSimulatorSessionHandler extends FrameDecoder {
 
     public void sendPdu(Pdu pdu) throws Exception {
         logger.info("Sending on channel 0x" + HexUtil.toHexString(channel.getId()) + " PDU: {}", pdu);
-        ChannelBuffer writeBuffer = this.transcoder.encode(pdu);
+        ByteBuf writeBuffer = this.transcoder.encode(pdu);
         channel.write(writeBuffer).await();
     }
 
     @Override
-    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+    protected Object decode(ChannelHandlerContext ctx, Channel channel, ByteBuf buffer) throws Exception {
         // ignore requests with zero bytes
         if (buffer.readableBytes() <= 0) {
             return null;
@@ -147,7 +147,7 @@ public class SmppSimulatorSessionHandler extends FrameDecoder {
         if (this.writePduQueue.size() > 0) {
             Pdu pduToWrite = this.writePduQueue.remove();
             logger.info("Automatically writing back on channel 0x" + HexUtil.toHexString(channel.getId()) + " the PDU: {}", pduToWrite);
-            ChannelBuffer writeBuffer = this.transcoder.encode(pduToWrite);
+            ByteBuf writeBuffer = this.transcoder.encode(pduToWrite);
             channel.write(writeBuffer);
         }
 

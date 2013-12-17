@@ -21,7 +21,7 @@ package com.cloudhopper.smpp.channel;
  */
 
 import java.net.InetSocketAddress;
-import org.jboss.netty.channel.Channel;
+import io.netty.channel.Channel;
 
 /**
  * Utility methods for working with Netty Channels.

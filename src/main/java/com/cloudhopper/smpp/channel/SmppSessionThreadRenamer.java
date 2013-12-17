@@ -21,10 +21,10 @@ package com.cloudhopper.smpp.channel;
  */
 
 
-import org.jboss.netty.channel.ChannelEvent;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
-import org.jboss.netty.channel.ChannelUpstreamHandler;
+import io.netty.channel.ChannelEvent;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipelineCoverage;
+import io.netty.channel.ChannelUpstreamHandler;
 
 /**
  * Channel handler responsible for renaming the current thread, passing the
