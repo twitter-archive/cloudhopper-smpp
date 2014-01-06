@@ -21,15 +21,16 @@ package com.cloudhopper.smpp.channel;
  */
 
 import com.cloudhopper.smpp.type.LoggingOptions;
-import static io.netty.buffer.ByteBufs.*;
-
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelDownstreamHandler;
-import io.netty.channel.ChannelEvent;
+import static io.netty.buffer.ByteBufUtil.*;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipelineCoverage;
-import io.netty.channel.ChannelUpstreamHandler;
-import io.netty.channel.MessageEvent;
+// import io.netty.channel.ChannelInboundHandler;
+// import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.ChannelPromise;
+import java.net.SocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +41,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelPipelineCoverage("one")
-public class SmppSessionLogger implements ChannelUpstreamHandler, ChannelDownstreamHandler {
+@ChannelHandler.Sharable
+public class SmppSessionLogger extends ChannelDuplexHandler {
 
     private final Logger logger;
     private final LoggingOptions options;
@@ -79,34 +80,45 @@ public class SmppSessionLogger implements ChannelUpstreamHandler, ChannelDownstr
     /**
      * Logs the specified event to the {@link InternalLogger} returned by
      * {@link #getLogger()}. If hex dump has been enabled for this handler,
-     * the hex dump of the {@link ByteBuf} in a {@link MessageEvent} will
+     * the hex dump of the {@link ByteBuf} in a message will
      * be logged together.
      */
-    protected void log(Direction direction, ChannelEvent evt) {
+    protected void log(Direction direction, Object msg) {
         // handle logging of message events (PDU, ByteBuf, etc.)
-        if (evt instanceof MessageEvent) {
-            MessageEvent me = (MessageEvent)evt;
-            // handle logging of bytes write/read
-            if ((me.getMessage() instanceof ByteBuf) && this.options.isLogBytesEnabled()) {
-                ByteBuf buffer = (ByteBuf)me.getMessage();
-                if (direction == Direction.UP) {
-                    logger.info("read bytes: [{}]", hexDump(buffer));
-                } else if (direction == Direction.DOWN) {
-                    logger.info("write bytes: [{}]", hexDump(buffer));
-                }
-            }
+	if ((msg instanceof ByteBuf) && this.options.isLogBytesEnabled()) {
+	    ByteBuf buffer = (ByteBuf)msg;
+	    if (direction == Direction.UP) {
+		logger.info("read bytes: [{}]", hexDump(buffer));
+	    } else if (direction == Direction.DOWN) {
+		logger.info("write bytes: [{}]", hexDump(buffer));
+	    }
         }
     }
 
+    // INBOUND
+    // @Override
+    // public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
+    //     log(Direction.UP, e);
+    //     ctx.sendUpstream(e);
+    // }
     @Override
-    public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
-        log(Direction.UP, e);
-        ctx.sendUpstream(e);
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+	//     log(Direction.UP, e);
+	log(Direction.UP, msg);
+        ctx.fireChannelRead(msg);
     }
 
+    // OUTBOUND
+    // @Override
+    // public void handleDownstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
+    //     log(Direction.DOWN, e);
+    //     ctx.sendDownstream(e);
+    // }
     @Override
-    public void handleDownstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
-        log(Direction.DOWN, e);
-        ctx.sendDownstream(e);
+    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+	//     log(Direction.DOWN, e);
+	log(Direction.DOWN, msg);
+        ctx.write(msg, promise);
     }
+
 }

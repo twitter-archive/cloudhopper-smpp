@@ -22,9 +22,10 @@ package com.cloudhopper.smpp.channel;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipelineCoverage;
-import io.netty.channel.ChannelStateEvent;
-import io.netty.channel.ExceptionEvent;
-import io.netty.channel.SimpleChannelUpstreamHandler;
+//import io.netty.channel.ChannelStateEvent;
+//import io.netty.channel.ExceptionEvent;
+//import io.netty.channel.SimpleChannelUpstreamHandler;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @ChannelPipelineCoverage("all")
-public class SmppClientConnector extends SimpleChannelUpstreamHandler {
+public class SmppClientConnector extends SimpleChannelInboundHandler {
     private static final Logger logger = LoggerFactory.getLogger(SmppClientConnector.class);
 
     private ChannelGroup channels;

@@ -23,6 +23,7 @@ package com.cloudhopper.smpp.simulator;
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
+import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -31,11 +32,10 @@ import java.util.concurrent.TimeUnit;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ExceptionEvent;
-import io.netty.handler.codec.frame.FrameDecoder;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static io.netty.buffer.ByteBufs.*;
+import static io.netty.buffer.ByteBufUtil.*;
 
 /**
  * Basically turns the event-driven handler into a "queued" handler by queuing
@@ -45,7 +45,7 @@ import static io.netty.buffer.ByteBufs.*;
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-public class SmppSimulatorSessionHandler extends FrameDecoder {
+public class SmppSimulatorSessionHandler extends ByteToMessageDecoder {
     private static final Logger logger = LoggerFactory.getLogger(SmppSimulatorSessionHandler.class);
 
     private final Channel channel;
@@ -101,35 +101,44 @@ public class SmppSimulatorSessionHandler extends FrameDecoder {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        logger.info("Received new throwable on channel 0x" + HexUtil.toHexString(channel.getId()) );
-        this.exceptionQueue.add(e.getCause());
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable e) throws Exception {
+        logger.info("Received new throwable on channel 0x" + HexUtil.toHexString(channel.hashCode()) );
+        this.exceptionQueue.add(e);
+	//TODO: do this? 
+	ctx.fireExceptionCaught(e);
     }
 
     public void sendPdu(Pdu pdu) throws Exception {
-        logger.info("Sending on channel 0x" + HexUtil.toHexString(channel.getId()) + " PDU: {}", pdu);
+        logger.info("Sending on channel 0x" + HexUtil.toHexString(channel.hashCode()) + " PDU: {}", pdu);
         ByteBuf writeBuffer = this.transcoder.encode(pdu);
         channel.write(writeBuffer).await();
     }
 
+    // @Override
+    // protected Object decode(ChannelHandlerContext ctx, Channel channel, ByteBuf buffer) throws Exception {
     @Override
-    protected Object decode(ChannelHandlerContext ctx, Channel channel, ByteBuf buffer) throws Exception {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
         // ignore requests with zero bytes
         if (buffer.readableBytes() <= 0) {
             return null;
         }
+
+	// get the channel
+	Channel channel = ctx.channel();
+	// TODO: can we safely use channel.hashCode() as we used to use channel.getId()?
+	//       Maybe in version 5: https://github.com/netty/netty/issues/1810
 
         // decode the buffer into a pdu
         Pdu pdu = transcoder.decode(buffer);
 
         // if the pdu was null, we don't have enough data yet
         if (pdu == null) {
-            logger.info("Received data on channel 0x" + HexUtil.toHexString(channel.getId()) + ", but not enough to parse PDU fully yet");
+            logger.info("Received data on channel 0x" + HexUtil.toHexString(channel.hashCode()) + ", but not enough to parse PDU fully yet");
             logger.info("Bytes in buffer: [{}]", hexDump(buffer));
             return null;
         }
 
-        logger.info("Decoded buffer on channel 0x" + HexUtil.toHexString(channel.getId()) + " into PDU: {}", pdu);
+        logger.info("Decoded buffer on channel 0x" + HexUtil.toHexString(channel.hashCode()) + " into PDU: {}", pdu);
 
         // if we have a pdu procesor registered, let's see if it handles it
         boolean processed = false;
@@ -143,15 +152,16 @@ public class SmppSimulatorSessionHandler extends FrameDecoder {
             this.pduQueue.add(pdu);
         }
 
+	// TODO: do we write directly or just return it as 'out'?
         // is there a PDU someone wants us to write in response?
         if (this.writePduQueue.size() > 0) {
             Pdu pduToWrite = this.writePduQueue.remove();
-            logger.info("Automatically writing back on channel 0x" + HexUtil.toHexString(channel.getId()) + " the PDU: {}", pduToWrite);
+            logger.info("Automatically writing back on channel 0x" + HexUtil.toHexString(channel.hashCode()) + " the PDU: {}", pduToWrite);
             ByteBuf writeBuffer = this.transcoder.encode(pduToWrite);
             channel.write(writeBuffer);
         }
 
-        return pdu;
+	out.add(pdu);
     }
     
 }

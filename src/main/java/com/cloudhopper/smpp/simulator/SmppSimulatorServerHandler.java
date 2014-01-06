@@ -27,6 +27,8 @@ import com.cloudhopper.smpp.transcoder.PduTranscoderContext;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipelineCoverage;
 import io.netty.channel.ChannelStateEvent;
@@ -43,7 +45,7 @@ import org.slf4j.LoggerFactory;
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @ChannelPipelineCoverage("one")
-public class SmppSimulatorServerHandler extends SimpleChannelHandler {
+public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu> {
     private static final Logger logger = LoggerFactory.getLogger(SmppSimulatorServerHandler.class);
 
     private final ChannelGroup sessionChannels;
@@ -69,7 +71,7 @@ public class SmppSimulatorServerHandler extends SimpleChannelHandler {
     }
 
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+    public void messageReceived(ChannelHandlerContext ctx, Pdu e) throws Exception {
     	logger.info(e.toString());
         /**
         if (e.getMessage() instanceof Pdu) {
@@ -114,8 +116,8 @@ public class SmppSimulatorServerHandler extends SimpleChannelHandler {
      * Invoked when an exception was raised by an I/O thread or an upstream handler.
      */
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        logger.warn("Exception triggered in upstream ChannelHandler: {}", e.getCause());
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable e) throws Exception {
+        logger.warn("Exception triggered in upstream ChannelHandler: {}", e);
         //this.listener.fireExceptionThrown(e.getCause());
     }
 
