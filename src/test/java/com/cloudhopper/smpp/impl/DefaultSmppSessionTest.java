@@ -153,7 +153,7 @@ public class DefaultSmppSessionTest {
     public void bindToFirewalledHostThrowsSmppChannelConnectTimeoutException() throws Exception {
         SmppSessionConfiguration configuration = createDefaultConfiguration();
         // change to a host and port that are definitely firewalled
-        configuration.setHost("www.google.com");
+        configuration.setHost("www.twitter.com");
         configuration.setPort(81);
 
         DefaultSmppSession session = null;

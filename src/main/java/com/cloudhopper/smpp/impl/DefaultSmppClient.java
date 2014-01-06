@@ -49,6 +49,7 @@ import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLEngine;
 import io.netty.bootstrap.ClientBootstrap;
 import io.netty.channel.Channel;
@@ -58,6 +59,7 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.ClientSocketChannelFactory;
 import io.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,6 +77,8 @@ public class DefaultSmppClient implements SmppClient {
     private ClientSocketChannelFactory channelFactory;
     private ClientBootstrap clientBootstrap;
     private ScheduledExecutorService monitorExecutor;
+    // shared instance of a timer for writeTimeout timing
+    private final org.jboss.netty.util.Timer writeTimeoutTimer;
 
     /**
      * Creates a new default SmppClient. Window monitoring and automatic
@@ -139,6 +143,8 @@ public class DefaultSmppClient implements SmppClient {
         this.clientConnector = new SmppClientConnector(this.channels);
         this.clientBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, this.clientConnector);
         this.monitorExecutor = monitorExecutor;
+	// a shared instance of a timer for session writeTimeout timing
+	this.writeTimeoutTimer = new org.jboss.netty.util.HashedWheelTimer();
     }
     
     public int getConnectionSize() {
@@ -151,6 +157,8 @@ public class DefaultSmppClient implements SmppClient {
         this.channels.close().awaitUninterruptibly();
         // clean up all external resources
         this.clientBootstrap.releaseExternalResources();
+	// stop the writeTimeout timer 
+	this.writeTimeoutTimer.stop();
     }
 
     protected BaseBind createBindRequest(SmppSessionConfiguration config) throws UnrecoverablePduException {
@@ -246,6 +254,12 @@ public class DefaultSmppClient implements SmppClient {
         SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
         channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
 
+	// add a writeTimeout handler after the logger
+	if (config.getWriteTimeout() > 0) {
+	    WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(writeTimeoutTimer, config.getWriteTimeout(), TimeUnit.MILLISECONDS);
+	    channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRITE_TIMEOUT_NAME, writeTimeoutHandler);
+	}
+
         // add a new instance of a decoder (that takes care of handling frames)
         channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_PDU_DECODER_NAME, new SmppSessionPduDecoder(session.getTranscoder()));
 
@@ -259,19 +273,28 @@ public class DefaultSmppClient implements SmppClient {
         // a socket address used to "bind" to the remote system
         InetSocketAddress socketAddr = new InetSocketAddress(host, port);
 
+	// set the timeout
+	this.clientBootstrap.setOption("connectTimeoutMillis", connectTimeoutMillis);
+
         // attempt to connect to the remote system
         ChannelFuture connectFuture = this.clientBootstrap.connect(socketAddr);
         
         // wait until the connection is made successfully
-        boolean timeout = !connectFuture.await(connectTimeoutMillis);
+	// boolean timeout = !connectFuture.await(connectTimeoutMillis);
+	// BAD: using .await(timeout)
+	//      see http://netty.io/3.9/api/org/jboss/netty/channel/ChannelFuture.html
+	connectFuture.awaitUninterruptibly();
+	//assert connectFuture.isDone();
 
-        if (timeout) {
-            throw new SmppChannelConnectTimeoutException("Unable to connect to host [" + host + "] and port [" + port + "] within " + connectTimeoutMillis + " ms");
-        }
-
-        if (!connectFuture.isSuccess()) {
-            throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " + connectFuture.getCause().getMessage(), connectFuture.getCause());
-        }
+	if (connectFuture.isCancelled()) {
+	    throw new InterruptedException("connectFuture cancelled by user");
+	} else if (!connectFuture.isSuccess()) {
+	    if (connectFuture.getCause() instanceof org.jboss.netty.channel.ConnectTimeoutException) {
+		throw new SmppChannelConnectTimeoutException("Unable to connect to host [" + host + "] and port [" + port + "] within " + connectTimeoutMillis + " ms", connectFuture.getCause());
+	    } else {
+		throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " + connectFuture.getCause().getMessage(), connectFuture.getCause());
+	    }
+	}
 
         // if we get here, then we were able to connect and get a channel
         return connectFuture.getChannel();
