@@ -13,7 +13,7 @@
   <scm>
     <url>https://github.com/twitter/cloudhopper-smpp</url>
     <connection>scm:git:https://github.com/twitter/cloudhopper-smpp.git</connection>
-    <developerConnection>scm:git:git://github.com:twitter/cloudhopper-smpp.git</developerConnection>
+    <developerConnection>scm:git:git://github.com/twitter/cloudhopper-smpp.git</developerConnection>
     <tag>master</tag>
   </scm>
   
