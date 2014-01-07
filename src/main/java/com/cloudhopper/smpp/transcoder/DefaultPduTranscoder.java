@@ -53,8 +53,8 @@ import com.cloudhopper.smpp.pdu.UnbindResp;
 import com.cloudhopper.smpp.type.NotEnoughDataInBufferException;
 import com.cloudhopper.smpp.util.PduUtil;
 import com.cloudhopper.smpp.util.SequenceNumber;
-import io.netty.buffer.BigEndianHeapByteBuf;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * 
@@ -86,7 +86,8 @@ public class DefaultPduTranscoder implements PduTranscoder {
         }
 
         // create the buffer and add the header
-        ByteBuf buffer = new BigEndianHeapByteBuf(pdu.getCommandLength());
+        ByteBuf buffer = Unpooled.buffer(pdu.getCommandLength());
+	//TODO: directBuffer?
 
         buffer.writeInt(pdu.getCommandLength());
         buffer.writeInt(pdu.getCommandId());

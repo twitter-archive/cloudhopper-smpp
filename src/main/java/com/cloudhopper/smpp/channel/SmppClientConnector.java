@@ -20,11 +20,8 @@ package com.cloudhopper.smpp.channel;
  * #L%
  */
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipelineCoverage;
-//import io.netty.channel.ChannelStateEvent;
-//import io.netty.channel.ExceptionEvent;
-//import io.netty.channel.SimpleChannelUpstreamHandler;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
@@ -40,7 +37,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelPipelineCoverage("all")
+@ChannelHandler.Sharable
 public class SmppClientConnector extends SimpleChannelInboundHandler {
     private static final Logger logger = LoggerFactory.getLogger(SmppClientConnector.class);
 
@@ -51,15 +48,17 @@ public class SmppClientConnector extends SimpleChannelInboundHandler {
     }
 
     @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // called every time a new channel connects
-        channels.add(e.getChannel());
+        channels.add(ctx.hannel());
+	ctx.fireChannelActive();
     }
 
     @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // called every time a channel disconnects
-        channels.remove(e.getChannel());
+        channels.remove(ctx.channel());
+        ctx.fireChannelInactive();
     }
 
     /**
@@ -67,12 +66,12 @@ public class SmppClientConnector extends SimpleChannelInboundHandler {
      * NOTE: Not implementing this causes annoying log statements to STDERR
      */
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         // the client smpp implementation relies on this to catch errors upstream
         // however, during a connect sequence, we don't have any upstream handlers
         // yet and the framework logged the exceptions to STDERR causing issues
         // on the console.  So, we'll implement a default handling of it here
         // where we just pass it further upstream and basically discard it
-        ctx.sendUpstream(e);
+        ctx.fireExceptionCaught(cause);
     }
 }

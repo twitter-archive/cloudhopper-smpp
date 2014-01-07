@@ -51,9 +51,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLEngine;
-import io.netty.bootstrap.ClientBootstrap;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ConnectTimeoutException;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.ClientSocketChannelFactory;
@@ -75,10 +77,8 @@ public class DefaultSmppClient implements SmppClient {
     private SmppClientConnector clientConnector;
     private ExecutorService executors;
     private ClientSocketChannelFactory channelFactory;
-    private ClientBootstrap clientBootstrap;
+    private Bootstrap clientBootstrap;
     private ScheduledExecutorService monitorExecutor;
-    // shared instance of a timer for writeTimeout timing
-    private final org.jboss.netty.util.Timer writeTimeoutTimer;
 
     /**
      * Creates a new default SmppClient. Window monitoring and automatic
@@ -138,13 +138,18 @@ public class DefaultSmppClient implements SmppClient {
         this.channels = new DefaultChannelGroup();
         this.executors = executors;
         this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
-        this.clientBootstrap = new ClientBootstrap(channelFactory);
+        this.clientBootstrap = new Bootstrap(channelFactory);
         // we use the same default pipeline for all new channels - no need for a factory
         this.clientConnector = new SmppClientConnector(this.channels);
         this.clientBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, this.clientConnector);
         this.monitorExecutor = monitorExecutor;
-	// a shared instance of a timer for session writeTimeout timing
-	this.writeTimeoutTimer = new org.jboss.netty.util.HashedWheelTimer();
+
+
+
+	// EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+        // this.clientBootstrap = new Bootstrap(channelFactory);
+	// clientBootstrap.group(eventLoopGroup)
+	//     .
     }
     
     public int getConnectionSize() {
@@ -157,8 +162,6 @@ public class DefaultSmppClient implements SmppClient {
         this.channels.close().awaitUninterruptibly();
         // clean up all external resources
         this.clientBootstrap.releaseExternalResources();
-	// stop the writeTimeout timer 
-	this.writeTimeoutTimer.stop();
     }
 
     protected BaseBind createBindRequest(SmppSessionConfiguration config) throws UnrecoverablePduException {
@@ -237,7 +240,7 @@ public class DefaultSmppClient implements SmppClient {
 		SslContextFactory factory = new SslContextFactory(sslConfig);
 		SSLEngine sslEngine = factory.newSslEngine();
 		sslEngine.setUseClientMode(true);
-		channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
+		channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
 	    } catch (Exception e) {
 		throw new SmppChannelConnectException("Unable to create SSL session]: " + e.getMessage(), e);
 	    }
@@ -245,26 +248,26 @@ public class DefaultSmppClient implements SmppClient {
 
         // add the thread renamer portion to the pipeline
         if (config.getName() != null) {
-            channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(config.getName()));
+            channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(config.getName()));
         } else {
             logger.warn("Session configuration did not have a name set - skipping threadRenamer in pipeline");
         }
 
         // create the logging handler (for bytes sent/received on wire)
         SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
 
 	// add a writeTimeout handler after the logger
 	if (config.getWriteTimeout() > 0) {
-	    WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(writeTimeoutTimer, config.getWriteTimeout(), TimeUnit.MILLISECONDS);
-	    channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRITE_TIMEOUT_NAME, writeTimeoutHandler);
+	    WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(config.getWriteTimeout(), TimeUnit.MILLISECONDS);
+	    channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRITE_TIMEOUT_NAME, writeTimeoutHandler);
 	}
 
         // add a new instance of a decoder (that takes care of handling frames)
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_PDU_DECODER_NAME, new SmppSessionPduDecoder(session.getTranscoder()));
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_PDU_DECODER_NAME, new SmppSessionPduDecoder(session.getTranscoder()));
 
         // create a new wrapper around a session to pass the pdu up the chain
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
 
         return session;
     }
@@ -274,7 +277,7 @@ public class DefaultSmppClient implements SmppClient {
         InetSocketAddress socketAddr = new InetSocketAddress(host, port);
 
 	// set the timeout
-	this.clientBootstrap.setOption("connectTimeoutMillis", connectTimeoutMillis);
+	this.clientBootstrap.setOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeoutMillis);
 
         // attempt to connect to the remote system
         ChannelFuture connectFuture = this.clientBootstrap.connect(socketAddr);
@@ -289,15 +292,15 @@ public class DefaultSmppClient implements SmppClient {
 	if (connectFuture.isCancelled()) {
 	    throw new InterruptedException("connectFuture cancelled by user");
 	} else if (!connectFuture.isSuccess()) {
-	    if (connectFuture.getCause() instanceof org.jboss.netty.channel.ConnectTimeoutException) {
-		throw new SmppChannelConnectTimeoutException("Unable to connect to host [" + host + "] and port [" + port + "] within " + connectTimeoutMillis + " ms", connectFuture.getCause());
+	    if (connectFuture.cause() instanceof ConnectTimeoutException) {
+		throw new SmppChannelConnectTimeoutException("Unable to connect to host [" + host + "] and port [" + port + "] within " + connectTimeoutMillis + " ms", connectFuture.cause());
 	    } else {
-		throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " + connectFuture.getCause().getMessage(), connectFuture.getCause());
+		throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " + connectFuture.cause().getMessage(), connectFuture.cause());
 	    }
 	}
 
         // if we get here, then we were able to connect and get a channel
-        return connectFuture.getChannel();
+        return connectFuture.channel();
     }
 
 }

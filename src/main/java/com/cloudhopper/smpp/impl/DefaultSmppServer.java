@@ -79,8 +79,6 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     private ChannelFactory channelFactory;
     private ServerBootstrap serverBootstrap;
     private Channel serverChannel; 
-    // shared instance of a timer for session writeTimeout timing
-    private final org.jboss.netty.util.Timer writeTimeoutTimer;
     // shared instance of a timer background thread to close unbound channels
     private final Timer bindTimer;
    // shared instance of a session id generator (an atomic long)
@@ -153,8 +151,6 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         // we use the same default pipeline for all new channels - no need for a factory
         this.serverConnector = new SmppServerConnector(channels, this);
         this.serverBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, this.serverConnector);
-	// a shared instance of a timer for session writeTimeout timing
-	this.writeTimeoutTimer = new org.jboss.netty.util.HashedWheelTimer();
         // a shared timer used to make sure new channels are bound within X milliseconds
         this.bindTimer = new Timer(configuration.getName() + "-BindTimer0", true);
         // NOTE: this would permit us to customize the "transcoding" context for a server if needed
@@ -270,7 +266,6 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         stop();
         this.serverBootstrap.releaseExternalResources();
         this.serverBootstrap = null;
-	this.writeTimeoutTimer.stop();
         unregisterMBean();
         logger.info("{} destroyed on SMPP port [{}]", configuration.getName(), configuration.getPort());
     }
@@ -333,24 +328,24 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.SERVER, config, channel, this, sessionId, preparedBindResponse, interfaceVersion, monitorExecutor);
 
         // replace name of thread used for renaming
-        SmppSessionThreadRenamer threadRenamer = (SmppSessionThreadRenamer)channel.getPipeline().get(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME);
+        SmppSessionThreadRenamer threadRenamer = (SmppSessionThreadRenamer)channel.pipeline().get(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME);
         threadRenamer.setThreadName(config.getName());
 
         // add a logging handler after the thread renamer
         SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
-        channel.getPipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
+        channel.pipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
 
 	// add a writeTimeout handler after the logger
 	if (config.getWriteTimeout() > 0) {
-	    WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(writeTimeoutTimer, config.getWriteTimeout(), TimeUnit.MILLISECONDS);
-	    channel.getPipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, SmppChannelConstants.PIPELINE_SESSION_WRITE_TIMEOUT_NAME, writeTimeoutHandler);
+	    WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(config.getWriteTimeout(), TimeUnit.MILLISECONDS);
+	    channel.pipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, SmppChannelConstants.PIPELINE_SESSION_WRITE_TIMEOUT_NAME, writeTimeoutHandler);
 	}
 
         // decoder in pipeline is ok (keep it)
 
         // create a new wrapper around a session to pass the pdu up the chain
-        channel.getPipeline().remove(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME);
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
+        channel.pipeline().remove(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME);
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
         
         // check if the # of channels exceeds maxConnections
         if (this.channels.size() > this.configuration.getMaxConnectionSize()) {

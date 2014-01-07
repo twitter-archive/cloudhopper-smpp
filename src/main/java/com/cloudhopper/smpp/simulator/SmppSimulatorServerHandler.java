@@ -31,11 +31,7 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipelineCoverage;
-import io.netty.channel.ChannelStateEvent;
-import io.netty.channel.ChildChannelStateEvent;
-import io.netty.channel.ExceptionEvent;
-import io.netty.channel.MessageEvent;
-import io.netty.channel.SimpleChannelHandler;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +40,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelPipelineCoverage("one")
+@ChannelHandler.Sharable
 public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu> {
     private static final Logger logger = LoggerFactory.getLogger(SmppSimulatorServerHandler.class);
 
@@ -70,9 +66,11 @@ public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu>
         return this.sessionQueue;
     }
 
+    // @Override
+    // public void messageReceived(ChannelHandlerContext ctx, Pdu pdu) throws Exception {
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, Pdu e) throws Exception {
-    	logger.info(e.toString());
+    public void channelRead0(ChannelHandlerContext ctx, Pdu pdu) throws Exception {
+    	logger.info(pdu.toString());
         /**
         if (e.getMessage() instanceof Pdu) {
             Pdu pdu = (Pdu)e.getMessage();
@@ -151,8 +149,8 @@ public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu>
      * Invoked when a Channel was disconnected from its remote peer.
      */
     @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("channelInactive");
         //ctx.sendUpstream(e);
     }
 
@@ -160,16 +158,16 @@ public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu>
      * Invoked when a Channel was unbound from the current local address.
      */
     @Override
-    public void channelUnbound(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
+    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+        logger.info("channelUnregistered");
     }
 
     /**
      * Invoked when a Channel was closed and all its related resources were released.
      */
     @Override
-    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
+    public void channelClosed(ChannelHandlerContext ctx) throws Exception {
+        logger.info("");
         //this.listener.fireChannelClosed();
     }
 }

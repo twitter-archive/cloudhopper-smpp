@@ -380,7 +380,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     @Override
     public void unbind(long timeoutInMillis) {
         // is this channel still open?
-        if (this.channel.isConnected()) {
+        if (this.channel.isActive()) {
             this.state.set(STATE_UNBINDING);
 
             // try a "graceful" unbind by sending an "unbind" request
@@ -406,7 +406,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
 
     @Override
     public void close(long timeoutInMillis) {
-        if (channel.isConnected()) {
+        if (channel.isActive()) {
             // temporarily set to "unbinding" for now
             this.state.set(STATE_UNBINDING);
             // make sure the channel is always closed
@@ -473,8 +473,8 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // 3 possible scenarios once completed: success, failure, or cancellation
         if (future.isSuccess()) {
             return future.getResponse();
-        } else if (future.getCause() != null) {
-            Throwable cause = future.getCause();
+        } else if (future.cause() != null) {
+            Throwable cause = future.cause();
             if (cause instanceof ClosedChannelException) {
                 throw new SmppChannelException("Channel was closed after sending request, but before receiving response", cause);
             } else {
@@ -523,7 +523,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // check if the write was a success
         if (!channelFuture.isSuccess()) {
             // the write failed, make sure to throw an exception
-            throw new SmppChannelException(channelFuture.getCause().getMessage(), channelFuture.getCause());
+            throw new SmppChannelException(channelFuture.cause().getMessage(), channelFuture.cause());
         }
         
         this.countSendRequestPdu(pdu);
@@ -562,7 +562,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // check if the write was a success
         if (!channelFuture.isSuccess()) {
             // the write failed, make sure to throw an exception
-            throw new SmppChannelException(channelFuture.getCause().getMessage(), channelFuture.getCause());
+            throw new SmppChannelException(channelFuture.cause().getMessage(), channelFuture.cause());
         }
     }
 
@@ -880,7 +880,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     @Override
     public String getLocalAddressAndPort() {
         if (this.channel != null) {
-            InetSocketAddress addr = (InetSocketAddress)this.channel.getLocalAddress();
+            InetSocketAddress addr = (InetSocketAddress)this.channel.localAddress();
             return addr.getAddress().getHostAddress() + ":" + addr.getPort();
         } else {
             return null;
@@ -890,7 +890,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     @Override
     public String getRemoteAddressAndPort() {
         if (this.channel != null) {
-            InetSocketAddress addr = (InetSocketAddress)this.channel.getRemoteAddress();
+            InetSocketAddress addr = (InetSocketAddress)this.channel.remoteAddress();
             return addr.getAddress().getHostAddress() + ":" + addr.getPort();
         } else {
             return null;
