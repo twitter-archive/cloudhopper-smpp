@@ -54,12 +54,17 @@ import javax.net.ssl.SSLEngine;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ConnectTimeoutException;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.socket.ClientSocketChannelFactory;
-import io.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.oio.OioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.slf4j.Logger;
@@ -73,11 +78,11 @@ import org.slf4j.LoggerFactory;
 public class DefaultSmppClient implements SmppClient {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppClient.class);
 
-    private ChannelGroup channels;
-    private SmppClientConnector clientConnector;
-    private ExecutorService executors;
-    private ClientSocketChannelFactory channelFactory;
+    private final SmppClientConnector clientConnector;
     private Bootstrap clientBootstrap;
+    private ChannelGroup channels;
+    private ExecutorService executors;
+    // private ClientSocketChannelFactory channelFactory;
     private ScheduledExecutorService monitorExecutor;
 
     /**
@@ -137,19 +142,26 @@ public class DefaultSmppClient implements SmppClient {
     public DefaultSmppClient(ExecutorService executors, int expectedSessions, ScheduledExecutorService monitorExecutor) {
         this.channels = new DefaultChannelGroup();
         this.executors = executors;
-        this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
-        this.clientBootstrap = new Bootstrap(channelFactory);
+        // this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
+        // this.clientBootstrap = new Bootstrap(channelFactory);
         // we use the same default pipeline for all new channels - no need for a factory
         this.clientConnector = new SmppClientConnector(this.channels);
-        this.clientBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, this.clientConnector);
+        // this.clientBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, this.clientConnector);
         this.monitorExecutor = monitorExecutor;
 
 
 
-	// EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
-        // this.clientBootstrap = new Bootstrap(channelFactory);
-	// clientBootstrap.group(eventLoopGroup)
-	//     .
+	EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+	this.clientBootstrap = new Bootstrap();
+	this.clientBootstrap.group(eventLoopGroup)
+	    .channel(NioSocketChannel.class)
+	    .handler(new ChannelInitializer<SocketChannel>() {
+		    @Override
+			public void initChannel(SocketChannel ch) throws Exception {
+			ch.pipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, clientConnector);
+		    }
+		});
+    
     }
     
     public int getConnectionSize() {
@@ -161,7 +173,19 @@ public class DefaultSmppClient implements SmppClient {
         // close all channels still open within this session "bootstrap"
         this.channels.close().awaitUninterruptibly();
         // clean up all external resources
-        this.clientBootstrap.releaseExternalResources();
+        // this.clientBootstrap.releaseExternalResources();
+
+	try {
+	    clientChannel.closeFuture().sync(); 
+	    this.clientBootstrap = null;
+	} finally {
+	    // Shut down all event loops to terminate all threads.
+	    eventLoopGroup.shutdownGracefully();
+	    
+	    // Wait until all threads are terminated.
+	    eventLoopGroup.terminationFuture().sync();
+	}
+
     }
 
     protected BaseBind createBindRequest(SmppSessionConfiguration config) throws UnrecoverablePduException {

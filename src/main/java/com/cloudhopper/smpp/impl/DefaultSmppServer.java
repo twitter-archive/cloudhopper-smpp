@@ -54,10 +54,16 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFactory;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import io.netty.channel.socket.oio.OioServerSocketChannelFactory;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.oio.OioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.oio.OioServerSocketChannel;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,8 +81,10 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     private final SmppServerConfiguration configuration;
     private final SmppServerHandler serverHandler;
     private final PduTranscoder transcoder;
-    private ExecutorService bossThreadPool;
-    private ChannelFactory channelFactory;
+    // private ExecutorService bossThreadPool;
+    private EventLoopGroup bossGroup;
+    private EventLoopGroup workerGroup;
+    // private ChannelFactory channelFactory;
     private ServerBootstrap serverBootstrap;
     private Channel serverChannel; 
     // shared instance of a timer background thread to close unbound channels
@@ -133,24 +141,49 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         this.channels = new DefaultChannelGroup();
         this.serverHandler = serverHandler;
         // we'll put the "boss" worker for a server in its own pool
-        this.bossThreadPool = Executors.newCachedThreadPool();
+        // this.bossThreadPool = Executors.newCachedThreadPool();
         
-        // a factory for creating channels (connections)
+        // // a factory for creating channels (connections)
+        // if (configuration.isNonBlockingSocketsEnabled()) {
+        //     this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executor, configuration.getMaxConnectionSize());
+        // } else {
+        //     this.channelFactory = new OioServerSocketChannelFactory(this.bossThreadPool, executor);
+        // }
+        
+	//NEW
+	//TODO: How do we control the thread pools and executors?
+	//      How do we set the max # of threads in the worker pool?
+        this.serverBootstrap = new ServerBootstrap();
         if (configuration.isNonBlockingSocketsEnabled()) {
-            this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executor, configuration.getMaxConnectionSize());
-        } else {
-            this.channelFactory = new OioServerSocketChannelFactory(this.bossThreadPool, executor);
-        }
-        
-        // tie the server bootstrap to this server socket channel factory
-        this.serverBootstrap = new ServerBootstrap(this.channelFactory);
-        
-        // set options for the server socket that are useful
-        this.serverBootstrap.setOption("reuseAddress", configuration.isReuseAddress());
-        
-        // we use the same default pipeline for all new channels - no need for a factory
+	    this.bossGroup = new NioEventLoopGroup();
+	    this.workerGroup = new NioEventLoopGroup();
+	    this.serverBootstrap.channel(NioServerSocketChannel.class);
+	} else {
+	    this.bossGroup = new OioEventLoopGroup();
+	    this.workerGroup = new OioEventLoopGroup();
+	    this.serverBootstrap.channel(OioServerSocketChannel.class);
+	}
+        this.channels = new DefaultChannelGroup(bossGroup);
         this.serverConnector = new SmppServerConnector(channels, this);
-        this.serverBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, this.serverConnector);
+	this.serverBootstrap.group(bossGroup, workerGroup)
+	    .option(ChannelOption.SO_REUSEADDR, configuration.isReuseAddress())
+	    .handler(new ChannelInitializer<SocketChannel>() {
+		    @Override
+			public void initChannel(SocketChannel ch) throws Exception {
+			ch.pipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, serverConnector);
+		    }
+		});
+
+        // // tie the server bootstrap to this server socket channel factory
+        // this.serverBootstrap = new ServerBootstrap(this.channelFactory);
+        
+        // // set options for the server socket that are useful
+        // this.serverBootstrap.setOption("reuseAddress", configuration.isReuseAddress());
+        
+        // // we use the same default pipeline for all new channels - no need for a factory
+        // this.serverConnector = new SmppServerConnector(channels, this);
+        // this.serverBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, this.serverConnector);
+
         // a shared timer used to make sure new channels are bound within X milliseconds
         this.bindTimer = new Timer(configuration.getName() + "-BindTimer0", true);
         // NOTE: this would permit us to customize the "transcoding" context for a server if needed
@@ -219,7 +252,9 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     
     @Override
     public boolean isStarted() {
-        return (this.serverChannel != null && this.serverChannel.isBound());
+	//TODO is isRegistered the same as isBound
+        // return (this.serverChannel != null && this.serverChannel.isBound());
+        return (this.serverChannel != null && this.serverChannel.isRegistered());
     }
 
     @Override
@@ -238,7 +273,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
             throw new SmppChannelException("Unable to start: server is destroyed");
         }
         try {
-            serverChannel = this.serverBootstrap.bind(new InetSocketAddress(configuration.getPort()));
+            serverChannel = this.serverBootstrap.bind(new InetSocketAddress(configuration.getPort())).channel();
             logger.info("{} started on SMPP port [{}]", configuration.getName(), configuration.getPort());
         } catch (ChannelException e) {
             throw new SmppChannelException(e.getMessage(), e);
@@ -264,8 +299,24 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     public void destroy() {
         this.bindTimer.cancel();
         stop();
-        this.serverBootstrap.releaseExternalResources();
-        this.serverBootstrap = null;
+
+	//TODO how to release resources? Do we need to ?
+        // this.serverBootstrap.releaseExternalResources();
+        // this.serverBootstrap = null;
+	//  serverChannel.closeFuture().sync(); ??
+	try {
+	    serverChannel.closeFuture().sync(); 
+	    this.serverBootstrap = null;
+	} finally {
+	    // Shut down all event loops to terminate all threads.
+	    bossGroup.shutdownGracefully();
+	    workerGroup.shutdownGracefully();
+	    
+	    // Wait until all threads are terminated.
+	    bossGroup.terminationFuture().sync();
+	    workerGroup.terminationFuture().sync();
+	}
+
         unregisterMBean();
         logger.info("{} destroyed on SMPP port [{}]", configuration.getName(), configuration.getPort());
     }
@@ -319,7 +370,8 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         // back on via the "serverReady()" method call on the session object
 
         // make sure the channel is not being read/processed (until we flag we're ready later on)
-        channel.setReadable(false).awaitUninterruptibly();
+	//TODO how do we do this in netty4?
+	// channel.setReadable(false).awaitUninterruptibly();
 
         // auto negotiate the interface version in use based on the requested interface version
         byte interfaceVersion = this.autoNegotiateInterfaceVersion(config.getInterfaceVersion());
