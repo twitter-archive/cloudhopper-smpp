@@ -197,7 +197,7 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
             // check if the write was a success
             if (!channelFuture.isSuccess()) {
                 // the write failed, make sure to throw an exception
-                throw new SmppChannelException(channelFuture.getCause().getMessage(), channelFuture.getCause());
+                throw new SmppChannelException(channelFuture.cause().getMessage(), channelFuture.cause());
             }
         } catch (Exception e) {
             logger.error("Fatal exception thrown while attempting to send response PDU: {}", e);

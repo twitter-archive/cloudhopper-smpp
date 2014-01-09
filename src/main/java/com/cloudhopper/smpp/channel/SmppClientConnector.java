@@ -22,7 +22,8 @@ package com.cloudhopper.smpp.channel;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+// import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @ChannelHandler.Sharable
-public class SmppClientConnector extends SimpleChannelInboundHandler {
+public class SmppClientConnector extends ChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(SmppClientConnector.class);
 
     private ChannelGroup channels;
@@ -47,23 +48,30 @@ public class SmppClientConnector extends SimpleChannelInboundHandler {
         this.channels = channels;
     }
 
+    //TODO is channelActive is the same as channelConnected?
+    // @Override
+    // public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // called every time a new channel connects
-        channels.add(ctx.hannel());
-	ctx.fireChannelActive();
+        channels.add(ctx.channel());
+	// ctx.fireChannelActive();
     }
 
+    //TODO is channelInactive is the same as channelDisconnected?
+    // @Override
+    // public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // called every time a channel disconnects
         channels.remove(ctx.channel());
-        ctx.fireChannelInactive();
+        // ctx.fireChannelInactive();
     }
 
     /**
      * Invoked when an exception was raised by an I/O thread or an upstream handler.
      * NOTE: Not implementing this causes annoying log statements to STDERR
+     * TODO: do we need this anymore? This is the default impl.
      */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {

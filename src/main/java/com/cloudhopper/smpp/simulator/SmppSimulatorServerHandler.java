@@ -20,6 +20,7 @@ package com.cloudhopper.smpp.simulator;
  * #L%
  */
 
+import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
@@ -30,7 +31,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipelineCoverage;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
@@ -68,6 +68,7 @@ public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu>
 
     // @Override
     // public void messageReceived(ChannelHandlerContext ctx, Pdu pdu) throws Exception {
+    //Please keep in mind that this method will be renamed to messageReceived(ChannelHandlerContext, I) in 5.0.
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Pdu pdu) throws Exception {
     	logger.info(pdu.toString());
@@ -79,36 +80,36 @@ public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu>
          */
     }
 
-    @Override
-    public void childChannelOpen(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
-        logger.info("childChannelOpen: {}", e);
+    // @Override
+    // public void childChannelOpen(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
+    //     logger.info("childChannelOpen: {}", e);
 
-        // modify its pipeline
-        PduTranscoderContext context = new DefaultPduTranscoderContext();
-        PduTranscoder transcoder = new DefaultPduTranscoder(context);
+    //     // modify its pipeline
+    //     PduTranscoderContext context = new DefaultPduTranscoderContext();
+    //     PduTranscoder transcoder = new DefaultPduTranscoder(context);
 
-        // create a new "smsc" session instance (which is just a handler)
-        SmppSimulatorSessionHandler session = new SmppSimulatorSessionHandler(e.getChildChannel(), transcoder);
+    //     // create a new "smsc" session instance (which is just a handler)
+    //     SmppSimulatorSessionHandler session = new SmppSimulatorSessionHandler(e.getChildChannel(), transcoder);
 
-        // add this channel's new processing pipeline
-        e.getChildChannel().getPipeline().addLast(SmppSimulatorServer.PIPELINE_SESSION_NAME, session);
+    //     // add this channel's new processing pipeline
+    //     e.getChildChannel().getPipeline().addLast(SmppSimulatorServer.PIPELINE_SESSION_NAME, session);
 
-        session.setPduProcessor(defaultPduProcessor);
+    //     session.setPduProcessor(defaultPduProcessor);
 
-        // store this in our internal queue
-        this.sessionChannels.add(e.getChildChannel());
-        this.sessionQueue.add(session);
-    }
+    //     // store this in our internal queue
+    //     this.sessionChannels.add(e.getChildChannel());
+    //     this.sessionQueue.add(session);
+    // }
 
-    /**
-     * Invoked when a child {@link Channel} was closed.
-     * (e.g. the accepted connection was closed)
-     */
-    @Override
-    public void childChannelClosed(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
-        logger.info("childChannelClosed: {}", e);
-        ctx.sendUpstream(e);
-    }
+    // /**
+    //  * Invoked when a child {@link Channel} was closed.
+    //  * (e.g. the accepted connection was closed)
+    //  */
+    // @Override
+    // public void childChannelClosed(ChannelHandlerContext ctx, ChildChannelStateEvent e) throws Exception {
+    //     logger.info("childChannelClosed: {}", e);
+    //     ctx.sendUpstream(e);
+    // }
 
     /**
      * Invoked when an exception was raised by an I/O thread or an upstream handler.
@@ -116,46 +117,23 @@ public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu>
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable e) throws Exception {
         logger.warn("Exception triggered in upstream ChannelHandler: {}", e);
-        //this.listener.fireExceptionThrown(e.getCause());
     }
 
     /**
-     * Invoked when a Channel was disconnected from its remote peer.
      */
     @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
-        //ctx.sendUpstream(e);
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("channelActive");
     }
 
     /**
-     * Invoked when a Channel was unbound from the current local address.
-     */
-    @Override
-    public void channelBound(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
-    }
-
-    /**
-     * Invoked when a Channel was closed and all its related resources were released.
-     */
-    @Override
-    public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        logger.info(e.toString());
-        //this.listener.fireChannelClosed();
-    }
-
-    /**
-     * Invoked when a Channel was disconnected from its remote peer.
      */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info("channelInactive");
-        //ctx.sendUpstream(e);
     }
 
     /**
-     * Invoked when a Channel was unbound from the current local address.
      */
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
@@ -163,11 +141,9 @@ public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu>
     }
 
     /**
-     * Invoked when a Channel was closed and all its related resources were released.
      */
     @Override
-    public void channelClosed(ChannelHandlerContext ctx) throws Exception {
-        logger.info("");
-        //this.listener.fireChannelClosed();
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        logger.info("channelRegistered");
     }
 }

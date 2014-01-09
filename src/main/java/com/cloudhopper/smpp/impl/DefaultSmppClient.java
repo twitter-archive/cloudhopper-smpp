@@ -67,6 +67,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,8 @@ public class DefaultSmppClient implements SmppClient {
     private Bootstrap clientBootstrap;
     private ChannelGroup channels;
     private ExecutorService executors;
+    private EventLoopGroup eventLoopGroup;
+    private Channel clientChannel; 
     // private ClientSocketChannelFactory channelFactory;
     private ScheduledExecutorService monitorExecutor;
 
@@ -140,7 +143,9 @@ public class DefaultSmppClient implements SmppClient {
      *      be disabled.
      */
     public DefaultSmppClient(ExecutorService executors, int expectedSessions, ScheduledExecutorService monitorExecutor) {
-        this.channels = new DefaultChannelGroup();
+        // this.channels = new DefaultChannelGroup();
+	//The doc says about GlobalEventExecutor: Please note it is not scalable to schedule large number of tasks to this executor; use a dedicated executor. 
+	this.channels = new DefaultChannelGroup("server", GlobalEventExecutor.INSTANCE);
         this.executors = executors;
         // this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
         // this.clientBootstrap = new Bootstrap(channelFactory);
@@ -151,16 +156,17 @@ public class DefaultSmppClient implements SmppClient {
 
 
 
-	EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+	this.eventLoopGroup = new NioEventLoopGroup();
 	this.clientBootstrap = new Bootstrap();
 	this.clientBootstrap.group(eventLoopGroup)
 	    .channel(NioSocketChannel.class)
-	    .handler(new ChannelInitializer<SocketChannel>() {
-		    @Override
-			public void initChannel(SocketChannel ch) throws Exception {
-			ch.pipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, clientConnector);
-		    }
-		});
+	    .handler(clientConnector);
+	    // .handler(new ChannelInitializer<SocketChannel>() {
+	    // 	    @Override
+	    // 		public void initChannel(SocketChannel ch) throws Exception {
+	    // 		ch.pipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, clientConnector);
+	    // 	    }
+	    // 	});
     
     }
     
@@ -178,12 +184,18 @@ public class DefaultSmppClient implements SmppClient {
 	try {
 	    clientChannel.closeFuture().sync(); 
 	    this.clientBootstrap = null;
+	} catch (InterruptedException e) {
+	    logger.warn("Thread interrupted closing client channel.", e);
 	} finally {
 	    // Shut down all event loops to terminate all threads.
 	    eventLoopGroup.shutdownGracefully();
 	    
-	    // Wait until all threads are terminated.
-	    eventLoopGroup.terminationFuture().sync();
+	    try {
+		// Wait until all threads are terminated.
+		eventLoopGroup.terminationFuture().sync();
+	    } catch (InterruptedException e) {
+		logger.warn("Thread interrupted closing executors.", e);
+	    }
 	}
 
     }
@@ -248,9 +260,9 @@ public class DefaultSmppClient implements SmppClient {
 
     protected DefaultSmppSession doOpen(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         // create and connect a channel to the remote host
-        Channel channel = createConnectedChannel(config.getHost(), config.getPort(), config.getConnectTimeout());
+        this.clientChannel = createConnectedChannel(config.getHost(), config.getPort(), config.getConnectTimeout());
         // tie this new opened channel with a new session
-        return createSession(channel, config, sessionHandler);
+        return createSession(clientChannel, config, sessionHandler);
     }
 
     protected DefaultSmppSession createSession(Channel channel, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
@@ -301,7 +313,7 @@ public class DefaultSmppClient implements SmppClient {
         InetSocketAddress socketAddr = new InetSocketAddress(host, port);
 
 	// set the timeout
-	this.clientBootstrap.setOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeoutMillis);
+	this.clientBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int)connectTimeoutMillis);
 
         // attempt to connect to the remote system
         ChannelFuture connectFuture = this.clientBootstrap.connect(socketAddr);

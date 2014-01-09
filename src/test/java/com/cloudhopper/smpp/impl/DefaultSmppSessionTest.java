@@ -51,7 +51,7 @@ import com.cloudhopper.smpp.type.UnexpectedPduResponseException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.SmppSessionUtil;
 import java.util.concurrent.TimeUnit;
-import org.jboss.netty.channel.Channel;
+import io.netty.channel.Channel;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

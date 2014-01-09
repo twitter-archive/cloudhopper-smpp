@@ -20,17 +20,16 @@ package com.cloudhopper.smpp.channel;
  * #L%
  */
 
-
 import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.impl.UnboundSmppSession;
 import com.cloudhopper.smpp.ssl.SslConfiguration;
 import com.cloudhopper.smpp.ssl.SslContextFactory;
 import javax.net.ssl.SSLEngine;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipelineCoverage;
-import io.netty.channel.ChannelStateEvent;
-import io.netty.channel.SimpleChannelUpstreamHandler;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+// import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
@@ -41,8 +40,8 @@ import org.slf4j.LoggerFactory;
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelPipelineCoverage("all")
-public class SmppServerConnector extends SimpleChannelUpstreamHandler {
+@ChannelHandler.Sharable
+public class SmppServerConnector extends ChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(SmppServerConnector.class);
 
     // reference to every channel connected via this server channel
@@ -54,10 +53,13 @@ public class SmppServerConnector extends SimpleChannelUpstreamHandler {
         this.server = server;
     }
 
+    //TODO is channelActive is the same as channelConnected?
+    // @Override
+    // public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // the channel we are going to handle
-        Channel channel = e.getChannel();
+        Channel channel = ctx.channel();
 
         // always add it to our channel group
         channels.add(channel);
@@ -95,10 +97,13 @@ public class SmppServerConnector extends SimpleChannelUpstreamHandler {
         channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
     }
 
+    //TODO is channelInactive is the same as channelDisconnected?
+    // @Override
+    // public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // called every time a channel disconnects
-        channels.remove(e.getChannel());
+        channels.remove(ctx.channel());
         this.server.getCounters().incrementChannelDisconnectsAndGet();
     }
 

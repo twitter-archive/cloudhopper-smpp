@@ -320,7 +320,8 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             logger.error("{}", e);
         }
         // flag the channel is ready to read
-        this.channel.setReadable(true).awaitUninterruptibly();
+	//TODO: how to make the channel readable?
+        // this.channel.setReadable(true).awaitUninterruptibly();
         this.setBound();
     }
 
@@ -473,8 +474,8 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // 3 possible scenarios once completed: success, failure, or cancellation
         if (future.isSuccess()) {
             return future.getResponse();
-        } else if (future.cause() != null) {
-            Throwable cause = future.cause();
+        } else if (future.getCause() != null) {
+            Throwable cause = future.getCause();
             if (cause instanceof ClosedChannelException) {
                 throw new SmppChannelException("Channel was closed after sending request, but before receiving response", cause);
             } else {

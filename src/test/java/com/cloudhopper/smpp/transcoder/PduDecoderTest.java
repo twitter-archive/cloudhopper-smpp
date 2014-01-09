@@ -29,9 +29,8 @@ import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.tlv.Tlv;
 import org.junit.*;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.buffer.CompositeChannelBuffer;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +53,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeLessThan4Bytes() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000");
+        ByteBuf buffer = BufferHelper.createBuffer("000000");
 
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
         Assert.assertNull(pdu0);
@@ -64,7 +63,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeOnly4Bytes() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010");
 
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
         Assert.assertNull(pdu0);
@@ -74,7 +73,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeLessThan16Bytes() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001000000015000000000a342e");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001000000015000000000a342e");
 
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
         Assert.assertNull(pdu0);
@@ -84,7 +83,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeUnsupportedRequestCommandId() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001000000110000000000a342ee7");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001000000110000000000a342ee7");
 
         try {
             EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
@@ -99,7 +98,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeUnsupportedResponseCommandId() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001080000110000000000a342ee7");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001080000110000000000a342ee7");
 
         try {
             EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
@@ -114,7 +113,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeBadPduButSkipAllDataInBuffer() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001100000110000000000a342ee70F0000001000000015000000000a342ee7");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001100000110000000000a342ee70F0000001000000015000000000a342ee7");
 
         try {
             EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
@@ -138,7 +137,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeSignedIntLength() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("F000001100000110000000000a342ee7");
+        ByteBuf buffer = BufferHelper.createBuffer("F000001100000110000000000a342ee7");
         try {
             EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
             Assert.fail();
@@ -149,7 +148,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeMaxSequenceNumber() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001000000015000000007fffffff");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001000000015000000007fffffff");
 
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
 
@@ -163,7 +162,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeTooBigSequenceNumber() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010000000150000000080000000");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010000000150000000080000000");
 
         try {
             EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
@@ -178,7 +177,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeZeroSequenceNumber() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010000000150000000000000000");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010000000150000000000000000");
 
         // this should work now...
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
@@ -186,7 +185,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeSequenceNumberOfOne() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010000000150000000000000001");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010000000150000000000000001");
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
         Assert.assertEquals(1, pdu0.getSequenceNumber());
         // despite having too large a sequence number, all the bytes should have been read
@@ -195,7 +194,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeSequenceNumberMaxValue() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001000000015000000007fffffff");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001000000015000000007fffffff");
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
         Assert.assertEquals(0x7fffffff, pdu0.getSequenceNumber());
         // despite having too large a sequence number, all the bytes should have been read
@@ -204,7 +203,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeEnquireLink() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001000000015000000000a342ee7");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001000000015000000000a342ee7");
 
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
 
@@ -219,7 +218,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeEnquireLinkResp() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001080000015000000000a342eed");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001080000015000000000a342eed");
 
         EnquireLinkResp pdu0 = (EnquireLinkResp)transcoder.decode(buffer);
 
@@ -235,7 +234,7 @@ public class PduDecoderTest {
     @Test
     public void decodeTwoEnquireLinkRespButWithReadRequiredInBetween() throws Exception {
         // f1 missing on end at first
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001080000015000000000a342eed0000001080000015000000000a342e");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001080000015000000000a342eed0000001080000015000000000a342e");
 
         EnquireLinkResp pdu0 = (EnquireLinkResp)transcoder.decode(buffer);
 
@@ -254,8 +253,8 @@ public class PduDecoderTest {
         Assert.assertEquals(15, buffer.readableBytes());
 
         // add 1 more byte (should finish the byte array off)
-        ChannelBuffer buffer0 = BufferHelper.createBuffer("f1");
-        ChannelBuffer buffer1 = ChannelBuffers.wrappedBuffer(buffer, buffer0);    // merge both buffers...
+        ByteBuf buffer0 = BufferHelper.createBuffer("f1");
+        ByteBuf buffer1 = Unpooled.wrappedBuffer(buffer, buffer0);    // merge both buffers...
         buffer = buffer1;
 
         pdu0 = (EnquireLinkResp)transcoder.decode(buffer);
@@ -271,7 +270,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeSubmitSmResp() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001c80000004000000000a342ee1393432353834333135393400");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001c80000004000000000a342ee1393432353834333135393400");
 
         SubmitSmResp pdu0 = (SubmitSmResp)transcoder.decode(buffer);
 
@@ -288,7 +287,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeSubmitSmRespWithNoMessageId() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001080000004000000000a342ee1");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001080000004000000000a342ee1");
 
         SubmitSmResp pdu0 = (SubmitSmResp)transcoder.decode(buffer);
 
@@ -304,7 +303,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeSubmitSmRespWithEmptyMessageId() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001180000004000000000a342ee100");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001180000004000000000a342ee100");
 
         SubmitSmResp pdu0 = (SubmitSmResp)transcoder.decode(buffer);
 
@@ -320,7 +319,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeSubmitSmRespWithNoNullByteForMessageId() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001180000004000000000a342ee139");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001180000004000000000a342ee139");
 
         SubmitSmResp pdu0 = null;
         try {
@@ -342,7 +341,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDeliverSmResp() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001c800000050000000000116ac7393432353834333135393400");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001c800000050000000000116ac7393432353834333135393400");
 
         DeliverSmResp pdu0 = (DeliverSmResp)transcoder.decode(buffer);
 
@@ -357,7 +356,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDeliverSmRespWithEmptyMessageId() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000011800000050000000000116ac700");
+        ByteBuf buffer = BufferHelper.createBuffer("00000011800000050000000000116ac700");
 
         DeliverSmResp pdu0 = (DeliverSmResp)transcoder.decode(buffer);
 
@@ -372,7 +371,7 @@ public class PduDecoderTest {
     
     @Test
     public void decodeDeliverSmRespWithNoMessageId() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010800000050000000000116ac7");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010800000050000000000116ac7");
 
         DeliverSmResp pdu0 = (DeliverSmResp)transcoder.decode(buffer);
 
@@ -387,7 +386,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDataSmResp() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001c800001030000000000116ac7393432353834333135393400");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001c800001030000000000116ac7393432353834333135393400");
 
         DataSmResp pdu0 = (DataSmResp)transcoder.decode(buffer);
 
@@ -402,7 +401,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDataSmRespWithEmptyMessageId() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000011800001030000000000116ac700");
+        ByteBuf buffer = BufferHelper.createBuffer("00000011800001030000000000116ac700");
 
         DataSmResp pdu0 = (DataSmResp)transcoder.decode(buffer);
 
@@ -417,7 +416,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDataSmRespWithNoMessageId() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010800001030000000000116ac7");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010800001030000000000116ac7");
 
         DataSmResp pdu0 = (DataSmResp)transcoder.decode(buffer);
 
@@ -432,7 +431,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeBindTransceiverResp() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001f800000090000000000039951536d73632053696d756c61746f7200");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001f800000090000000000039951536d73632053696d756c61746f7200");
 
         BindTransceiverResp pdu0 = (BindTransceiverResp)transcoder.decode(buffer);
 
@@ -450,7 +449,7 @@ public class PduDecoderTest {
     @Test
     public void decodeBindTransceiverRespFailedButWithSystemId() throws Exception {
         // this specific PDU actually failed with legacy smpp library
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000015800000090000000e00004db3534d534300");
+        ByteBuf buffer = BufferHelper.createBuffer("00000015800000090000000e00004db3534d534300");
 
         BindTransceiverResp pdu0 = (BindTransceiverResp)transcoder.decode(buffer);
 
@@ -467,7 +466,7 @@ public class PduDecoderTest {
     
     @Test
     public void decodeBindTransceiverRespWithOptionalParams() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001d800000090000000000039943536d7363204757000210000134");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001d800000090000000000039943536d7363204757000210000134");
 
         BindTransceiverResp pdu0 = (BindTransceiverResp)transcoder.decode(buffer);
 
@@ -489,7 +488,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeBindTransmitterRespWithOptionalParams() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001d80000002000000000003995f54574954544552000210000134");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001d80000002000000000003995f54574954544552000210000134");
 
         BindTransmitterResp pdu0 = (BindTransmitterResp)transcoder.decode(buffer);
 
@@ -511,7 +510,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeBindReceiverRespWithOptionalParams() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001d80000001000000000003996274776974746572000210000134");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001d80000001000000000003996274776974746572000210000134");
 
         BindReceiverResp pdu0 = (BindReceiverResp)transcoder.decode(buffer);
 
@@ -534,7 +533,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeBindTransceiver() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000023000000090000000000039951414c4c5f545700414c4c5f5457000034010200");
+        ByteBuf buffer = BufferHelper.createBuffer("00000023000000090000000000039951414c4c5f545700414c4c5f5457000034010200");
 
         BindTransceiver pdu0 = (BindTransceiver)transcoder.decode(buffer);
 
@@ -557,7 +556,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeBindTransmitter() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000002500000002000000000003995f747769747465720074776974746572000034000000");
+        ByteBuf buffer = BufferHelper.createBuffer("0000002500000002000000000003995f747769747465720074776974746572000034000000");
 
         BindTransmitter pdu0 = (BindTransmitter)transcoder.decode(buffer);
 
@@ -580,7 +579,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeBindReceiver() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000025000000010000000000039961747769747465720074776974746572000034000000");
+        ByteBuf buffer = BufferHelper.createBuffer("00000025000000010000000000039961747769747465720074776974746572000034000000");
 
         BindReceiver pdu0 = (BindReceiver)transcoder.decode(buffer);
 
@@ -603,7 +602,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDeliverSm() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000400000000500000000000000030002013837363534333231000409343034303400000000000000000000084024232125262F3A000E0001010006000101");
+        ByteBuf buffer = BufferHelper.createBuffer("000000400000000500000000000000030002013837363534333231000409343034303400000000000000000000084024232125262F3A000E0001010006000101");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
@@ -643,7 +642,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDeliverSmAsDeliveryReceipt() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000BA00000005000000000000000200010134343935313336313932300001013430343034000400000000000000006E69643A30303539313133393738207375623A30303120646C7672643A303031207375626D697420646174653A3130303231303137333020646F6E6520646174653A3130303231303137333120737461743A44454C49565244206572723A30303020746578743A4024232125262F3A000E0001010006000101001E000833383630316661000427000102");
+        ByteBuf buffer = BufferHelper.createBuffer("000000BA00000005000000000000000200010134343935313336313932300001013430343034000400000000000000006E69643A30303539313133393738207375623A30303120646C7672643A303031207375626D697420646174653A3130303231303137333020646F6E6520646174653A3130303231303137333120737461743A44454C49565244206572723A30303020746578743A4024232125262F3A000E0001010006000101001E000833383630316661000427000102");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
@@ -692,7 +691,7 @@ public class PduDecoderTest {
         // it has a length of 0x41, but only 5 bytes were actually included
         // notified vendor this was a mistake, but perhaps we should try to make
         // this implementation work somehow?
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000a40000000500000000000000050001013233343830333337363831353100050056414e534f000400000000040000006369643a30303030303033303035207375623a30303120646c7672643a303031207375626d697420646174653a3130303131383134333120646f6e6520646174653a3130303131383134333120737461743a44454c49565244206572723a3030302074650427000102001e00413330303500");
+        ByteBuf buffer = BufferHelper.createBuffer("000000a40000000500000000000000050001013233343830333337363831353100050056414e534f000400000000040000006369643a30303030303033303035207375623a30303120646c7672643a303031207375626d697420646174653a3130303131383134333120646f6e6520646174653a3130303131383134333120737461743a44454c49565244206572723a3030302074650427000102001e00413330303500");
 
         DeliverSm pdu0 = (DeliverSm)PduDecoder.decode(buffer);
 
@@ -737,7 +736,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeSubmitSm() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000039000000040000000000004FE80001013430343034000101343439353133363139323000000000000001000000084024232125262F3A");
+        ByteBuf buffer = BufferHelper.createBuffer("00000039000000040000000000004FE80001013430343034000101343439353133363139323000000000000001000000084024232125262F3A");
 
         SubmitSm pdu0 = (SubmitSm)transcoder.decode(buffer);
 
@@ -773,7 +772,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeUnbind() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010000000060000000000000001");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010000000060000000000000001");
 
         Unbind pdu0 = (Unbind)transcoder.decode(buffer);
 
@@ -787,7 +786,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeUnbindResp() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010800000060000000000000001");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010800000060000000000000001");
 
         UnbindResp pdu0 = (UnbindResp)transcoder.decode(buffer);
 
@@ -801,7 +800,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeGenericNak() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010800000000000000100082a77");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010800000000000000100082a77");
 
         GenericNack pdu0 = (GenericNack)transcoder.decode(buffer);
         logger.debug("{}", pdu0);
@@ -816,7 +815,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDeliverSmWithOptionalMessagePayload() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000640000000500000000000547EB0002013434393531333631393200040934303430340000000000000000000000000E000101000600010104240026404D616964656E6D616E363634207761732069742073617070793F2026526F6D616E7469633F");
+        ByteBuf buffer = BufferHelper.createBuffer("000000640000000500000000000547EB0002013434393531333631393200040934303430340000000000000000000000000E000101000600010104240026404D616964656E6D616E363634207761732069742073617070793F2026526F6D616E7469633F");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
@@ -858,7 +857,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDeliverSmWith2BytePayload() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000040000000050000000000657E4E0002013434393531333631393200040934303430340000000000000000000000000E0001010006000101042400024F6B");
+        ByteBuf buffer = BufferHelper.createBuffer("00000040000000050000000000657E4E0002013434393531333631393200040934303430340000000000000000000000000E0001010006000101042400024F6B");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
@@ -900,7 +899,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDeliverSmWith1BytePayload() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000003F000000050000000000657E4E0002013434393531333631393200040934303430340000000000000000000000000E0001010006000101042400014F");
+        ByteBuf buffer = BufferHelper.createBuffer("0000003F000000050000000000657E4E0002013434393531333631393200040934303430340000000000000000000000000E0001010006000101042400014F");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
@@ -942,7 +941,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDeliverSmWithNoPayload() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000003E000000050000000000657E4E0002013434393531333631393200040934303430340000000000000000000000000E000101000600010104240000");
+        ByteBuf buffer = BufferHelper.createBuffer("0000003E000000050000000000657E4E0002013434393531333631393200040934303430340000000000000000000000000E000101000600010104240000");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
@@ -984,7 +983,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDeliverSmWithDeliveryReceiptThatFailedFromEndToEnd() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000A2000000050000000000116AD500010134343935313336313932303537000501475442616E6B000400000000010000006E69643A3934323531343330393233207375623A30303120646C7672643A303031207375626D697420646174653A3039313130343031323420646F6E6520646174653A3039313130343031323420737461743A41434345505444206572723A31303720746578743A20323646313032");
+        ByteBuf buffer = BufferHelper.createBuffer("000000A2000000050000000000116AD500010134343935313336313932303537000501475442616E6B000400000000010000006E69643A3934323531343330393233207375623A30303120646C7672643A303031207375626D697420646174653A3039313130343031323420646F6E6520646174653A3039313130343031323420737461743A41434345505444206572723A31303720746578743A20323646313032");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
@@ -1020,7 +1019,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeDeliveryReceipt0() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000EB00000005000000000000000100010134343935313336313932300000013430343034000400000000000003009069643A3132366538356136656465616331613032303230303939333132343739353634207375623A30303120646C7672643A303031207375626D697420646174653A3130303231393136333020646F6E6520646174653A3130303231393136333020737461743A44454C49565244206572723A30303020546578743A48656C6C6F2020202020202020202020202020200427000102001E0021313236653835613665646561633161303230323030393933313234373935363400");
+        ByteBuf buffer = BufferHelper.createBuffer("000000EB00000005000000000000000100010134343935313336313932300000013430343034000400000000000003009069643A3132366538356136656465616331613032303230303939333132343739353634207375623A30303120646C7672643A303031207375626D697420646174653A3130303231393136333020646F6E6520646174653A3130303231393136333020737461743A44454C49565244206572723A30303020546578743A48656C6C6F2020202020202020202020202020200427000102001E0021313236653835613665646561633161303230323030393933313234373935363400");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
@@ -1056,7 +1055,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeLargeSequenceNumber() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000400000000500000000A2859F22313030310001013434393531333631393230000001343034303430343034303430343034300000000000000000080000");
+        ByteBuf buffer = BufferHelper.createBuffer("000000400000000500000000A2859F22313030310001013434393531333631393230000001343034303430343034303430343034300000000000000000080000");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
@@ -1086,7 +1085,7 @@ public class PduDecoderTest {
     
     @Test
     public void decodeWAUMalformedPacket() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000400000000500000000A2859F22313030310001013434393531333631393230000001343034303430343034303430343034300000000000000000080000");
+        ByteBuf buffer = BufferHelper.createBuffer("000000400000000500000000A2859F22313030310001013434393531333631393230000001343034303430343034303430343034300000000000000000080000");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
@@ -1121,7 +1120,7 @@ public class PduDecoderTest {
         String text255 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum in orci magna. Etiam auctor ultrices lacus vel suscipit. Maecenas eget faucibus purus. Etiam aliquet mollis fermentum. Proin vel augue arcu. Praesent venenatis tristique ante turpis duis.";
         byte[] text255Bytes = text255.getBytes("ISO-8859-1");
 
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000130000000040000000000004FE80001013430343034000101343439353133363139323000000000000001000000FF" + HexUtil.toHexString(text255Bytes));
+        ByteBuf buffer = BufferHelper.createBuffer("00000130000000040000000000004FE80001013430343034000101343439353133363139323000000000000001000000FF" + HexUtil.toHexString(text255Bytes));
 
         SubmitSm pdu0 = (SubmitSm)transcoder.decode(buffer);
 
@@ -1162,7 +1161,7 @@ public class PduDecoderTest {
         // this normally causes an IndexOutOfBoundsException on the ByteBuffer read, but
         // this should probably be caught and have a specific exception thrown instead!
         // MX nextel parsing exception in real world
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000039000000050000000000000001000101393939393139393134353933000000363436340000000000000000080010c1e1e9edf3faf1fc");
+        ByteBuf buffer = BufferHelper.createBuffer("00000039000000050000000000000001000101393939393139393134353933000000363436340000000000000000080010c1e1e9edf3faf1fc");
 
         DeliverSm pdu = (DeliverSm)transcoder.decode(buffer);
 
@@ -1171,7 +1170,7 @@ public class PduDecoderTest {
     
     @Test
     public void decodeDeliverSMWithNotPerSpecSequenceNumberButNeedsToBeValid() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000390000000500000000806A179B000101393939393139393134353933000000363436340000000000000000080008c1e1e9edf3faf1fc");
+        ByteBuf buffer = BufferHelper.createBuffer("000000390000000500000000806A179B000101393939393139393134353933000000363436340000000000000000080008c1e1e9edf3faf1fc");
 
         DeliverSm pdu = (DeliverSm)transcoder.decode(buffer);
         
@@ -1181,7 +1180,7 @@ public class PduDecoderTest {
         // make sure the pdu is correct on a reply
         DeliverSmResp pduResponse = pdu.createResponse();
         
-        ChannelBuffer respbuf = transcoder.encode(pduResponse);
+        ByteBuf respbuf = transcoder.encode(pduResponse);
         String actualHex = BufferHelper.createHexString(respbuf).toUpperCase();
         String expectedHex = "000000118000000500000000806A179B00";
         
@@ -1190,7 +1189,7 @@ public class PduDecoderTest {
     
     @Test
     public void decodeDataSM() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000300000010300000000000000000001013535353237313030303000000139363935000001000424000454657374");
+        ByteBuf buffer = BufferHelper.createBuffer("000000300000010300000000000000000001013535353237313030303000000139363935000001000424000454657374");
 
         DataSm pdu0 = (DataSm)transcoder.decode(buffer);
         
@@ -1232,7 +1231,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeCancelSm() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000002D000000080000000000004FE80031323334350001013430343034000101343439353133363139323000");
+        ByteBuf buffer = BufferHelper.createBuffer("0000002D000000080000000000004FE80031323334350001013430343034000101343439353133363139323000");
 
         CancelSm pdu0 = (CancelSm)transcoder.decode(buffer);
 
@@ -1259,7 +1258,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeQuerySm() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("0000001E000000030000000000004FE83132333435000101343034303400");
+        ByteBuf buffer = BufferHelper.createBuffer("0000001E000000030000000000004FE83132333435000101343034303400");
 
         QuerySm pdu0 = (QuerySm)transcoder.decode(buffer);
 
@@ -1281,7 +1280,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeCancelSmResp() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010800000080000000000004FE8");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010800000080000000000004FE8");
 
         CancelSmResp pdu0 = (CancelSmResp)transcoder.decode(buffer);
 
@@ -1296,7 +1295,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeQuerySmResp() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000019800000030000000000004FE8313233343500000600");
+        ByteBuf buffer = BufferHelper.createBuffer("00000019800000030000000000004FE8313233343500000600");
 
         QuerySmResp pdu0 = (QuerySmResp)transcoder.decode(buffer);
 

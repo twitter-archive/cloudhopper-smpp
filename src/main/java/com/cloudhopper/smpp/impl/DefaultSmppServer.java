@@ -53,7 +53,6 @@ import javax.management.ObjectName;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
-import io.netty.channel.ChannelFactory;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -65,6 +64,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.oio.OioServerSocketChannel;
 import io.netty.handler.timeout.WriteTimeoutHandler;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,7 +138,10 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler, ExecutorService executor, ScheduledExecutorService monitorExecutor) {
         this.configuration = configuration;
         // the same group we'll put every server channel
-        this.channels = new DefaultChannelGroup();
+        // this.channels = new DefaultChannelGroup();
+	//The doc says about GlobalEventExecutor: Please note it is not scalable to schedule large number of tasks to this executor; use a dedicated executor. 
+	this.channels = new DefaultChannelGroup("server", GlobalEventExecutor.INSTANCE);
+
         this.serverHandler = serverHandler;
         // we'll put the "boss" worker for a server in its own pool
         // this.bossThreadPool = Executors.newCachedThreadPool();
@@ -163,16 +166,16 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
 	    this.workerGroup = new OioEventLoopGroup();
 	    this.serverBootstrap.channel(OioServerSocketChannel.class);
 	}
-        this.channels = new DefaultChannelGroup(bossGroup);
         this.serverConnector = new SmppServerConnector(channels, this);
 	this.serverBootstrap.group(bossGroup, workerGroup)
 	    .option(ChannelOption.SO_REUSEADDR, configuration.isReuseAddress())
-	    .handler(new ChannelInitializer<SocketChannel>() {
-		    @Override
-			public void initChannel(SocketChannel ch) throws Exception {
-			ch.pipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, serverConnector);
-		    }
-		});
+	    .childHandler(serverConnector);
+	    // .handler(new ChannelInitializer<SocketChannel>() {
+	    // 	    @Override
+	    // 		public void initChannel(SocketChannel ch) throws Exception {
+	    // 		ch.pipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, serverConnector);
+	    // 	    }
+	    // 	});
 
         // // tie the server bootstrap to this server socket channel factory
         // this.serverBootstrap = new ServerBootstrap(this.channelFactory);
@@ -289,8 +292,13 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         this.channels.close().awaitUninterruptibly();
         // clean up all external resources
         if (this.serverChannel != null) {
-            this.serverChannel.close().awaitUninterruptibly();
-            this.serverChannel = null;
+	    try {
+		/// this.serverChannel.close().awaitUninterruptibly();
+		this.serverChannel.close().sync(); 
+		this.serverChannel = null;
+	    } catch (InterruptedException e) {
+		logger.warn("Thread interrupted closing server channel.", e);
+	    }
         }
         logger.info("{} stopped on SMPP port [{}]", configuration.getName(), configuration.getPort());
     }
@@ -302,19 +310,16 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
 
 	//TODO how to release resources? Do we need to ?
         // this.serverBootstrap.releaseExternalResources();
-        // this.serverBootstrap = null;
-	//  serverChannel.closeFuture().sync(); ??
+	this.serverBootstrap = null;
+
+	this.bossGroup.shutdownGracefully();
+	this.workerGroup.shutdownGracefully();
 	try {
-	    serverChannel.closeFuture().sync(); 
-	    this.serverBootstrap = null;
-	} finally {
-	    // Shut down all event loops to terminate all threads.
-	    bossGroup.shutdownGracefully();
-	    workerGroup.shutdownGracefully();
-	    
 	    // Wait until all threads are terminated.
 	    bossGroup.terminationFuture().sync();
 	    workerGroup.terminationFuture().sync();
+	} catch (InterruptedException e) {
+	    logger.warn("Thread interrupted closing executors.", e);
 	}
 
         unregisterMBean();

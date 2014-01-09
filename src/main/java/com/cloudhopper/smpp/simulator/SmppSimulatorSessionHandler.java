@@ -104,8 +104,6 @@ public class SmppSimulatorSessionHandler extends ByteToMessageDecoder {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable e) throws Exception {
         logger.info("Received new throwable on channel 0x" + HexUtil.toHexString(channel.hashCode()) );
         this.exceptionQueue.add(e);
-	//TODO: do this? 
-	ctx.fireExceptionCaught(e);
     }
 
     public void sendPdu(Pdu pdu) throws Exception {
@@ -120,7 +118,7 @@ public class SmppSimulatorSessionHandler extends ByteToMessageDecoder {
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
         // ignore requests with zero bytes
         if (buffer.readableBytes() <= 0) {
-            return null;
+            return;
         }
 
 	// get the channel
@@ -135,7 +133,7 @@ public class SmppSimulatorSessionHandler extends ByteToMessageDecoder {
         if (pdu == null) {
             logger.info("Received data on channel 0x" + HexUtil.toHexString(channel.hashCode()) + ", but not enough to parse PDU fully yet");
             logger.info("Bytes in buffer: [{}]", hexDump(buffer));
-            return null;
+            return;
         }
 
         logger.info("Decoded buffer on channel 0x" + HexUtil.toHexString(channel.hashCode()) + " into PDU: {}", pdu);
