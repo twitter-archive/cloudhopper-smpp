@@ -23,7 +23,6 @@ package com.cloudhopper.smpp.channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-// import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +38,13 @@ import org.slf4j.LoggerFactory;
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @ChannelHandler.Sharable
-public class SmppClientConnector extends ChannelInboundHandlerAdapter {
+public class SmppClientConnector extends LoggingChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(SmppClientConnector.class);
 
     private ChannelGroup channels;
 
     public SmppClientConnector(ChannelGroup channels) {
+	super(SmppClientConnector.class);
         this.channels = channels;
     }
 

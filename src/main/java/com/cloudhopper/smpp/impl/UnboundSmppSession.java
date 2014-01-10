@@ -144,7 +144,7 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
 
     @Override
     public void fireChannelClosed() {
-        logger.info("Connection closed with [{}]", channelName);
+        logger.trace("Connection closed with [{}]", channelName);
         closeChannelAndCancelTimer();
     }
 

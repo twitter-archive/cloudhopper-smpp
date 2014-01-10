@@ -24,11 +24,7 @@ import com.cloudhopper.smpp.type.LoggingOptions;
 import io.netty.buffer.ByteBuf;
 import static io.netty.buffer.ByteBufUtil.*;
 import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
-// import io.netty.channel.ChannelInboundHandler;
-// import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.ChannelPromise;
 import java.net.SocketAddress;
 import org.slf4j.Logger;
@@ -41,7 +37,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelHandler.Sharable
 public class SmppSessionLogger extends ChannelDuplexHandler {
 
     private final Logger logger;
@@ -103,7 +98,6 @@ public class SmppSessionLogger extends ChannelDuplexHandler {
     // }
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-	//     log(Direction.UP, e);
 	log(Direction.UP, msg);
         ctx.fireChannelRead(msg);
     }
@@ -116,7 +110,6 @@ public class SmppSessionLogger extends ChannelDuplexHandler {
     // }
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-	//     log(Direction.DOWN, e);
 	log(Direction.DOWN, msg);
         ctx.write(msg, promise);
     }

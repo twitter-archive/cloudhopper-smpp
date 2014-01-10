@@ -26,6 +26,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -50,7 +52,7 @@ public class SmppSimulatorServer {
     private EventLoopGroup workerGroup;
     private ServerBootstrap serverBootstrap;
     
-    private SmppSimulatorServerHandler serverHandler;
+    private final SmppSimulatorServerHandler serverHandler;
 
     public SmppSimulatorServer() {
         this(Executors.newCachedThreadPool());
@@ -70,7 +72,13 @@ public class SmppSimulatorServer {
         // the handler to use when new child connections are accepted
         this.serverHandler = new SmppSimulatorServerHandler(this.sessionChannels);
         // set up the event pipeline factory for new connections
-        this.serverBootstrap.handler(serverHandler);
+        this.serverBootstrap.childHandler(serverHandler);
+	this.serverBootstrap.handler(new ChannelInboundHandlerAdapter() {
+		@Override
+		public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+		    serverHandler.channelRead(ctx, msg);
+		}
+	    });
     }
     
     public void start(int port) {

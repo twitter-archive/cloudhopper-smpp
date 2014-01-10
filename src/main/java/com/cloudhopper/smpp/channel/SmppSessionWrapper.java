@@ -22,7 +22,6 @@ package com.cloudhopper.smpp.channel;
 
 import com.cloudhopper.smpp.impl.SmppSessionChannelListener;
 import com.cloudhopper.smpp.pdu.Pdu;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.ChannelPromise;
@@ -35,7 +34,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-//@ChannelHandler.Sharable
 public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> implements ChannelOutboundHandler {
     private static final Logger logger = LoggerFactory.getLogger(SmppSessionWrapper.class);
 
@@ -45,8 +43,6 @@ public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> impleme
         this.listener = listener;
     }
     
-    // @Override
-    // public void messageReceived(ChannelHandlerContext ctx, Pdu pdu) throws Exception {
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Pdu pdu) throws Exception {
 	logger.trace("Pdu received: {}", pdu);
@@ -68,6 +64,7 @@ public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> impleme
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.trace("channelInactive");
+	//TODO: if the old channelClosed is the outbound close(), we don't need this impl anymore
         // this.listener.fireChannelClosed();
 	ctx.fireChannelInactive();
     }
@@ -79,8 +76,7 @@ public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> impleme
      * Sub-classes may override this method to change behavior.
      */
     @Override
-    public void bind(ChannelHandlerContext ctx, SocketAddress localAddress,
-            ChannelPromise promise) throws Exception {
+    public void bind(ChannelHandlerContext ctx, SocketAddress localAddress, ChannelPromise promise) throws Exception {
 	logger.trace("bind {}", localAddress);
         ctx.bind(localAddress, promise);
     }
@@ -92,8 +88,7 @@ public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> impleme
      * Sub-classes may override this method to change behavior.
      */
     @Override
-    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress,
-            SocketAddress localAddress, ChannelPromise promise) throws Exception {
+    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
 	logger.trace("connect {} {}", localAddress, remoteAddress);
         ctx.connect(remoteAddress, localAddress, promise);
     }
@@ -105,8 +100,7 @@ public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> impleme
      * Sub-classes may override this method to change behavior.
      */
     @Override
-    public void disconnect(ChannelHandlerContext ctx, ChannelPromise promise)
-            throws Exception {
+    public void disconnect(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
 	logger.trace("disconnect");
         ctx.disconnect(promise);
     }
@@ -118,8 +112,7 @@ public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> impleme
      * Sub-classes may override this method to change behavior.
      */
     @Override
-    public void close(ChannelHandlerContext ctx, ChannelPromise promise)
-            throws Exception {
+    public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
 	logger.trace("close");
 	this.listener.fireChannelClosed();
         ctx.close(promise);

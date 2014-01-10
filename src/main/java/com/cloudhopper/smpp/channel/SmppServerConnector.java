@@ -58,7 +58,7 @@ public class SmppServerConnector extends LoggingChannelInboundHandlerAdapter {
     // public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-	logger.debug("channelActive");
+	logger.trace("channelActive");
         // the channel we are going to handle
         Channel channel = ctx.channel();
 
@@ -103,7 +103,7 @@ public class SmppServerConnector extends LoggingChannelInboundHandlerAdapter {
     // public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-	logger.debug("channelInactive");
+	logger.trace("channelInactive");
 	logger.info("Disconnected channel from [{}]", ChannelUtil.createChannelName(ctx.channel()));
         // called every time a channel disconnects
         channels.remove(ctx.channel());

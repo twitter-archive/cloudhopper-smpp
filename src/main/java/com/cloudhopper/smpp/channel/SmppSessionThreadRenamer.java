@@ -20,7 +20,6 @@ package com.cloudhopper.smpp.channel;
  * #L%
  */
 
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
@@ -35,7 +34,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-//@ChannelHandler.Sharable
 public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements ChannelInboundHandler {
     private static final Logger logger = LoggerFactory.getLogger(SmppSessionThreadRenamer.class);
 
@@ -55,7 +53,6 @@ public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements C
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-	logger.debug("channelRegistered");
 	String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
 	ctx.fireChannelRegistered();
@@ -64,7 +61,6 @@ public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements C
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-	logger.debug("channelUnregistered");
 	String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
 	ctx.fireChannelUnregistered();
@@ -73,7 +69,6 @@ public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements C
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-	logger.debug("channelActive");
 	String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
 	ctx.fireChannelActive();
@@ -82,7 +77,6 @@ public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements C
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-	logger.debug("channelInactive");
 	String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
 	ctx.fireChannelInactive();
@@ -91,7 +85,6 @@ public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements C
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-	logger.debug("channelRead");
 	String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
 	ctx.fireChannelRead(msg);
@@ -100,7 +93,6 @@ public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements C
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-	logger.debug("channelReadComplete");
 	String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
 	ctx.fireChannelReadComplete();
@@ -109,7 +101,6 @@ public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements C
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-	logger.debug("userEventTriggered");
 	String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
 	ctx.fireUserEventTriggered(evt);
@@ -118,7 +109,6 @@ public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements C
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-	logger.debug("channelWritabilityChanged");
 	String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
 	ctx.fireChannelWritabilityChanged();
@@ -126,9 +116,7 @@ public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements C
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
-	throws Exception {
-	logger.debug("exceptionCaught");
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 	String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
 	ctx.fireExceptionCaught(cause);

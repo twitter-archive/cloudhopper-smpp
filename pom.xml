@@ -39,7 +39,7 @@
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
-    <dependency>
+    <dependency> <!-- TODO: select only the netty deps we need -->
       <groupId>io.netty</groupId>
       <artifactId>netty-all</artifactId>
       <version>${netty.version}</version>
