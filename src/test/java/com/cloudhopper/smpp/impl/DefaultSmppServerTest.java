@@ -104,6 +104,7 @@ public class DefaultSmppServerTest {
 
         @Override
         public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
+	    logger.debug("Session created {}", sessionId);
             sessions.add(session);
             // need to do something it now (flag we're ready)
             session.serverReady(sessionHandler);
@@ -111,6 +112,7 @@ public class DefaultSmppServerTest {
 
         @Override
         public void sessionDestroyed(Long sessionId, SmppServerSession session) {
+	    logger.debug("Session destroyed {}", sessionId);
             sessions.remove(session);
         }
     }

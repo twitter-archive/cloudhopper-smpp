@@ -160,14 +160,12 @@ public class DefaultSmppClient implements SmppClient {
 	this.clientBootstrap = new Bootstrap();
 	this.clientBootstrap.group(eventLoopGroup)
 	    .channel(NioSocketChannel.class)
-	    .handler(clientConnector);
-	    // .handler(new ChannelInitializer<SocketChannel>() {
-	    // 	    @Override
-	    // 		public void initChannel(SocketChannel ch) throws Exception {
-	    // 		ch.pipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, clientConnector);
-	    // 	    }
-	    // 	});
-    
+	    .handler(new ChannelInitializer<SocketChannel>() {
+	    	    @Override
+	    		public void initChannel(SocketChannel ch) throws Exception {
+	    		ch.pipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, clientConnector);
+	    	    }
+	    	});
     }
     
     public int getConnectionSize() {
@@ -290,8 +288,8 @@ public class DefaultSmppClient implements SmppClient {
         }
 
         // create the logging handler (for bytes sent/received on wire)
-        SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
-        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
+	SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
+	channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
 
 	// add a writeTimeout handler after the logger
 	if (config.getWriteTimeout() > 0) {
@@ -322,19 +320,24 @@ public class DefaultSmppClient implements SmppClient {
 	// boolean timeout = !connectFuture.await(connectTimeoutMillis);
 	// BAD: using .await(timeout)
 	//      see http://netty.io/3.9/api/org/jboss/netty/channel/ChannelFuture.html
+	logger.debug("Waiting for client connection to {}", socketAddr);
 	connectFuture.awaitUninterruptibly();
 	//assert connectFuture.isDone();
 
 	if (connectFuture.isCancelled()) {
+	    logger.warn("Client connection cancelled.");
 	    throw new InterruptedException("connectFuture cancelled by user");
 	} else if (!connectFuture.isSuccess()) {
 	    if (connectFuture.cause() instanceof ConnectTimeoutException) {
+		logger.warn("Client did not connect in timeout " + connectTimeoutMillis + " ms", connectFuture.cause());
 		throw new SmppChannelConnectTimeoutException("Unable to connect to host [" + host + "] and port [" + port + "] within " + connectTimeoutMillis + " ms", connectFuture.cause());
 	    } else {
+		logger.warn("Client did not connect.", connectFuture.cause());
 		throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " + connectFuture.cause().getMessage(), connectFuture.cause());
 	    }
 	}
 
+	logger.debug("Client connected to {}", socketAddr);
         // if we get here, then we were able to connect and get a channel
         return connectFuture.channel();
     }

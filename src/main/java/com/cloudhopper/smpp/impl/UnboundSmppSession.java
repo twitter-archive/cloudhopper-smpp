@@ -192,7 +192,7 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
             logger.info("send PDU: {}", pdu);
 
             // write the pdu out & wait till its written
-            ChannelFuture channelFuture = this.channel.write(buffer).await();
+            ChannelFuture channelFuture = this.channel.writeAndFlush(buffer).await();
 
             // check if the write was a success
             if (!channelFuture.isSuccess()) {

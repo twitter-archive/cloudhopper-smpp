@@ -29,7 +29,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-// import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
@@ -41,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @ChannelHandler.Sharable
-public class SmppServerConnector extends ChannelInboundHandlerAdapter {
+public class SmppServerConnector extends LoggingChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(SmppServerConnector.class);
 
     // reference to every channel connected via this server channel
@@ -49,6 +48,7 @@ public class SmppServerConnector extends ChannelInboundHandlerAdapter {
     private DefaultSmppServer server;
 
     public SmppServerConnector(ChannelGroup channels, DefaultSmppServer server) {
+	super(SmppServerConnector.class);
         this.channels = channels;
         this.server = server;
     }
@@ -58,6 +58,7 @@ public class SmppServerConnector extends ChannelInboundHandlerAdapter {
     // public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+	logger.debug("channelActive");
         // the channel we are going to handle
         Channel channel = ctx.channel();
 
@@ -102,6 +103,8 @@ public class SmppServerConnector extends ChannelInboundHandlerAdapter {
     // public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+	logger.debug("channelInactive");
+	logger.info("Disconnected channel from [{}]", ChannelUtil.createChannelName(ctx.channel()));
         // called every time a channel disconnects
         channels.remove(ctx.channel());
         this.server.getCounters().incrementChannelDisconnectsAndGet();
