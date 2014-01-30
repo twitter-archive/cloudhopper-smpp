@@ -109,7 +109,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
      *      and creating/destroying sessions.
      * @param executor The executor that IO workers will be executed with. An
      *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than configuration.getMaxConnections() if NIO
+     *      will never grow more than configuration.getMaxThreads() if NIO
      *      sockets are used.
      */
     public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler, ExecutorService executor) {
@@ -123,7 +123,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
      *      and creating/destroying sessions.
      * @param executor The executor that IO workers will be executed with. An
      *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than configuration.getMaxConnections() if NIO
+     *      will never grow more than configuration.getMaxThreads() if NIO
      *      sockets are used.
      * @param monitorExecutor The scheduled executor that all sessions will share
      *      to monitor themselves and expire requests. If null monitoring will
@@ -139,7 +139,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         
         // a factory for creating channels (connections)
         if (configuration.isNonBlockingSocketsEnabled()) {
-            this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executor, configuration.getMaxConnectionSize());
+            this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executor, configuration.getMaxThreads());
         } else {
             this.channelFactory = new OioServerSocketChannelFactory(this.bossThreadPool, executor);
         }
@@ -441,6 +441,11 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     @Override
     public int getMaxConnectionSize() {
         return this.configuration.getMaxConnectionSize();
+    }
+
+    @Override
+    public int getMaxThreads() {
+        return this.configuration.getMaxThreads();
     }
 
     @Override

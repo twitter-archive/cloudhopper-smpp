@@ -44,9 +44,9 @@ public class SmppServerConfiguration {
     // smpp version the server supports
     private byte interfaceVersion;
     // max number of connections/sessions this server will expect to handle
-    // this number corrosponds to the number of worker threads handling reading
-    // data from sockets and the thread things will be processed under
     private int maxConnectionSize;
+    // max number worker threads used for I/O
+    private int maxThreads;
     private boolean nonBlockingSocketsEnabled;
     private boolean reuseAddress;
     // jmx options
@@ -67,6 +67,7 @@ public class SmppServerConfiguration {
         this.autoNegotiateInterfaceVersion = true;
         this.interfaceVersion = SmppConstants.VERSION_3_4;
         this.maxConnectionSize = SmppConstants.DEFAULT_SERVER_MAX_CONNECTION_SIZE;
+        this.maxThreads = SmppConstants.DEFAULT_SERVER_MAX_IO_THREADS;
         this.nonBlockingSocketsEnabled = SmppConstants.DEFAULT_SERVER_NON_BLOCKING_SOCKETS_ENABLED;
         this.reuseAddress = SmppConstants.DEFAULT_SERVER_REUSE_ADDRESS;
         this.jmxEnabled = false;
@@ -125,10 +126,25 @@ public class SmppServerConfiguration {
      * @param maxConnectionSize Max number of connections. Must be >= 1
      */
     public void setMaxConnectionSize(int maxConnectionSize) {
-        if (this.maxConnectionSize < 1) {
+        if (maxConnectionSize < 1) {
             throw new IllegalArgumentException("Max connection size must be >= 1");
         }
         this.maxConnectionSize = maxConnectionSize;
+    }
+
+    public int getMaxThreads() {
+        return maxThreads;
+    }
+
+    /**
+     * Set the maximum number of threads used for I/O
+     * @param maxThreads Max number of threads. Must be >= 1
+     */
+    public void setMaxThreads(int maxThreads) {
+        if (maxThreads < 1) {
+            throw new IllegalArgumentException("Max threads must be >= 1");
+        }
+        this.maxThreads = maxThreads;
     }
 
     /**

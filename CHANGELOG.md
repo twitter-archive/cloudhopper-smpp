@@ -3,6 +3,13 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+## 5.0.6 - 2014-02-01
+ - Added maxThreads to SmppServerConfiguration, which is distinct from
+   maxConnectionSize. maxThreads is used in DefaultSmppServer to set the number
+   of worker threads used by Netty. maxThreads defaults to 2 * processors.
+   maxConnectionSize still limits total client connections.
+ - maxThreads exposed in the DefaultSmppServerMXBean.
+
 ## 5.0.5 - 2014-01-07
  - Changed bindTimeout and writeTimeout implementations to adhere to documented
    best practices:

@@ -55,6 +55,8 @@ public interface DefaultSmppServerMXBean {
     
     public int getMaxConnectionSize();
     
+    public int getMaxThreads();
+    
     public int getConnectionSize();
     
     public long getBindTimeout();
