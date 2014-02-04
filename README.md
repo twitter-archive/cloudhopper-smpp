@@ -1,4 +1,4 @@
-Cloudhopper by Twitter
+Cloudhopper SMPP by Twitter [![Build Status](https://secure.travis-ci.org/twitter/cloudhopper-smpp.png?branch=master)](http://travis-ci.org/twitter/cloudhopper-smpp)
 ============================
 
 cloudhopper-smpp
