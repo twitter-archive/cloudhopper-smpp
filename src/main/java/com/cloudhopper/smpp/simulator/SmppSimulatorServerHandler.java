@@ -20,13 +20,13 @@ package com.cloudhopper.smpp.simulator;
  * #L%
  */
 
+import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.cloudhopper.smpp.transcoder.PduTranscoderContext;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,7 @@ import static io.netty.channel.ChannelHandler.Sharable;
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
 @Sharable
-public class SmppSimulatorServerHandler extends ChannelDuplexHandler {
+public class SmppSimulatorServerHandler extends SimpleChannelInboundHandler<Pdu> {
     private static final Logger logger = LoggerFactory.getLogger(SmppSimulatorServerHandler.class);
 
     private final ChannelGroup sessionChannels;
@@ -67,68 +67,56 @@ public class SmppSimulatorServerHandler extends ChannelDuplexHandler {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-    	logger.info(msg.toString());
-        if (msg instanceof Channel) {
-            Channel accepted = (Channel)msg;
-            childChannelOpen(accepted);
-        }
+    protected void channelRead0(ChannelHandlerContext ctx, Pdu msg) throws Exception {
+        logger.info("Read message {} from channel {}", msg.toString(), ctx.channel());
+        //if (msg instanceof Pdu) {
+        //    Pdu pdu = (Pdu)msg;
+        //    this.listener.firePduReceived(pdu);
+        //}
     }
 
-    private void childChannelOpen(Channel channel) throws Exception {
-       logger.info("childChannelOpen");
+    @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        logger.info("childChannelRegistered {}", ctx.channel());
 
         // modify its pipeline
         PduTranscoderContext context = new DefaultPduTranscoderContext();
         PduTranscoder transcoder = new DefaultPduTranscoder(context);
 
         // create a new "smsc" session instance (which is just a handler)
-        SmppSimulatorSessionHandler session = new SmppSimulatorSessionHandler(channel, transcoder);
+        SmppSimulatorSessionHandler session = new SmppSimulatorSessionHandler(ctx.channel(), transcoder);
 
         // add this channel's new processing pipeline
-        channel.pipeline().addLast(SmppSimulatorServer.PIPELINE_SESSION_NAME, session);
+        ctx.channel().pipeline().addLast(SmppSimulatorServer.PIPELINE_SESSION_NAME, session);
 
         session.setPduProcessor(defaultPduProcessor);
 
         // store this in our internal queue
-        this.sessionChannels.add(channel);
+        this.sessionChannels.add(ctx.channel());
         this.sessionQueue.add(session);
     }
 
+    /**
+     * Invoked when a child {@link io.netty.channel.Channel} was closed.
+     * (e.g. the accepted connection was closed)
+     */
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("childChannelClosed {}", ctx.channel());
+        super.channelInactive(ctx);
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("childChannelOpened {}", ctx.channel());
+        super.channelActive(ctx);
+    }
 
     /**
      * Invoked when an exception was raised by an I/O thread or an upstream handler.
      */
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable e) throws Exception {
-        logger.warn("Exception triggered in upstream ChannelHandler: {}", e);
-    }
-
-    /**
-     */
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("channelActive");
-    }
-
-    /**
-     */
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("channelInactive");
-    }
-
-    /**
-     */
-    @Override
-    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        logger.info("channelUnregistered");
-    }
-
-    /**
-     */
-    @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        logger.info("channelRegistered");
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        logger.warn("Exception triggered in upstream ChannelHandler: {}", cause);
     }
 }
