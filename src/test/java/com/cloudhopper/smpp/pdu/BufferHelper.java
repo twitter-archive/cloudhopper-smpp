@@ -23,6 +23,7 @@ package com.cloudhopper.smpp.pdu;
 import com.cloudhopper.commons.util.HexUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.nio.ByteOrder;
 
 /**
  *
@@ -32,7 +33,7 @@ public class BufferHelper
 {
 
     static public ByteBuf createBuffer(byte[] bytes) throws Exception {
-	return Unpooled.wrappedBuffer(bytes);
+        return Unpooled.wrappedBuffer(bytes).order(ByteOrder.BIG_ENDIAN);
     }
 
     static public ByteBuf createBuffer(String hexString) throws Exception {
@@ -47,7 +48,6 @@ public class BufferHelper
     }
 
     static public String createHexString(ByteBuf buffer) throws Exception {
-	return HexUtil.toHexString(createByteArray(buffer));
+        return HexUtil.toHexString(createByteArray(buffer));
     }
-
 }

@@ -26,14 +26,18 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
-import java.net.SocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.SocketAddress;
+
+import static io.netty.channel.ChannelHandler.Sharable;
 
 /**
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
+@Sharable
 public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> implements ChannelOutboundHandler {
     private static final Logger logger = LoggerFactory.getLogger(SmppSessionWrapper.class);
 
@@ -42,21 +46,6 @@ public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> impleme
     public SmppSessionWrapper(SmppSessionChannelListener listener) {
         this.listener = listener;
     }
-    
-    @Override
-    public void channelRead0(ChannelHandlerContext ctx, Pdu pdu) throws Exception {
-	logger.trace("Pdu received: {}", pdu);
-	this.listener.firePduReceived(pdu);
-    }
-    
-    /**
-     * Invoked when an exception was raised by an I/O thread or an upstream handler.
-     */
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable e) throws Exception {
-        logger.trace("Exception triggered in upstream ChannelHandler: {}", e.getCause());
-        this.listener.fireExceptionThrown(e);
-    }
 
     /**
      * Invoked when a Channel was closed and all its related resources were released.
@@ -64,9 +53,9 @@ public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> impleme
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.trace("channelInactive");
-	//TODO: if the old channelClosed is the outbound close(), we don't need this impl anymore
-        // this.listener.fireChannelClosed();
-	ctx.fireChannelInactive();
+        //TODO: if the old channelClosed is the outbound close(), we don't need this impl anymore
+        this.listener.fireChannelClosed();
+        super.channelInactive(ctx);
     }
 
     /**
@@ -103,6 +92,21 @@ public class SmppSessionWrapper extends SimpleChannelInboundHandler<Pdu> impleme
     public void disconnect(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
 	logger.trace("disconnect");
         ctx.disconnect(promise);
+    }
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, Pdu msg) throws Exception {
+        logger.trace("Pdu received: {}", msg);
+        this.listener.firePduReceived(msg);
+    }
+
+    /**
+     * Invoked when an exception was raised by an I/O thread or an upstream handler.
+     */
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        logger.trace("Exception triggered in upstream ChannelHandler: {}", cause.getCause());
+        this.listener.fireExceptionThrown(cause.getCause());
     }
 
     /**

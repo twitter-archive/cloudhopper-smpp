@@ -20,8 +20,8 @@ package com.cloudhopper.smpp.channel;
  * #L%
  */
 
-import java.net.InetSocketAddress;
 import io.netty.channel.Channel;
+import java.net.InetSocketAddress;
 
 /**
  * Utility methods for working with Netty Channels.

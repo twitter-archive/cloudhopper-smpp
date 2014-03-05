@@ -21,7 +21,7 @@ package com.cloudhopper.smpp.util;
  */
 
 // third party imports
-import com.cloudhopper.commons.util.HexUtil;
+
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.BufferHelper;
 import com.cloudhopper.smpp.pdu.DeliverSm;
@@ -30,11 +30,11 @@ import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.cloudhopper.smpp.transcoder.PduTranscoderContext;
-import com.cloudhopper.smpp.type.Address;
 import io.netty.buffer.ByteBuf;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -62,7 +62,7 @@ public class SmppServerConfiguration {
     public SmppServerConfiguration() {
         this.name = "SmppServer";
         this.port = 2775;
-        this.bindTimeout = 5000;
+        this.bindTimeout = SmppConstants.DEFAULT_BIND_TIMEOUT;
         this.systemId = "cloudhopper";
         this.autoNegotiateInterfaceVersion = true;
         this.interfaceVersion = SmppConstants.VERSION_3_4;

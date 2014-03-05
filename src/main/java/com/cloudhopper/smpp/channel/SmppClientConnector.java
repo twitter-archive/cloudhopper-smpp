@@ -20,12 +20,12 @@ package com.cloudhopper.smpp.channel;
  * #L%
  */
 
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.netty.channel.ChannelHandler.Sharable;
 
 /**
  * The default handler used just during a "connect" for a Channel when attempting
@@ -37,14 +37,14 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelHandler.Sharable
+@Sharable
 public class SmppClientConnector extends LoggingChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(SmppClientConnector.class);
 
     private ChannelGroup channels;
 
     public SmppClientConnector(ChannelGroup channels) {
-	super(SmppClientConnector.class);
+        super(SmppClientConnector.class);
         this.channels = channels;
     }
 
@@ -55,7 +55,7 @@ public class SmppClientConnector extends LoggingChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // called every time a new channel connects
         channels.add(ctx.channel());
-	// ctx.fireChannelActive();
+        super.channelActive(ctx);
     }
 
     //TODO is channelInactive is the same as channelDisconnected?
@@ -65,7 +65,7 @@ public class SmppClientConnector extends LoggingChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // called every time a channel disconnects
         channels.remove(ctx.channel());
-        // ctx.fireChannelInactive();
+        super.channelInactive(ctx);
     }
 
     /**
@@ -80,6 +80,6 @@ public class SmppClientConnector extends LoggingChannelInboundHandlerAdapter {
         // yet and the framework logged the exceptions to STDERR causing issues
         // on the console.  So, we'll implement a default handling of it here
         // where we just pass it further upstream and basically discard it
-        ctx.fireExceptionCaught(cause);
+        super.exceptionCaught(ctx, cause);
     }
 }

@@ -20,8 +20,8 @@ package com.cloudhopper.smpp.pdu;
  * #L%
  */
 
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.type.RecoverablePduException;
+import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import io.netty.buffer.ByteBuf;
 
 public abstract class EmptyBody<R extends PduResponse> extends PduRequest<R> {

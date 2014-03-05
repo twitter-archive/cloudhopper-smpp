@@ -22,13 +22,14 @@ package com.cloudhopper.smpp.channel;
 
 import com.cloudhopper.smpp.type.LoggingOptions;
 import io.netty.buffer.ByteBuf;
-import static io.netty.buffer.ByteBufUtil.*;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import java.net.SocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.netty.channel.ChannelHandler.Sharable;
 
 /**
  * Channel handler responsible for logging the bytes sent/received on an 
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
+@Sharable
 public class SmppSessionLogger extends ChannelDuplexHandler {
 
     private final Logger logger;
@@ -75,18 +77,18 @@ public class SmppSessionLogger extends ChannelDuplexHandler {
     /**
      * Logs the specified event to the {@link InternalLogger} returned by
      * {@link #getLogger()}. If hex dump has been enabled for this handler,
-     * the hex dump of the {@link ByteBuf} in a message will
+     * the hex dump of the {@link ByteBuf} in a {@link Object} will
      * be logged together.
      */
-    protected void log(Direction direction, Object msg) {
+    protected void log(Direction direction, Object obj) {
         // handle logging of message events (PDU, ByteBuf, etc.)
-	if ((msg instanceof ByteBuf) && this.options.isLogBytesEnabled()) {
-	    ByteBuf buffer = (ByteBuf)msg;
-	    if (direction == Direction.UP) {
-		logger.info("read bytes: [{}]", hexDump(buffer));
-	    } else if (direction == Direction.DOWN) {
-		logger.info("write bytes: [{}]", hexDump(buffer));
-	    }
+        if ((obj instanceof ByteBuf) && this.options.isLogBytesEnabled()) {
+            ByteBuf buffer = (ByteBuf) obj;
+            if (direction == Direction.UP) {
+                logger.info("read bytes: [{}]", ByteBufUtil.hexDump(buffer));
+            } else if (direction == Direction.DOWN) {
+                logger.info("write bytes: [{}]", ByteBufUtil.hexDump(buffer));
+            }
         }
     }
 
@@ -98,7 +100,7 @@ public class SmppSessionLogger extends ChannelDuplexHandler {
     // }
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-	log(Direction.UP, msg);
+        log(Direction.UP, msg);
         ctx.fireChannelRead(msg);
     }
 
@@ -110,8 +112,7 @@ public class SmppSessionLogger extends ChannelDuplexHandler {
     // }
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-	log(Direction.DOWN, msg);
+        log(Direction.DOWN, msg);
         ctx.write(msg, promise);
     }
-
 }

@@ -23,8 +23,8 @@ package com.cloudhopper.smpp.channel;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static io.netty.channel.ChannelHandler.Sharable;
 
 /**
  * Channel handler responsible for renaming the current thread, passing the
@@ -34,9 +34,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
+@Sharable
 public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements ChannelInboundHandler {
-    private static final Logger logger = LoggerFactory.getLogger(SmppSessionThreadRenamer.class);
-
     private String threadName;
 
     public SmppSessionThreadRenamer(String threadName) {
@@ -83,12 +82,12 @@ public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements C
 	Thread.currentThread().setName(currentThreadName);
     }
 
-    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-	String currentThreadName = Thread.currentThread().getName();
+        // always rename the current thread and then rename it back
+        String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
-	ctx.fireChannelRead(msg);
-	Thread.currentThread().setName(currentThreadName);
+        ctx.fireChannelRead(msg);
+        Thread.currentThread().setName(currentThreadName);
     }
 
     @Override

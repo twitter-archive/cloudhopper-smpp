@@ -20,41 +20,18 @@ package com.cloudhopper.smpp.transcoder;
  * #L%
  */
 
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.type.UnknownCommandIdException;
-import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.pdu.BindReceiver;
-import com.cloudhopper.smpp.pdu.BindReceiverResp;
-import com.cloudhopper.smpp.pdu.BindTransceiver;
-import com.cloudhopper.smpp.pdu.BindTransceiverResp;
-import com.cloudhopper.smpp.pdu.BindTransmitter;
-import com.cloudhopper.smpp.pdu.BindTransmitterResp;
-import com.cloudhopper.smpp.pdu.CancelSm;
-import com.cloudhopper.smpp.pdu.CancelSmResp;
-import com.cloudhopper.smpp.pdu.DataSm;
-import com.cloudhopper.smpp.pdu.DataSmResp;
-import com.cloudhopper.smpp.pdu.DeliverSm;
-import com.cloudhopper.smpp.pdu.DeliverSmResp;
-import com.cloudhopper.smpp.pdu.EnquireLink;
-import com.cloudhopper.smpp.pdu.EnquireLinkResp;
-import com.cloudhopper.smpp.pdu.GenericNack;
-import com.cloudhopper.smpp.pdu.PartialPdu;
-import com.cloudhopper.smpp.pdu.PartialPduResp;
-import com.cloudhopper.smpp.pdu.Pdu;
-import com.cloudhopper.smpp.pdu.PduResponse;
-import com.cloudhopper.smpp.pdu.QuerySm;
-import com.cloudhopper.smpp.pdu.QuerySmResp;
-import com.cloudhopper.smpp.pdu.SubmitSm;
-import com.cloudhopper.smpp.pdu.SubmitSmResp;
-import com.cloudhopper.smpp.pdu.Unbind;
-import com.cloudhopper.smpp.pdu.UnbindResp;
+import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.type.NotEnoughDataInBufferException;
+import com.cloudhopper.smpp.type.RecoverablePduException;
+import com.cloudhopper.smpp.type.UnknownCommandIdException;
+import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.PduUtil;
 import com.cloudhopper.smpp.util.SequenceNumber;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.nio.ByteOrder;
 
 /**
  * 
@@ -87,8 +64,8 @@ public class DefaultPduTranscoder implements PduTranscoder {
 
         // create the buffer and add the header
         ByteBuf buffer = Unpooled.buffer(pdu.getCommandLength());
-	//TODO: directBuffer?
-
+        //TODO: directBuffer?
+        buffer.order(ByteOrder.BIG_ENDIAN);
         buffer.writeInt(pdu.getCommandLength());
         buffer.writeInt(pdu.getCommandId());
         buffer.writeInt(pdu.getCommandStatus());

@@ -20,13 +20,10 @@ package com.cloudhopper.smpp.simulator;
  * #L%
  */
 
-import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.cloudhopper.smpp.transcoder.PduTranscoderContext;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -34,10 +31,16 @@ import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import static io.netty.channel.ChannelHandler.Sharable;
+
 /**
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
+@Sharable
 public class SmppSimulatorServerHandler extends ChannelDuplexHandler {
     private static final Logger logger = LoggerFactory.getLogger(SmppSimulatorServerHandler.class);
 
@@ -66,10 +69,10 @@ public class SmppSimulatorServerHandler extends ChannelDuplexHandler {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     	logger.info(msg.toString());
-	if (msg instanceof Channel) {
-	    Channel accepted = (Channel)msg;
-	    childChannelOpen(accepted);
-	}
+        if (msg instanceof Channel) {
+            Channel accepted = (Channel)msg;
+            childChannelOpen(accepted);
+        }
     }
 
     private void childChannelOpen(Channel channel) throws Exception {
