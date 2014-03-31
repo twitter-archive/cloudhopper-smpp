@@ -21,7 +21,6 @@ package com.cloudhopper.smpp.util;
  */
 
 // third party imports
-import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.BufferHelper;
 import com.cloudhopper.smpp.pdu.DeliverSm;
@@ -30,7 +29,7 @@ import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.cloudhopper.smpp.transcoder.PduTranscoderContext;
-import com.cloudhopper.smpp.type.Address;
+import org.hamcrest.core.StringContains;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -352,5 +351,23 @@ public class DeliveryReceiptTest {
         Assert.assertEquals(10, dlr.getErrorCode());
         
         Assert.assertEquals(receipt0, dlr.toShortMessage());
+    }
+
+    @Test
+    public void parseReceiptWithOnlySubmitDate() throws DeliveryReceiptException {
+        DeliveryReceipt dlr = DeliveryReceipt.parseShortMessage("submit date:110206193041", DateTimeZone.UTC, false);
+        // uninitialized state is -1 for numeric primitives, null for references
+        Assert.assertNull(dlr.getMessageId());
+        Assert.assertEquals(-1, dlr.getSubmitCount());
+        Assert.assertEquals(-1, dlr.getDeliveredCount());
+        Assert.assertEquals(new DateTime(2011, 2, 6, 19, 30, 41, 0, DateTimeZone.UTC), dlr.getSubmitDate());
+        Assert.assertNull(dlr.getDoneDate());
+        Assert.assertEquals((byte) -1, dlr.getState());
+        Assert.assertEquals(-1, dlr.getErrorCode());
+        Assert.assertNull(dlr.getText());
+
+        // broken null-check caused date format to be applied to null date,
+        // which results in the current time being formatted instead of all-zeroes
+        Assert.assertThat(dlr.toShortMessage(), new StringContains(DeliveryReceipt.FIELD_DONE_DATE + "0000000000"));
     }
 }
