@@ -14,16 +14,22 @@ public class Main {
 			SmppChannelException, UnrecoverablePduException, SmppTimeoutException {
 		DummySmppClientMessageService smppClientMessageService = new DummySmppClientMessageService();
 		List<OutboundClient> clients = new ArrayList<OutboundClient>();
-		clients.add(createClient(smppClientMessageService));
-		clients.add(createClient(smppClientMessageService));
-		clients.add(createClient(smppClientMessageService));
-		clients.add(createClient(smppClientMessageService));
-		clients.add(createClient(smppClientMessageService));
-		clients.add(createClient(smppClientMessageService));
-		clients.add(createClient(smppClientMessageService));
-		clients.add(createClient(smppClientMessageService));
-		clients.add(createClient(smppClientMessageService));
-		clients.add(createClient(smppClientMessageService));
+		int i = 0;
+		clients.add(createClient(smppClientMessageService,++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
+		clients.add(createClient(smppClientMessageService, ++i));
 
 		while (true) {
 			System.in.read();
@@ -34,23 +40,23 @@ public class Main {
 		}
 	}
 
-	private static OutboundClient createClient(DummySmppClientMessageService smppClientMessageService) {
+	private static OutboundClient createClient(DummySmppClientMessageService smppClientMessageService, int i) {
 		OutboundClient client = new OutboundClient();
-		client.initialize(getSmppSessionConfiguration(), smppClientMessageService);
+		client.initialize(getSmppSessionConfiguration(i), smppClientMessageService);
 		client.executeReconnect();
 		return client;
 	}
 
-	private static SmppSessionConfiguration getSmppSessionConfiguration() {
+	private static SmppSessionConfiguration getSmppSessionConfiguration(int i) {
 		// same configuration for each client runner
 		SmppSessionConfiguration config = new SmppSessionConfiguration();
 		config.setWindowSize(5);
-		config.setName("Tester.Session.0");
+		config.setName("Tester.Session."+i);
 		config.setType(SmppBindType.TRANSCEIVER);
 		config.setHost("127.0.0.1");
 		config.setPort(5019);
 		config.setConnectTimeout(10000);
-		config.setSystemId("systemId");
+		config.setSystemId("systemId"+i);
 		config.setPassword("password");
 		config.getLoggingOptions().setLogBytes(false);
 		// to enable monitoring (request expiration)
