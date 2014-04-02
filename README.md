@@ -98,9 +98,23 @@ In the second shell, run:
 You'll see the client bind to the server and a few different type of requests
 exchanged back and forth.
 
+User Contributed Demos
+----------------------
+
+A more complete persistent client demo:
+
+(https://github.com/krasa/cloudhopper-smpp/tree/persistent-connection/src/test/java/com/cloudhopper/smpp/demo/persist)
+
+A tutorial in Russian:
+
+https://github.com/wizardjedi/my-spring-learning/wiki/Twitter-cloudhopper
+
+Please let us know if you have other tutorials worth mentioning!
+
+
 License
 -------
 
-Copyright (C) 2010-2013 Twitter, Inc.
+Copyright (C) 2010-2014 Twitter, Inc.
 
 This work is licensed under the Apache License, Version 2.0. See LICENSE for details.
