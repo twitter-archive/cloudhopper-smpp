@@ -20,7 +20,7 @@
   <parent>
     <groupId>com.cloudhopper</groupId>
     <artifactId>ch-maven-parent-oss</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
   </parent>
 
   <dependencies>
@@ -57,7 +57,7 @@
     <dependency>
       <groupId>com.cloudhopper</groupId>
       <artifactId>ch-commons-gsm</artifactId>
-      <version>${ch-commons-gsm.version}</version>
+      <version>3.0.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -76,9 +76,9 @@
 
   <properties>
     <main.java.package>com.cloudhopper.smpp</main.java.package>
-    <ch-commons-util.version>[6.0.0,)</ch-commons-util.version>
-    <ch-commons-charset.version>[3.0.0,)</ch-commons-charset.version>
-    <ch-commons-gsm.version>[3.0.0,)</ch-commons-gsm.version>
+    <ch-commons-util.version>6.0.1</ch-commons-util.version>
+    <ch-commons-charset.version>3.0.2</ch-commons-charset.version>
+    <ch-commons-gsm.version>3.0.0</ch-commons-gsm.version>
     <netty.version>3.9.0.Final</netty.version>
   </properties>
 
