@@ -3,6 +3,18 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+
+## 5.0.6 - 2014-04-02
+ - Support for low-level PDU listener (supports advanced logging, sniffing, and
+   discarding before normal processing). New methods overridable in
+   DefaultSmppSessionHandler are firePduRecived()
+ - Bug with doneDate null-check fixed in DeliveryReceipt.toShortMessage().
+ - Delivery receipt intermediate constant has a flag of bit 4 not 5. Please note
+   that esm_class does used bit 5.
+ - Bumped pom parent to v1.5
+ - Dependencies now have specific version rather than version range.
+ - Updated docs with user contributed demos
+
 ## 5.0.5 - 2014-01-07
  - Changed bindTimeout and writeTimeout implementations to adhere to documented
    best practices:

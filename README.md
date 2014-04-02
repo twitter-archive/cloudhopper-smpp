@@ -115,6 +115,6 @@ Please let us know if you have other tutorials worth mentioning!
 License
 -------
 
-Copyright (C) 2010-2014 Twitter, Inc.
+Copyright (C) 2009-2014 Twitter, Inc.
 
 This work is licensed under the Apache License, Version 2.0. See LICENSE for details.
