@@ -1,0 +1,52 @@
+package com.cloudhopper.smpp.demo.persist;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.cloudhopper.smpp.SmppSession;
+import com.cloudhopper.smpp.pdu.EnquireLink;
+import com.cloudhopper.smpp.pdu.EnquireLinkResp;
+import com.cloudhopper.smpp.type.SmppChannelException;
+import com.cloudhopper.smpp.type.SmppTimeoutException;
+
+class EnquireLinkTask implements Runnable {
+
+	private static final Logger logger = LoggerFactory.getLogger(EnquireLinkTask.class);
+	private OutboundClient client;
+	private Integer enquireLinkTimeout;
+
+	public EnquireLinkTask(OutboundClient client, Integer enquireLinkTimeout) {
+		this.client = client;
+		this.enquireLinkTimeout = enquireLinkTimeout;
+	}
+
+	@Override
+	public void run() {
+		if (client.getSession().isBound()) {
+			try {
+				SmppSession smppSession = client.getSession();
+				if (smppSession != null && smppSession.isBound()) {
+					logger.debug("sending enquire_link");
+					EnquireLinkResp enquireLinkResp = smppSession.enquireLink(new EnquireLink(), enquireLinkTimeout);
+					logger.debug("enquire_link_resp: {}", enquireLinkResp);
+				}
+			} catch (SmppTimeoutException e) {
+				logger.warn("Enquire link failed, executing reconnect; " + e);
+				logger.debug("", e);
+				client.executeReconnect();
+			} catch (SmppChannelException e) {
+				logger.warn("Enquire link failed, executing reconnect; " + e);
+				logger.debug("", e);
+				client.executeReconnect();
+			} catch (InterruptedException e) {
+				// probably killed by reconnecting
+				logger.warn("Enquire link interrupted");
+			} catch (Exception e) {
+				logger.error("Enquire link failed, executing reconnect", e);
+				client.executeReconnect();
+			}
+		} else {
+			logger.error("enquire link running while session is not connected");
+		}
+	}
+}
