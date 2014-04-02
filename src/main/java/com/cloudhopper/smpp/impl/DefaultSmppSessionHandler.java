@@ -22,6 +22,8 @@ package com.cloudhopper.smpp.impl;
 
 import com.cloudhopper.smpp.PduAsyncResponse;
 import com.cloudhopper.smpp.SmppSessionHandler;
+import com.cloudhopper.smpp.SmppSessionListener;
+import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.type.RecoverablePduException;
@@ -37,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-public class DefaultSmppSessionHandler implements SmppSessionHandler {
+public class DefaultSmppSessionHandler implements SmppSessionListener {
     private final Logger logger;
 
     public DefaultSmppSessionHandler() {
@@ -102,6 +104,16 @@ public class DefaultSmppSessionHandler implements SmppSessionHandler {
     @Override
     public void firePduRequestExpired(PduRequest pduRequest) {
         logger.warn("Default handling is to discard expired request PDU: {}", pduRequest);
+    }
+
+    @Override
+    public boolean firePduRecived(Pdu pdu) {
+        return true;
+    }
+
+    @Override
+    public boolean firePduDispatch(Pdu pdu) {
+        return true;
     }
     
 }
