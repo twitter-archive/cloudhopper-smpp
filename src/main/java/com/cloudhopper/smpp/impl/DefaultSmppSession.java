@@ -34,6 +34,7 @@ import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.SmppSessionCounters;
 import com.cloudhopper.smpp.SmppSessionHandler;
+import com.cloudhopper.smpp.SmppSessionListener;
 import com.cloudhopper.smpp.type.SmppTimeoutException;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
@@ -506,6 +507,14 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         } catch (OfferTimeoutException e) {
             throw new SmppTimeoutException(e.getMessage(), e);
         }
+        
+        if(this.sessionHandler instanceof SmppSessionListener) {
+            if(!((SmppSessionListener)this.sessionHandler).firePduDispatch(pdu)) {
+                logger.info("dispatched request PDU discarded: {}", pdu);
+                future.cancel(); //@todo probably throwing exception here is better solution?
+                return future;
+            }
+        }
 
         // we need to log the PDU after encoding since some things only happen
         // during the encoding process such as looking up the result message
@@ -546,6 +555,13 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         if (!pdu.hasSequenceNumberAssigned()) {
             pdu.setSequenceNumber(this.sequenceNumber.next());
         }
+        
+        if(this.sessionHandler instanceof SmppSessionListener) {
+            if(!((SmppSessionListener)this.sessionHandler).firePduDispatch(pdu)) {
+                logger.info("dispatched response PDU discarded: {}", pdu);
+                return;
+            }
+        }
 
         // encode the pdu into a buffer
         ChannelBuffer buffer = transcoder.encode(pdu);
@@ -571,6 +587,13 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     public void firePduReceived(Pdu pdu) {
         if (configuration.getLoggingOptions().isLogPduEnabled()) {
             logger.info("received PDU: {}", pdu);
+        }
+
+        if(this.sessionHandler instanceof SmppSessionListener) {
+            if(!((SmppSessionListener)this.sessionHandler).firePduRecived(pdu)){
+                logger.info("recieved PDU discarded: {}", pdu);
+                return;
+            }
         }
 
         if (pdu instanceof PduRequest) {
