@@ -107,12 +107,14 @@ public class DefaultSmppSessionHandler implements SmppSessionListener {
     }
 
     @Override
-    public boolean firePduRecived(Pdu pdu) {
+    public boolean firePduReceived(Pdu pdu) {
+        // default handling is to accept pdu for processing up chain
         return true;
     }
 
     @Override
     public boolean firePduDispatch(Pdu pdu) {
+        // default handling is to accept pdu for processing up chain
         return true;
     }
     

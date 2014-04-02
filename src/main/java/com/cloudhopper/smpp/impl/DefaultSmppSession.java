@@ -590,7 +590,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
 
         if(this.sessionHandler instanceof SmppSessionListener) {
-            if(!((SmppSessionListener)this.sessionHandler).firePduRecived(pdu)){
+            if(!((SmppSessionListener)this.sessionHandler).firePduReceived(pdu)){
                 logger.info("recieved PDU discarded: {}", pdu);
                 return;
             }

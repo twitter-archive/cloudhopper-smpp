@@ -39,7 +39,7 @@ public interface SmppSessionListener extends SmppSessionHandler {
      * @param pdu 
      * @return boolean allow PDU processing. If false PDU would be discarded.
      */
-    public boolean firePduRecived(Pdu pdu);
+    public boolean firePduReceived(Pdu pdu);
     
     /**
      * Called when ANY PDU received from connection.
