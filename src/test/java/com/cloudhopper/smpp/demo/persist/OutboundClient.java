@@ -20,7 +20,6 @@ package com.cloudhopper.smpp.demo.persist;
  * #L%
  */
 
-
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,21 +38,25 @@ public class OutboundClient extends Client {
 
 	private ReconnectionDaemon reconnectionDaemon = ReconnectionDaemon.getInstance();
 
+	private Logger logger = LoggerFactory.getLogger(OutboundClient.class);
+
 	private final ScheduledThreadPoolExecutor monitorExecutor;
 	private final ThreadPoolExecutor executor;
-	private ScheduledExecutorService timer;
-	private Integer enquireLinkPeriod = 1000;
-	private volatile Integer connectionFailedTimes = 0;
-	private Logger logger = LoggerFactory.getLogger(OutboundClient.class);
 	private DefaultSmppClient clientBootstrap;
 	private DefaultSmppSessionHandler sessionHandler;
+
 	private SmppSessionConfiguration config;
+
+	private ScheduledExecutorService enquireLinkExecutor;
 	private ScheduledFuture<?> enquireLinkTask;
+	private Integer enquireLinkPeriod = 1000;
 	private Integer enquireLinkTimeout = 1000;
+
+	private volatile Integer connectionFailedTimes = 0;
 
 	public OutboundClient() {
 		super(null);
-		this.timer = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+		this.enquireLinkExecutor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
 
 			@Override
 			public Thread newThread(Runnable r) {
@@ -120,7 +123,7 @@ public class OutboundClient extends Client {
 		try {
 			logger.info("connecting {}", this);
 
-			disconnect();
+			destroySession();
 
 			smppSession = clientBootstrap.bind(config, sessionHandler);
 
@@ -149,44 +152,38 @@ public class OutboundClient extends Client {
 
 	public void executeReconnect() {
 		// session sometimes stays in bound state even after SMSC is killed
-		disconnect();
+		destroySession();
 		reconnectionDaemon.executeReconnect(getReconnectionTask());
 	}
 
-	private void disconnect() {
-		stopEnquireLinkTask();
-
-		destroySession();
-	}
-
-	public void stopEnquireLinkTask() {
+	private void stopEnquireLinkTask() {
 		if (enquireLinkTask != null) {
 			this.enquireLinkTask.cancel(true);
 		}
 	}
 
 	private void runEnquireLinkTask() {
-		enquireLinkTask = this.timer.scheduleAtFixedRate(new EnquireLinkTask(this, enquireLinkTimeout),
+		enquireLinkTask = this.enquireLinkExecutor.scheduleAtFixedRate(new EnquireLinkTask(this, enquireLinkTimeout),
 				enquireLinkPeriod, enquireLinkPeriod, TimeUnit.MILLISECONDS);
 	}
 
 	@PreDestroy
 	public void shutdown() {
-		timer.shutdownNow();
+		logger.info("Shutting down client {}", this);
 
 		destroySession();
 
 		// this is required to not causing server to hang from non-daemon threads
 		// this also makes sure all open Channels are closed to I *think*
-		logger.info("Shutting down client bootstrap and executors...");
 		clientBootstrap.destroy();
 		executor.shutdownNow();
+		enquireLinkExecutor.shutdownNow();
 		monitorExecutor.shutdownNow();
-
-		logger.info("Done. Exiting");
 	}
 
 	private void destroySession() {
+		stopEnquireLinkTask();
+
 		try {
 			if (smppSession != null) {
 				logger.debug("Cleaning up session... (final counters)");

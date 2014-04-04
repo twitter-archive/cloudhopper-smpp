@@ -37,8 +37,10 @@ public class ReconnectionTask implements Runnable {
 
 	@Override
 	public synchronized void run() {
-		// guard against multiple reconnects, downside is that you must be sure to kill session before calling this,
-		// sometimes it stain bound state even after SMSC is killed
+		/*
+		 * guard against multiple reconnects, downside is that you must be sure to kill session before calling this,
+		 * because sometimes it stays in bound state even after SMSC is killed
+		 */
 		if (!client.isConnected() && optimisticLock()) {
 			client.connect();
 		} else if (client.isConnected()) {

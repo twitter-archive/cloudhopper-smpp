@@ -31,9 +31,11 @@ import org.slf4j.LoggerFactory;
 
 public class ReconnectionDaemon {
 
-	public static final int MAX_THREADS = 50;
-	public static final ReconnectionDaemon RECONNECTION_DAEMON = new ReconnectionDaemon("1,5,15");
 	private static final Logger log = LoggerFactory.getLogger(ReconnectionDaemon.class);
+
+	private static final ReconnectionDaemon RECONNECTION_DAEMON = new ReconnectionDaemon("1,5,15");
+	private static final int MAX_THREADS = 50;
+
 	private final ScheduledThreadPoolExecutor executorService;
 	private final String[] reconnectionPeriods;
 
