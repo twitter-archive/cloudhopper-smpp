@@ -43,7 +43,7 @@ public class ReconnectionDaemon {
 
 	public ReconnectionDaemon(String reconnectionPeriods) {
 		this.reconnectionPeriods = reconnectionPeriods.split(",");
-		scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(getThreadFactory("ReconnectionSchedulerDaemon"));
+		scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(getThreadFactory("ReconnectionSchedulerDaemon-"));
 
 		executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, KEEP_ALIVE_TIME, TimeUnit.SECONDS,
 				new SynchronousQueue<Runnable>(), getThreadFactory("ReconnectionExecutorDaemon-"));
@@ -107,7 +107,6 @@ public class ReconnectionDaemon {
 		@Override
 		public void run() {
 			executor.execute(task);
-
 		}
 	}
 }

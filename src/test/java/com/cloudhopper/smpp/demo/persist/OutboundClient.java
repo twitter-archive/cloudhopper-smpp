@@ -23,8 +23,6 @@ package com.cloudhopper.smpp.demo.persist;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.annotation.PreDestroy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,12 +48,11 @@ public class OutboundClient extends Client {
 	private ScheduledExecutorService enquireLinkExecutor;
 	private ScheduledFuture<?> enquireLinkTask;
 	private Integer enquireLinkPeriod = 1000;
-	private Integer enquireLinkTimeout = 1000;
+	private Integer enquireLinkTimeout = 10000;
 
 	private volatile Integer connectionFailedTimes = 0;
 
 	public OutboundClient() {
-		super(null);
 		this.enquireLinkExecutor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
 
 			@Override
@@ -66,10 +63,6 @@ public class OutboundClient extends Client {
 				return t;
 			}
 		});
-
-		// setup 3 things required for any session we plan on creating
-		//
-
 		// for monitoring thread use, it's preferable to create your own instance
 		// of an executor with Executors.newCachedThreadPool() and cast it to ThreadPoolExecutor
 		// this permits exposing thinks like executor.getActiveCount() via JMX possible
@@ -92,15 +85,6 @@ public class OutboundClient extends Client {
 			}
 		});
 
-	}
-
-	public ReconnectionTask getReconnectionTask() {
-		return new ReconnectionTask(this, connectionFailedTimes);
-	}
-
-	public void initialize(SmppSessionConfiguration config, SmppClientMessageService smppClientMessageService) {
-		this.config = config;
-
 		// a single instance of a client bootstrap can technically be shared
 		// between any sessions that are created (a session can go to any different
 		// number of SMSCs) - each session created under
@@ -112,6 +96,10 @@ public class OutboundClient extends Client {
 		// threads it will ever use, despite the "max pool size", etc. set on
 		// the executor passed in here
 		clientBootstrap = new DefaultSmppClient(executor, 1, monitorExecutor);
+	}
+
+	public void initialize(SmppSessionConfiguration config, SmppClientMessageService smppClientMessageService) {
+		this.config = config;
 
 		//
 		// setup configuration for a client session
@@ -129,10 +117,9 @@ public class OutboundClient extends Client {
 
 			connectionFailedTimes = 0;
 
-			logger.info("connected {}", this);
-
 			runEnquireLinkTask();
 
+			logger.info("connected {}", this);
 		} catch (SmppChannelConnectException e) {
 			logger.warn(e.getMessage() + " " + LoggingUtil.toString(getConfiguration()));
 			scheduleReconnect();
@@ -156,6 +143,10 @@ public class OutboundClient extends Client {
 		reconnectionDaemon.executeReconnect(getReconnectionTask());
 	}
 
+	private ReconnectionTask getReconnectionTask() {
+		return new ReconnectionTask(this, connectionFailedTimes);
+	}
+
 	private void stopEnquireLinkTask() {
 		if (enquireLinkTask != null) {
 			this.enquireLinkTask.cancel(true);
@@ -167,7 +158,6 @@ public class OutboundClient extends Client {
 				enquireLinkPeriod, enquireLinkPeriod, TimeUnit.MILLISECONDS);
 	}
 
-	@PreDestroy
 	public void shutdown() {
 		logger.info("Shutting down client {}", this);
 

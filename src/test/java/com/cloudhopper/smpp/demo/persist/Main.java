@@ -20,7 +20,6 @@ package com.cloudhopper.smpp.demo.persist;
  * #L%
  */
 
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,19 +35,6 @@ public class Main {
 		DummySmppClientMessageService smppClientMessageService = new DummySmppClientMessageService();
 		List<OutboundClient> clients = new ArrayList<OutboundClient>();
 		int i = 0;
-		clients.add(createClient(smppClientMessageService,++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
 		clients.add(createClient(smppClientMessageService, ++i));
 		clients.add(createClient(smppClientMessageService, ++i));
 
@@ -69,23 +55,20 @@ public class Main {
 	}
 
 	private static SmppSessionConfiguration getSmppSessionConfiguration(int i) {
-		// same configuration for each client runner
 		SmppSessionConfiguration config = new SmppSessionConfiguration();
 		config.setWindowSize(5);
-		config.setName("Tester.Session."+i);
+		config.setName("Tester.Session." + i);
 		config.setType(SmppBindType.TRANSCEIVER);
 		config.setHost("127.0.0.1");
-		config.setPort(5019);
+		config.setPort(2776);
 		config.setConnectTimeout(10000);
-		config.setSystemId("systemId"+i);
+		config.setSystemId("systemId" + i);
 		config.setPassword("password");
 		config.getLoggingOptions().setLogBytes(false);
 		// to enable monitoring (request expiration)
 
-		// values for easier bug reproducing?
-		config.setRequestExpiryTimeout(15000);
-		config.setWindowMonitorInterval(7000);
-		config.setWindowWaitTimeout(30000);
+		config.setRequestExpiryTimeout(30000);
+		config.setWindowMonitorInterval(15000);
 
 		config.setCountersEnabled(true);
 		return config;

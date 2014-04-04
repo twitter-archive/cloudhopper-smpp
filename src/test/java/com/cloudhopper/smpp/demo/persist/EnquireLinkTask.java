@@ -20,7 +20,6 @@ package com.cloudhopper.smpp.demo.persist;
  * #L%
  */
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,14 +42,12 @@ class EnquireLinkTask implements Runnable {
 
 	@Override
 	public void run() {
-		if (client.getSession().isBound()) {
+		SmppSession smppSession = client.getSession();
+		if (smppSession != null && smppSession.isBound()) {
 			try {
-				SmppSession smppSession = client.getSession();
-				if (smppSession != null && smppSession.isBound()) {
-					logger.debug("sending enquire_link");
-					EnquireLinkResp enquireLinkResp = smppSession.enquireLink(new EnquireLink(), enquireLinkTimeout);
-					logger.debug("enquire_link_resp: {}", enquireLinkResp);
-				}
+				logger.debug("sending enquire_link");
+				EnquireLinkResp enquireLinkResp = smppSession.enquireLink(new EnquireLink(), enquireLinkTimeout);
+				logger.debug("enquire_link_resp: {}", enquireLinkResp);
 			} catch (SmppTimeoutException e) {
 				logger.warn("Enquire link failed, executing reconnect; " + e);
 				logger.debug("", e);

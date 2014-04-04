@@ -27,7 +27,7 @@ public class ReconnectionTask implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(ReconnectionTask.class);
 
-	private final OutboundClient client;
+	private OutboundClient client;
 	private Integer connectionFailedTimes;
 
 	protected ReconnectionTask(OutboundClient client, Integer connectionFailedTimes) {
