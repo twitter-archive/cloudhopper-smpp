@@ -20,17 +20,16 @@ package com.cloudhopper.smpp.demo.persist;
  * #L%
  */
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.type.SmppChannelConnectException;
 import com.cloudhopper.smpp.type.SmppTimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class OutboundClient extends Client {
 
@@ -107,24 +106,31 @@ public class OutboundClient extends Client {
 		sessionHandler = new ClientSmppSessionHandler(this, smppClientMessageService);
 	}
 
-	protected void connect() {
+	protected synchronized void reconnect(Integer connectionFailedTimes) {
+		if (!getConnectionFailedTimes().equals(connectionFailedTimes)) {
+			logger.info("skipping reconnect for client {} due to optimistic lock", this, connectionFailedTimes,
+					getConnectionFailedTimes());
+			return;
+		}
 		try {
 			logger.info("connecting {}", this);
 
-			destroySession();
+			disconnect();
 
 			smppSession = clientBootstrap.bind(config, sessionHandler);
 
-			connectionFailedTimes = 0;
+			this.connectionFailedTimes = 0;
 
 			runEnquireLinkTask();
 
 			logger.info("connected {}", this);
 		} catch (SmppChannelConnectException e) {
 			logger.warn(e.getMessage() + " " + LoggingUtil.toString(getConfiguration()));
+			logger.debug("", e);
 			scheduleReconnect();
 		} catch (SmppTimeoutException e) {
 			logger.warn(e.getMessage() + " " + LoggingUtil.toString(getConfiguration()));
+			logger.debug("", e);
 			scheduleReconnect();
 		} catch (Exception e) {
 			logger.error("Session binding failed " + LoggingUtil.toString(getConfiguration()), e);
@@ -138,8 +144,6 @@ public class OutboundClient extends Client {
 	}
 
 	public void executeReconnect() {
-		// session sometimes stays in bound state even after SMSC is killed
-		destroySession();
 		reconnectionDaemon.executeReconnect(getReconnectionTask());
 	}
 
@@ -147,11 +151,6 @@ public class OutboundClient extends Client {
 		return new ReconnectionTask(this, connectionFailedTimes);
 	}
 
-	private void stopEnquireLinkTask() {
-		if (enquireLinkTask != null) {
-			this.enquireLinkTask.cancel(true);
-		}
-	}
 
 	private void runEnquireLinkTask() {
 		enquireLinkTask = this.enquireLinkExecutor.scheduleAtFixedRate(new EnquireLinkTask(this, enquireLinkTimeout),
@@ -161,7 +160,7 @@ public class OutboundClient extends Client {
 	public void shutdown() {
 		logger.info("Shutting down client {}", this);
 
-		destroySession();
+		disconnect();
 
 		// this is required to not causing server to hang from non-daemon threads
 		// this also makes sure all open Channels are closed to I *think*
@@ -171,9 +170,19 @@ public class OutboundClient extends Client {
 		monitorExecutor.shutdownNow();
 	}
 
-	private void destroySession() {
+	private void disconnect() {
 		stopEnquireLinkTask();
 
+		destroySession();
+	}
+
+	private void stopEnquireLinkTask() {
+		if (enquireLinkTask != null) {
+			this.enquireLinkTask.cancel(true);
+		}
+	}
+
+	private void destroySession() {
 		try {
 			if (smppSession != null) {
 				logger.debug("Cleaning up session... (final counters)");

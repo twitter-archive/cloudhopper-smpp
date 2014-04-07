@@ -21,15 +21,14 @@ package com.cloudhopper.smpp.demo.persist;
  */
 
 
-import java.io.IOException;
-import java.nio.channels.ClosedChannelException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.pdu.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.channels.ClosedChannelException;
 
 public class ClientSmppSessionHandler extends DefaultSmppSessionHandler {
 
@@ -39,7 +38,7 @@ public class ClientSmppSessionHandler extends DefaultSmppSessionHandler {
 	private SmppClientMessageService smppClientMessageService;
 
 	public ClientSmppSessionHandler(OutboundClient client,
-			SmppClientMessageService smppClientMessageService) {
+									SmppClientMessageService smppClientMessageService) {
 		super(logger);
 		this.client = client;
 		this.smppClientMessageService = smppClientMessageService;
@@ -71,7 +70,9 @@ public class ClientSmppSessionHandler extends DefaultSmppSessionHandler {
 		return response;
 	}
 
-	/** TODO not sure if we really need to call reconnect here */
+	/**
+	 * TODO not sure if we really need to call reconnect here
+	 */
 	@Override
 	public void fireUnknownThrowable(Throwable t) {
 		if (t instanceof ClosedChannelException) {
@@ -79,8 +80,8 @@ public class ClientSmppSessionHandler extends DefaultSmppSessionHandler {
 					+ LoggingUtil.toString(client.getConfiguration()));
 			client.executeReconnect();
 		} else if (t instanceof IOException) {
-			logger.warn(t + ", executing reconnect" + " " + LoggingUtil.toString(client.getConfiguration()));
-			client.executeReconnect();
+			logger.warn(t + " " + LoggingUtil.toString(client.getConfiguration()));
+			//#fireChannelUnexpectedlyClosed will be called from a different place
 		} else {
 			logger.warn(String.valueOf(t) + " " + LoggingUtil.toString(client.getConfiguration()), t);
 		}

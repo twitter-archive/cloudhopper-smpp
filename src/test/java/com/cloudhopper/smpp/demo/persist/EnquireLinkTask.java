@@ -20,14 +20,13 @@ package com.cloudhopper.smpp.demo.persist;
  * #L%
  */
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cloudhopper.smpp.SmppSession;
 import com.cloudhopper.smpp.pdu.EnquireLink;
 import com.cloudhopper.smpp.pdu.EnquireLinkResp;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppTimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class EnquireLinkTask implements Runnable {
 
@@ -57,8 +56,7 @@ class EnquireLinkTask implements Runnable {
 				logger.debug("", e);
 				client.executeReconnect();
 			} catch (InterruptedException e) {
-				// probably killed by reconnecting
-				logger.warn("Enquire link interrupted");
+				logger.info("Enquire link interrupted, probably killed by reconnecting");
 			} catch (Exception e) {
 				logger.error("Enquire link failed, executing reconnect", e);
 				client.executeReconnect();
