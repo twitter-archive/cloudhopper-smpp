@@ -245,7 +245,7 @@ public class DeliveryReceipt {
 		}
 		buf.append(" ");
 		buf.append(FIELD_DONE_DATE);
-		if (this.submitDate == null) {
+		if (this.doneDate == null) {
 			buf.append("0000000000");
 		} else {
 			buf.append(dateFormatTemplate.print(this.doneDate));

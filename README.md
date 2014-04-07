@@ -4,28 +4,39 @@ Cloudhopper SMPP by Twitter [![Build Status](https://secure.travis-ci.org/twitte
 cloudhopper-smpp
 ------------------------
 
-Efficient, scalable, and flexible Java implementation of the Short Messaging
-Peer to Peer Protocol (SMPP). This library supports the following SMPP protocol
-versions:
+Efficient, scalable, rock-solid, and flexible Java implementation of the Short
+Messaging Peer to Peer Protocol (SMPP).
 
- - 3.3
- - 3.4
- - most of 5.0
-
-This library's implementation takes advantage of non-blocking (NIO) sockets to
-support thousands of binds using minimal resources.  It can be used to
-implement either the server, client, or both sides of the SMPP protocol. We use
-it internally at Twitter for both.  Both synchronous or asynchronous request
-modes can be supported on an SMPP session. Clients and servers can use TLS/SSL to 
-provide communication transport security.
+ * Real-world used library by Twitter across nearly every SMSC vendor and 
+   mobile operator around the world.  We've seen almost every variance in the
+   SMPP protocol and this library handles it flawlessly.
+ * Rigorous unit testing
+ * Support for SMPP protocol:
+    * Version 3.3
+    * Version 3.4
+    * Most of version 5.0
+ * Uses non-blocking (NIO) sockets (via underlying Netty dependency, one thread
+   can support 1 or more SMPP sessions)
+ * Can support thousands of binds/connections using minimal resources and threads
+ * Supports both client and server modes of the SMPP protocol (yes you can 
+   write your own SMPP server using this library as well as be a client to one)
+ * Supports synchronous request mode (send request and block until response
+   received)
+ * Supports asynchronous request mode (send request, get a future response,
+   and then decide when you'd like to wait/get a response)
+ * Advanced support for SMPP "windowing":
+    * Configurable window size per session
+    * Waiting for a window slot to open up
+    * Get a list of unacknowledged/in-flight PDUs if session disconnects
+ * SSL/TLS support for clients and servers
+ * Configurable support for expiry of unacknowledged PDUs
+ * Configurable counter metrics per client-session, server-session, or server.
+ * Support for sniffing/logging/discarding of PDUs before normal processing
 
 The library has been tested and certified with hundreds of mobile operators
 and suppliers around the world.  It's effective at being flexible with SMPP
 specifications that aren't truly compliant.
 
-SMPP is notorious for having slight differences depending on the vendor. This
-library attempts to ensure that the internal PDU parser never breaks regardless
-of vendor.
 
 Background and Contributors
 ---------------------------
@@ -87,9 +98,23 @@ In the second shell, run:
 You'll see the client bind to the server and a few different type of requests
 exchanged back and forth.
 
+User Contributed Demos
+----------------------
+
+A more complete persistent client demo:
+
+(https://github.com/krasa/cloudhopper-smpp/tree/persistent-connection/src/test/java/com/cloudhopper/smpp/demo/persist)
+
+A tutorial in Russian:
+
+https://github.com/wizardjedi/my-spring-learning/wiki/Twitter-cloudhopper
+
+Please let us know if you have other tutorials worth mentioning!
+
+
 License
 -------
 
-Copyright (C) 2010-2013 Twitter, Inc.
+Copyright (C) 2009-2014 Twitter, Inc.
 
 This work is licensed under the Apache License, Version 2.0. See LICENSE for details.
