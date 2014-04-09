@@ -193,6 +193,9 @@ public class DefaultSmppServerTest {
                 Assert.assertEquals(SmppConstants.STATUS_INVPASWD, e.getBindResponse().getCommandStatus());
             }
 
+            // give this a little time to catch up
+            Thread.sleep(100);
+
             Assert.assertEquals(0, serverHandler.sessions.size());
             Assert.assertEquals(0, server0.getChannels().size());
         } finally {
