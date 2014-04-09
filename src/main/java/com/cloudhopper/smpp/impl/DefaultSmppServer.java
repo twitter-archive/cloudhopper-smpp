@@ -239,9 +239,13 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
             // wait until the connection is made successfully
             boolean timeout = !f.await(configuration.getBindTimeout());
 
-            if (timeout || !f.isSuccess())
+            if (timeout)
                 throw new SmppChannelException("Can't bind to port " + configuration.getPort()
                         + " after " + configuration.getBindTimeout() + " milliseconds");
+
+            if (!f.isSuccess())
+                throw new SmppChannelException("Can't bind to port " + configuration.getPort()
+                        + " future cause: " + f.cause());
 
             logger.info("{} started on SMPP port [{}]", configuration.getName(), configuration.getPort());
             serverChannel = f.channel();
