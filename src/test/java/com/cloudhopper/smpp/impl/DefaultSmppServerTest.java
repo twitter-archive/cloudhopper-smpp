@@ -525,12 +525,7 @@ public class DefaultSmppServerTest {
                 DefaultSmppSession session0 = client0.doOpen(sessionConfig0, new DefaultSmppSessionHandler());
                 // try to bind and execute a bind request and wait for a bind response
                 BaseBind bindRequest = client0.createBindRequest(sessionConfig0);
-                try {
-                    // just send the request without caring if it succeeds
-                    session0.sendRequestPdu(bindRequest, 2000, false);
-                } catch (SmppChannelException e) {
-                    System.out.println(e.getMessage());
-                }
+                session0.sendRequestPdu(bindRequest, 2000, false);
             }
 
             // now try to bind normally -- since all previous workers are "starved"
@@ -548,11 +543,10 @@ public class DefaultSmppServerTest {
                 // worker thread were "starved"
                 logger.debug("Correctly received SmppChannelException during bind");
             }
-            
-        } finally {
             Thread.sleep(10500);
             Assert.assertEquals(0, server0.getChannels().size());
-            Assert.assertEquals(3, server0.getCounters().getBindTimeouts());
+            Assert.assertEquals(workersToStarveWith + 1, server0.getCounters().getBindTimeouts());
+        } finally {
             server0.destroy();
         }
     }
