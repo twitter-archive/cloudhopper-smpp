@@ -42,6 +42,8 @@ public class Main {
 			System.in.read();
 			break;
 		}
+		
+		ReconnectionDaemon.getInstance().shutdown();
 		for (OutboundClient client1 : clients) {
 			client1.shutdown();
 		}

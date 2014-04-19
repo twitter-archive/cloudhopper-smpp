@@ -20,15 +20,16 @@ package com.cloudhopper.smpp.demo.persist;
  * #L%
  */
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.annotation.PreDestroy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** #schedule cannot spawn more threads than corePoolSize, so the blocking work is done by separate executor */
+import javax.annotation.PreDestroy;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ * #schedule cannot spawn more threads than corePoolSize, so the blocking work is done by separate executor
+ */
 public class ReconnectionDaemon {
 
 	private static final Logger log = LoggerFactory.getLogger(ReconnectionDaemon.class);
@@ -71,23 +72,22 @@ public class ReconnectionDaemon {
 		executor.execute(reconnectionTask);
 	}
 
-	public void scheduleReconnectByFailureNumber(OutboundClient outboundClient, Integer failureCount,
-			ReconnectionTask reconnectionTask) {
-		String reconnectionPeriod = getReconnectionPeriod(failureCount);
-		log.info("Scheduling reconnect for {} in {} seconds", outboundClient, reconnectionPeriod);
-		scheduledExecutorService.schedule(new ScheduledTask(reconnectionTask), Long.parseLong(reconnectionPeriod),
+	public void scheduleReconnect(OutboundClient outboundClient, Integer failureCount,
+								  ReconnectionTask reconnectionTask) {
+		 long delay = getReconnectionPeriod(failureCount);
+		log.info("Scheduling reconnect for {} in {} seconds", outboundClient, delay);
+		scheduledExecutorService.schedule(new ScheduledTask(reconnectionTask), delay,
 				TimeUnit.SECONDS);
-
 	}
 
-	protected String getReconnectionPeriod(Integer failureCount) {
+	private long getReconnectionPeriod(Integer failureCount) {
 		String reconnectionPeriod;
 		if (reconnectionPeriods.length > failureCount) {
 			reconnectionPeriod = reconnectionPeriods[failureCount];
 		} else {
 			reconnectionPeriod = reconnectionPeriods[reconnectionPeriods.length - 1];
 		}
-		return reconnectionPeriod;
+		return Long.parseLong(reconnectionPeriod);
 	}
 
 	@PreDestroy

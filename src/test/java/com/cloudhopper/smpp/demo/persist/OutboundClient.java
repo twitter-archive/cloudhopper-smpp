@@ -140,7 +140,7 @@ public class OutboundClient extends Client {
 
 	private void scheduleReconnect() {
 		++connectionFailedTimes;
-		reconnectionDaemon.scheduleReconnectByFailureNumber(this, connectionFailedTimes, getReconnectionTask());
+		reconnectionDaemon.scheduleReconnect(this, connectionFailedTimes, getReconnectionTask());
 	}
 
 	public void executeReconnect() {
