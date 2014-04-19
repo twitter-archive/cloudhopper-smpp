@@ -153,7 +153,7 @@ public class OutboundClient extends Client {
 
 
 	private void runEnquireLinkTask() {
-		enquireLinkTask = this.enquireLinkExecutor.scheduleAtFixedRate(new EnquireLinkTask(this, enquireLinkTimeout),
+		enquireLinkTask = this.enquireLinkExecutor.scheduleWithFixedDelay(new EnquireLinkTask(this, enquireLinkTimeout),
 				enquireLinkPeriod, enquireLinkPeriod, TimeUnit.MILLISECONDS);
 	}
 
