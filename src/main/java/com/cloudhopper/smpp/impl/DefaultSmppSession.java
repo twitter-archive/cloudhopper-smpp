@@ -264,7 +264,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         return this.sequenceNumber;
     }
 
-    protected PduTranscoder getTranscoder() {
+    public PduTranscoder getTranscoder() {
         return this.transcoder;
     }
     
@@ -306,7 +306,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         this.setBound();
     }
 
-    protected BaseBindResp bind(BaseBind request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppBindException, SmppTimeoutException, SmppChannelException, InterruptedException {
+    public BaseBindResp bind(BaseBind request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppBindException, SmppTimeoutException, SmppChannelException, InterruptedException {
         assertValidRequest(request);
         boolean bound = false;
         try {
