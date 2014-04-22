@@ -20,16 +20,17 @@ package com.cloudhopper.smpp.demo.persist;
  * #L%
  */
 
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.type.SmppChannelConnectException;
 import com.cloudhopper.smpp.type.SmppTimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OutboundClient extends Client {
 
@@ -48,6 +49,7 @@ public class OutboundClient extends Client {
 	private ScheduledFuture<?> enquireLinkTask;
 	private Integer enquireLinkPeriod = 1000;
 	private Integer enquireLinkTimeout = 10000;
+	private boolean shutdown = false;
 
 	private volatile Integer connectionFailedTimes = 0;
 
@@ -107,6 +109,10 @@ public class OutboundClient extends Client {
 	}
 
 	protected synchronized void reconnect(Integer connectionFailedTimes) {
+		if (shutdown) {
+			logger.warn("skipping reconnect for client {} due to shutdown", this);
+			return;
+		}
 		if (!getConnectionFailedTimes().equals(connectionFailedTimes)) {
 			logger.info("skipping reconnect for client {} due to optimistic lock", this, connectionFailedTimes,
 					getConnectionFailedTimes());
@@ -125,41 +131,43 @@ public class OutboundClient extends Client {
 
 			logger.info("connected {}", this);
 		} catch (SmppChannelConnectException e) {
-			logger.warn(e.getMessage() + " " + LoggingUtil.toString(getConfiguration()));
+			logger.warn("Unable to connect: " + e.getMessage() + " " + LoggingUtil.toString(getConfiguration()));
 			logger.debug("", e);
 			scheduleReconnect();
 		} catch (SmppTimeoutException e) {
-			logger.warn(e.getMessage() + " " + LoggingUtil.toString(getConfiguration()));
+			logger.warn("Unable to connect: " + e.getMessage() + " " + LoggingUtil.toString(getConfiguration()));
 			logger.debug("", e);
 			scheduleReconnect();
 		} catch (Exception e) {
-			logger.error("Session binding failed " + LoggingUtil.toString(getConfiguration()), e);
+			logger.error("Unable to connect: " + LoggingUtil.toString(getConfiguration()), e);
 			scheduleReconnect();
 		}
 	}
 
 	private void scheduleReconnect() {
 		++connectionFailedTimes;
-		reconnectionDaemon.scheduleReconnect(this, connectionFailedTimes, getReconnectionTask());
+		reconnectionDaemon.scheduleReconnect(this, connectionFailedTimes, createReconnectionTask());
 	}
 
 	public void executeReconnect() {
-		reconnectionDaemon.executeReconnect(getReconnectionTask());
+		reconnectionDaemon.executeReconnect(createReconnectionTask());
 	}
 
-	private ReconnectionTask getReconnectionTask() {
+	private ReconnectionTask createReconnectionTask() {
 		return new ReconnectionTask(this, connectionFailedTimes);
 	}
 
 
 	private void runEnquireLinkTask() {
-		enquireLinkTask = this.enquireLinkExecutor.scheduleWithFixedDelay(new EnquireLinkTask(this, enquireLinkTimeout),
+		enquireLinkTask = this.enquireLinkExecutor.scheduleWithFixedDelay(
+				new EnquireLinkTask(this, enquireLinkTimeout),
 				enquireLinkPeriod, enquireLinkPeriod, TimeUnit.MILLISECONDS);
 	}
 
-	public void shutdown() {
+	public synchronized void shutdown() {
 		logger.info("Shutting down client {}", this);
 
+		shutdown = true;
 		disconnect();
 
 		// this is required to not causing server to hang from non-daemon threads
