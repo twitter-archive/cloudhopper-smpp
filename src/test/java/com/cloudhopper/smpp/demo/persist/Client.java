@@ -32,8 +32,9 @@ public abstract class Client {
 	}
 
 	public boolean isConnected() {
-		if (smppSession != null) {
-			return smppSession.isBound();
+		SmppSession session = smppSession;
+		if (session != null) {
+			return session.isBound();
 		}
 		return false;
 	}
