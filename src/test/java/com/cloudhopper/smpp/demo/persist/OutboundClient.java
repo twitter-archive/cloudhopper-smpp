@@ -20,17 +20,16 @@ package com.cloudhopper.smpp.demo.persist;
  * #L%
  */
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.type.SmppChannelConnectException;
 import com.cloudhopper.smpp.type.SmppTimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class OutboundClient extends Client {
 
@@ -101,7 +100,7 @@ public class OutboundClient extends Client {
 
 	public void initialize(SmppSessionConfiguration config, SmppClientMessageService smppClientMessageService) {
 		this.config = config;
-
+		logger = LoggerFactory.getLogger(OutboundClient.class.getCanonicalName() + config.getName());
 		//
 		// setup configuration for a client session
 		//

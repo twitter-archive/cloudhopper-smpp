@@ -20,32 +20,79 @@ package com.cloudhopper.smpp.demo.persist;
  * #L%
  */
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.cloudhopper.smpp.SmppBindType;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
+import com.cloudhopper.commons.charset.CharsetUtil;
+import com.cloudhopper.commons.util.*;
+import com.cloudhopper.smpp.*;
+import com.cloudhopper.smpp.pdu.SubmitSm;
+import com.cloudhopper.smpp.pdu.SubmitSmResp;
 import com.cloudhopper.smpp.type.*;
+import org.junit.Assert;
+
+import java.io.IOException;
+import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Main {
 
 	public static void main(String[] args) throws IOException, RecoverablePduException, InterruptedException,
 			SmppChannelException, UnrecoverablePduException, SmppTimeoutException {
 		DummySmppClientMessageService smppClientMessageService = new DummySmppClientMessageService();
-		List<OutboundClient> clients = new ArrayList<OutboundClient>();
 		int i = 0;
-		clients.add(createClient(smppClientMessageService, ++i));
-		clients.add(createClient(smppClientMessageService, ++i));
+		final LoadBalancedList<OutboundClient> balancedList = LoadBalancedLists.synchronizedList(new RoundRobinLoadBalancedList<OutboundClient>());
+		balancedList.set(createClient(smppClientMessageService, ++i), 1);
+		balancedList.set(createClient(smppClientMessageService, ++i), 1);
+		balancedList.set(createClient(smppClientMessageService, ++i), 1);
 
+		final ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+		Scanner terminalInput = new Scanner(System.in);
 		while (true) {
-			System.in.read();
-			break;
+			String s = terminalInput.nextLine();
+			final long messagesToSend;
+			try {
+				messagesToSend = Long.parseLong(s);
+			} catch (NumberFormatException e) {
+				break;
+			}
+			final AtomicLong alreadySent = new AtomicLong();
+			for (int j = 0; j < 10; j++) {
+				executorService.execute(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							long sent = alreadySent.incrementAndGet();
+							while (sent <= messagesToSend) {
+								final OutboundClient next = balancedList.getNext();
+								final SmppSession session = next.getSession();
+								if (session != null && session.isBound()) {
+									String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
+									byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);
+
+									SubmitSm submit = new SubmitSm();
+									submit.setSourceAddress(new Address((byte) 0x03, (byte) 0x00, "40404"));
+									submit.setDestAddress(new Address((byte) 0x01, (byte) 0x01, "44555519205"));
+									submit.setRegisteredDelivery(SmppConstants.REGISTERED_DELIVERY_SMSC_RECEIPT_REQUESTED);
+									submit.setShortMessage(textBytes);
+									final SubmitSmResp submit1 = session.submit(submit, 10000);
+									Assert.assertNotNull(submit1);
+								}
+								sent = alreadySent.incrementAndGet();
+							}
+						} catch (Exception e) {
+							System.err.println(e.toString());
+							return;
+						}
+					}
+				});
+			}
 		}
-		
+
+		executorService.shutdownNow();
 		ReconnectionDaemon.getInstance().shutdown();
-		for (OutboundClient client1 : clients) {
-			client1.shutdown();
+		for (LoadBalancedList.Node<OutboundClient> node : balancedList.getValues()) {
+			node.getValue().shutdown();
 		}
 	}
 
@@ -72,7 +119,7 @@ public class Main {
 		config.setRequestExpiryTimeout(30000);
 		config.setWindowMonitorInterval(15000);
 
-		config.setCountersEnabled(true);
+		config.setCountersEnabled(false);
 		return config;
 	}
 
