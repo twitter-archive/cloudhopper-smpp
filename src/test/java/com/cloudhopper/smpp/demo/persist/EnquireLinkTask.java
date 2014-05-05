@@ -50,16 +50,16 @@ class EnquireLinkTask implements Runnable {
 			} catch (SmppTimeoutException e) {
 				logger.warn("Enquire link failed, executing reconnect; " + e);
 				logger.debug("", e);
-				client.executeReconnect();
+				client.scheduleReconnect();
 			} catch (SmppChannelException e) {
 				logger.warn("Enquire link failed, executing reconnect; " + e);
 				logger.debug("", e);
-				client.executeReconnect();
+				client.scheduleReconnect();
 			} catch (InterruptedException e) {
 				logger.info("Enquire link interrupted, probably killed by reconnecting");
 			} catch (Exception e) {
 				logger.error("Enquire link failed, executing reconnect", e);
-				client.executeReconnect();
+				client.scheduleReconnect();
 			}
 		} else {
 			logger.error("enquire link running while session is not connected");

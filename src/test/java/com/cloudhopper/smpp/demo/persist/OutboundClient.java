@@ -117,6 +117,8 @@ public class OutboundClient extends Client {
 					getConnectionFailedTimes());
 			return;
 		}
+		++this.connectionFailedTimes;
+
 		try {
 			logger.info("connecting {}", this);
 
@@ -143,13 +145,8 @@ public class OutboundClient extends Client {
 		}
 	}
 
-	private void scheduleReconnect() {
-		++connectionFailedTimes;
+	public void scheduleReconnect() {
 		reconnectionDaemon.scheduleReconnect(this, connectionFailedTimes, createReconnectionTask());
-	}
-
-	public void executeReconnect() {
-		reconnectionDaemon.executeReconnect(createReconnectionTask());
 	}
 
 	private ReconnectionTask createReconnectionTask() {

@@ -34,7 +34,7 @@ public class ReconnectionDaemon {
 
 	private static final Logger log = LoggerFactory.getLogger(ReconnectionDaemon.class);
 
-	private static final ReconnectionDaemon RECONNECTION_DAEMON = new ReconnectionDaemon("1,5,15");
+	private static final ReconnectionDaemon RECONNECTION_DAEMON = new ReconnectionDaemon("0,5,15");
 	private static final long KEEP_ALIVE_TIME = 60L;
 
 	private final String[] reconnectionPeriods;
@@ -66,10 +66,6 @@ public class ReconnectionDaemon {
 
 	public static ReconnectionDaemon getInstance() {
 		return RECONNECTION_DAEMON;
-	}
-
-	public void executeReconnect(ReconnectionTask reconnectionTask) {
-		executor.execute(reconnectionTask);
 	}
 
 	public void scheduleReconnect(OutboundClient outboundClient, Integer failureCount,

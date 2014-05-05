@@ -99,7 +99,7 @@ public class Main {
 	private static OutboundClient createClient(DummySmppClientMessageService smppClientMessageService, int i) {
 		OutboundClient client = new OutboundClient();
 		client.initialize(getSmppSessionConfiguration(i), smppClientMessageService);
-		client.executeReconnect();
+		client.scheduleReconnect();
 		return client;
 	}
 

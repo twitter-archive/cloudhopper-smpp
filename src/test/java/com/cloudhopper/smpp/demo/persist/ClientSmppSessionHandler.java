@@ -78,7 +78,7 @@ public class ClientSmppSessionHandler extends DefaultSmppSessionHandler {
 		if (t instanceof ClosedChannelException) {
 			logger.warn("Unknown throwable received, but it was a ClosedChannelException, executing reconnect" + " "
 					+ LoggingUtil.toString(client.getConfiguration()));
-			client.executeReconnect();
+			client.scheduleReconnect();
 		} else if (t instanceof IOException) {
 			logger.warn(t + " " + LoggingUtil.toString(client.getConfiguration()));
 			//#fireChannelUnexpectedlyClosed will be called from a different place
@@ -89,7 +89,7 @@ public class ClientSmppSessionHandler extends DefaultSmppSessionHandler {
 
 	@Override
 	public void fireChannelUnexpectedlyClosed() {
-		client.executeReconnect();
+		client.scheduleReconnect();
 	}
 
 }
