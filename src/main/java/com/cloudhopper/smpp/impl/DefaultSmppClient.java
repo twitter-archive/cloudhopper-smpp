@@ -201,7 +201,7 @@ public class DefaultSmppClient implements SmppClient {
             // close the session if we weren't able to bind correctly
             if (session != null && !session.isBound()) {
                 // make sure that the resources are always cleaned up
-                try { session.close(); } catch (Exception e) { }
+                try { session.destroy(); } catch (Exception e) { }
             }
         }
         return session;
