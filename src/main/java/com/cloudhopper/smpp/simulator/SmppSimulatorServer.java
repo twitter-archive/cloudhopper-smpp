@@ -20,15 +20,8 @@ package com.cloudhopper.smpp.simulator;
  * #L%
  */
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -36,6 +29,9 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -54,21 +50,22 @@ public class SmppSimulatorServer {
     
     private final SmppSimulatorServerHandler serverHandler;
 
-    public SmppSimulatorServer() {
-        this(Executors.newCachedThreadPool());
-    }
+//    public SmppSimulatorServer() {
+//        this(Executors.newCachedThreadPool());
+//    }
 
-    public SmppSimulatorServer(ExecutorService executors) {
+    public SmppSimulatorServer() {
         // used for tracking any child channels (sessions)
         this.sessionChannels = new DefaultChannelGroup("simulatorServer", GlobalEventExecutor.INSTANCE);
         // we'll put the "boss" worker for a server in its own pool
-	this.bossGroup = new NioEventLoopGroup();
-	this.workerGroup = new NioEventLoopGroup();
+        bossGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup();
         // a factory for creating channels (connections)
         // tie the server bootstrap to this server socket channel factory
         this.serverBootstrap = new ServerBootstrap();
-	this.serverBootstrap.channel(NioServerSocketChannel.class);
-	this.serverBootstrap.group(bossGroup, workerGroup);
+        this.serverBootstrap.channel(NioServerSocketChannel.class);
+        this.serverBootstrap.group(bossGroup, workerGroup);
+
         // the handler to use when new child connections are accepted
         this.serverHandler = new SmppSimulatorServerHandler(this.sessionChannels);
         // set up the event pipeline factory for new connections
@@ -83,31 +80,32 @@ public class SmppSimulatorServer {
     
     public void start(int port) {
         logger.info("Simulator server starting on port " + port + "...");
-        serverChannel = this.serverBootstrap.bind(new InetSocketAddress(port)).channel();
+        ChannelFuture f = this.serverBootstrap.bind(new InetSocketAddress(port)).syncUninterruptibly();
+        serverChannel = f.channel();
         logger.info("Simulator server started");
     }
 
     public void stop() {
-	try {
-	    logger.info("Closing all server session channels...");
-	    this.sessionChannels.close().sync();
-	    logger.info("Closing server channel...");
-	    this.serverChannel.close().sync();
-	    this.serverBootstrap = null;
-	} catch (InterruptedException e) {
-	    logger.warn("Thread interrupted closing server channel.", e);
-	} finally {
-	    // Shut down all event loops to terminate all threads.
-	    bossGroup.shutdownGracefully();
-	    workerGroup.shutdownGracefully();
-	    try {
-		// Wait until all threads are terminated.
-		bossGroup.terminationFuture().sync();
-		workerGroup.terminationFuture().sync();
-	    } catch (InterruptedException e) {
-		logger.warn("Thread interrupted closing executors.", e);
-	    }
-	}
+        try {
+            logger.info("Closing all server session channels...");
+            this.sessionChannels.close().sync();
+            logger.info("Closing server channel...");
+            this.serverChannel.close().sync();
+            this.serverBootstrap = null;
+        } catch (InterruptedException e) {
+            logger.warn("Thread interrupted closing server channel.", e);
+        } finally {
+            // Shut down all event loops to terminate all threads.
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+            try {
+                // Wait until all threads are terminated.
+                bossGroup.terminationFuture().sync();
+                workerGroup.terminationFuture().sync();
+            } catch (InterruptedException e) {
+                logger.warn("Thread interrupted closing executors.", e);
+            }
+        }
         logger.info("Simulator server stopped");
     }
 

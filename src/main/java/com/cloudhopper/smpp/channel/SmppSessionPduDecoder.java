@@ -23,12 +23,12 @@ package com.cloudhopper.smpp.channel;
 import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Channel handler responsible for decoding a ByteBuf into a PDU.  A
@@ -48,13 +48,13 @@ public class SmppSessionPduDecoder extends ByteToMessageDecoder {
     // @Override
     // protected Object decode(ChannelHandlerContext ctx, Channel channel, ByteBuf buffer) throws Exception {
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         // try to decode the frame into a PDU
         // NOTE: this already returns null if there isn't enough data yet
-        // return transcoder.decode(buffer);
-	Pdu pdu = transcoder.decode(buffer);
-	logger.debug("Decoded PDU: {}", pdu);
-        out.add(pdu);
+        Pdu pdu = transcoder.decode(in);
+        logger.debug("Decoded PDU: {}", pdu);
+
+        if (pdu != null)
+            out.add(pdu);
     }
-    
 }

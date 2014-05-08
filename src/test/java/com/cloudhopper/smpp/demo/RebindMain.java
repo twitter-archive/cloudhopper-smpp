@@ -20,20 +20,22 @@ package com.cloudhopper.smpp.demo;
  * #L%
  */
 
-import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppSession;
+import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.pdu.EnquireLink;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.util.SmppSessionUtil;
+import io.netty.channel.nio.NioEventLoopGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -48,7 +50,7 @@ public class RebindMain {
         // THIS VERSION USES "DAEMON" threads by default
 	// SmppSessionBootstrap bootstrap = new SmppSessionBootstrap();
         // THIS VERSION DOESN'T - WILL HANG JVM UNTIL CLOSED
-        final DefaultSmppClient bootstrap = new DefaultSmppClient(Executors.newCachedThreadPool());
+        final DefaultSmppClient bootstrap = new DefaultSmppClient(new NioEventLoopGroup());
 
         final DefaultSmppSessionHandler sessionHandler = new ClientSmppSessionHandler();
 

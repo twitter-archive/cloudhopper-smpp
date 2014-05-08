@@ -21,16 +21,13 @@ package com.cloudhopper.smpp.util;
  */
 
 import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.type.Address;
-import com.cloudhopper.smpp.type.NotEnoughDataInBufferException;
-import com.cloudhopper.smpp.type.RecoverablePduException;
-import com.cloudhopper.smpp.type.TerminatingNullByteNotFoundException;
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.tlv.Tlv;
-import java.io.UnsupportedEncodingException;
+import com.cloudhopper.smpp.type.*;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.UnsupportedEncodingException;
 
 /**
  *
@@ -44,8 +41,8 @@ public class ByteBufUtil {
      * a minimum number of bytes readable from the buffer.
      * @param buffer
      * @return
-     * @throws UnrecoverablePduEncodingException
-     * @throws RecoverablePduEncodingException
+     * @throws UnrecoverablePduException
+     * @throws RecoverablePduException
      */
     static public Address readAddress(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         // an address is at least 3 bytes long (ton, npi, and null byte)
@@ -62,8 +59,8 @@ public class ByteBufUtil {
      * safely write out the SmppConstants.EMPTY_ADDRESS instance.
      * @param buffer
      * @param value
-     * @throws UnrecoverablePduEncodingException
-     * @throws RecoverablePduEncodingException
+     * @throws UnrecoverablePduException
+     * @throws RecoverablePduException
      */
     static public void writeAddress(ByteBuf buffer, Address value) throws UnrecoverablePduException, RecoverablePduException {
         if (value == null) {

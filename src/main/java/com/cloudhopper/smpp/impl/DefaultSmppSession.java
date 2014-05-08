@@ -21,41 +21,26 @@ package com.cloudhopper.smpp.impl;
  */
 
 import com.cloudhopper.commons.util.PeriodFormatterUtil;
+import com.cloudhopper.commons.util.windowing.*;
+import com.cloudhopper.smpp.*;
 import com.cloudhopper.smpp.jmx.DefaultSmppSessionMXBean;
-import com.cloudhopper.commons.util.windowing.DuplicateKeyException;
-import com.cloudhopper.commons.util.windowing.OfferTimeoutException;
-import com.cloudhopper.commons.util.windowing.Window;
-import com.cloudhopper.commons.util.windowing.WindowFuture;
-import com.cloudhopper.commons.util.windowing.WindowListener;
-import com.cloudhopper.smpp.SmppBindType;
-import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.SmppServerSession;
-import com.cloudhopper.smpp.type.SmppChannelException;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
-import com.cloudhopper.smpp.SmppSessionCounters;
-import com.cloudhopper.smpp.SmppSessionHandler;
-import com.cloudhopper.smpp.type.SmppTimeoutException;
-import com.cloudhopper.smpp.pdu.BaseBind;
-import com.cloudhopper.smpp.pdu.BaseBindResp;
-import com.cloudhopper.smpp.pdu.EnquireLink;
-import com.cloudhopper.smpp.pdu.EnquireLinkResp;
-import com.cloudhopper.smpp.pdu.Pdu;
-import com.cloudhopper.smpp.pdu.PduRequest;
-import com.cloudhopper.smpp.pdu.PduResponse;
-import com.cloudhopper.smpp.pdu.SubmitSm;
-import com.cloudhopper.smpp.pdu.SubmitSmResp;
-import com.cloudhopper.smpp.pdu.Unbind;
+import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.tlv.Tlv;
 import com.cloudhopper.smpp.tlv.TlvConvertException;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
-import com.cloudhopper.smpp.type.RecoverablePduException;
-import com.cloudhopper.smpp.type.SmppBindException;
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import com.cloudhopper.smpp.type.*;
 import com.cloudhopper.smpp.util.SequenceNumber;
 import com.cloudhopper.smpp.util.SmppSessionUtil;
 import com.cloudhopper.smpp.util.SmppUtil;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
@@ -63,12 +48,6 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.management.ObjectName;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of either an ESME or SMSC SMPP session.
@@ -139,7 +118,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      * @param channel The channel associated with this session. The channel
      *      needs to already be opened.
      * @param sessionHandler The handler for session events
-     * @param executor The executor that window monitoring and potentially
+     * @param monitorExecutor The executor that window monitoring and potentially
      *      statistics will be periodically executed under.  If null, monitoring
      *      will be disabled.
      */
@@ -285,7 +264,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         return this.sequenceNumber;
     }
 
-    protected PduTranscoder getTranscoder() {
+    public PduTranscoder getTranscoder() {
         return this.transcoder;
     }
     
@@ -320,12 +299,14 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             logger.error("{}", e);
         }
         // flag the channel is ready to read
-	//TODO: how to make the channel readable?
+        //TODO: how to make the channel readable?
         // this.channel.setReadable(true).awaitUninterruptibly();
+        this.channel.config().setAutoRead(true);
+
         this.setBound();
     }
 
-    protected BaseBindResp bind(BaseBind request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppBindException, SmppTimeoutException, SmppChannelException, InterruptedException {
+    public BaseBindResp bind(BaseBind request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppBindException, SmppTimeoutException, SmppChannelException, InterruptedException {
         assertValidRequest(request);
         boolean bound = false;
         try {
@@ -519,7 +500,12 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
 
         // write the pdu out & wait timeout amount of time
-	ChannelFuture channelFuture = this.channel.writeAndFlush(buffer).await();
+        ChannelFuture channelFuture = this.channel.writeAndFlush(buffer);
+        if (configuration.getWriteTimeout() > 0){
+            channelFuture.await(configuration.getWriteTimeout());
+        } else {
+            channelFuture.await();
+        }
 
         // check if the write was a success
         if (!channelFuture.isSuccess()) {
@@ -536,8 +522,8 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      * Asynchronously sends a PDU and does not wait for a response PDU.
      * This method will wait for the PDU to be written to the underlying channel.
      * @param pdu The PDU to send (can be either a response or request)
-     * @throws RecoverablePduEncodingException
-     * @throws UnrecoverablePduEncodingException
+     * @throws RecoverablePduException
+     * @throws UnrecoverablePduException
      * @throws SmppChannelException
      * @throws InterruptedException
      */
@@ -558,7 +544,12 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
 
         // write the pdu out & wait timeout amount of time
-        ChannelFuture channelFuture = this.channel.writeAndFlush(buffer).await();
+        ChannelFuture channelFuture = this.channel.writeAndFlush(buffer);
+        if(configuration.getWriteTimeout() > 0){
+            channelFuture.await(configuration.getWriteTimeout());
+        } else {
+            channelFuture.await();
+        }
 
         // check if the write was a success
         if (!channelFuture.isSuccess()) {

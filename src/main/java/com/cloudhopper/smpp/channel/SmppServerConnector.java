@@ -24,22 +24,24 @@ import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.impl.UnboundSmppSession;
 import com.cloudhopper.smpp.ssl.SslConfiguration;
 import com.cloudhopper.smpp.ssl.SslContextFactory;
-import javax.net.ssl.SSLEngine;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLEngine;
+
+import static io.netty.channel.ChannelHandler.Sharable;
 
 /**
  * Channel handler for server SMPP sessions.
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelHandler.Sharable
+
+@Sharable
 public class SmppServerConnector extends LoggingChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(SmppServerConnector.class);
 
@@ -48,7 +50,7 @@ public class SmppServerConnector extends LoggingChannelInboundHandlerAdapter {
     private DefaultSmppServer server;
 
     public SmppServerConnector(ChannelGroup channels, DefaultSmppServer server) {
-	super(SmppServerConnector.class);
+        super(SmppServerConnector.class);
         this.channels = channels;
         this.server = server;
     }
@@ -58,7 +60,7 @@ public class SmppServerConnector extends LoggingChannelInboundHandlerAdapter {
     // public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-	logger.trace("channelActive");
+        logger.trace("channelActive");
         // the channel we are going to handle
         Channel channel = ctx.channel();
 
@@ -77,15 +79,15 @@ public class SmppServerConnector extends LoggingChannelInboundHandlerAdapter {
         logger.info("New channel from [{}]", channelName);
         Thread.currentThread().setName(currentThreadName);
 
-	// add SSL handler
+        // add SSL handler
         if (server.getConfiguration().isUseSsl()) {
-	    SslConfiguration sslConfig = server.getConfiguration().getSslConfiguration();
-	    if (sslConfig == null) throw new IllegalStateException("sslConfiguration must be set");
-	    SslContextFactory factory = new SslContextFactory(sslConfig);
-	    SSLEngine sslEngine = factory.newSslEngine();
-	    sslEngine.setUseClientMode(false);
-	    channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
-	}
+            SslConfiguration sslConfig = server.getConfiguration().getSslConfiguration();
+        if (sslConfig == null) throw new IllegalStateException("sslConfiguration must be set");
+            SslContextFactory factory = new SslContextFactory(sslConfig);
+            SSLEngine sslEngine = factory.newSslEngine();
+            sslEngine.setUseClientMode(false);
+            channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
+        }
 
         // add a new instance of a thread renamer
         channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(threadName));
@@ -96,6 +98,8 @@ public class SmppServerConnector extends LoggingChannelInboundHandlerAdapter {
         // create a new wrapper around an "unbound" session to pass the pdu up the chain
         UnboundSmppSession session = new UnboundSmppSession(channelName, channel, server);
         channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
+
+        super.channelActive(ctx);
     }
 
     //TODO is channelInactive is the same as channelDisconnected?
@@ -103,11 +107,12 @@ public class SmppServerConnector extends LoggingChannelInboundHandlerAdapter {
     // public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-	logger.trace("channelInactive");
-	logger.info("Disconnected channel from [{}]", ChannelUtil.createChannelName(ctx.channel()));
+        logger.trace("channelInactive");
+        logger.info("Disconnected channel from [{}]", ChannelUtil.createChannelName(ctx.channel()));
         // called every time a channel disconnects
         channels.remove(ctx.channel());
         this.server.getCounters().incrementChannelDisconnectsAndGet();
-    }
 
+        super.channelInactive(ctx);
+    }
 }
