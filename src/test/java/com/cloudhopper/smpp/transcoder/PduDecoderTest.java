@@ -21,29 +21,12 @@ package com.cloudhopper.smpp.transcoder;
  */
 
 // third party imports
+import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.type.UnknownCommandIdException;
 import com.cloudhopper.smpp.type.TerminatingNullByteNotFoundException;
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.pdu.BindReceiver;
-import com.cloudhopper.smpp.pdu.BindReceiverResp;
-import com.cloudhopper.smpp.pdu.BindTransceiver;
-import com.cloudhopper.smpp.pdu.BindTransceiverResp;
-import com.cloudhopper.smpp.pdu.BindTransmitter;
-import com.cloudhopper.smpp.pdu.BindTransmitterResp;
-import com.cloudhopper.smpp.pdu.BufferHelper;
-import com.cloudhopper.smpp.pdu.DataSm;
-import com.cloudhopper.smpp.pdu.DataSmResp;
-import com.cloudhopper.smpp.pdu.DeliverSm;
-import com.cloudhopper.smpp.pdu.DeliverSmResp;
-import com.cloudhopper.smpp.pdu.EnquireLink;
-import com.cloudhopper.smpp.pdu.EnquireLinkResp;
-import com.cloudhopper.smpp.pdu.GenericNack;
-import com.cloudhopper.smpp.pdu.SubmitSm;
-import com.cloudhopper.smpp.pdu.SubmitSmResp;
-import com.cloudhopper.smpp.pdu.Unbind;
-import com.cloudhopper.smpp.pdu.UnbindResp;
 import com.cloudhopper.smpp.tlv.Tlv;
 import org.junit.*;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -1243,6 +1226,90 @@ public class PduDecoderTest {
         Assert.assertArrayEquals("Test".getBytes("ISO-8859-1"), tlv0.getValue());
 
         // interesting -- this example has optional parameters it happened to skip...
+        Assert.assertEquals(0, buffer.readableBytes());
+    }
+
+
+    @Test
+    public void decodeCancelSm() throws Exception {
+        ChannelBuffer buffer = BufferHelper.createBuffer("0000002D000000080000000000004FE80031323334350001013430343034000101343439353133363139323000");
+
+        CancelSm pdu0 = (CancelSm)transcoder.decode(buffer);
+
+        Assert.assertEquals(45, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_CANCEL_SM, pdu0.getCommandId());
+        Assert.assertEquals(0, pdu0.getCommandStatus());
+        Assert.assertEquals(20456, pdu0.getSequenceNumber());
+        Assert.assertEquals(true, pdu0.isRequest());
+        Assert.assertEquals("", pdu0.getServiceType());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        Assert.assertEquals("40404", pdu0.getSourceAddress().getAddress());
+        Assert.assertEquals(0x01, pdu0.getDestAddress().getTon());
+        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        Assert.assertEquals("44951361920", pdu0.getDestAddress().getAddress());
+        Assert.assertEquals("12345", pdu0.getMessageId());
+
+        Assert.assertEquals(null, pdu0.getOptionalParameters());
+
+        // interesting -- this example has optional parameters it happened to skip...
+        Assert.assertEquals(0, buffer.readableBytes());
+    }
+
+
+    @Test
+    public void decodeQuerySm() throws Exception {
+        ChannelBuffer buffer = BufferHelper.createBuffer("0000001E000000030000000000004FE83132333435000101343034303400");
+
+        QuerySm pdu0 = (QuerySm)transcoder.decode(buffer);
+
+        Assert.assertEquals(30, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_QUERY_SM, pdu0.getCommandId());
+        Assert.assertEquals(0, pdu0.getCommandStatus());
+        Assert.assertEquals(20456, pdu0.getSequenceNumber());
+        Assert.assertEquals(true, pdu0.isRequest());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        Assert.assertEquals("40404", pdu0.getSourceAddress().getAddress());
+        Assert.assertEquals("12345", pdu0.getMessageId());
+
+        Assert.assertEquals(null, pdu0.getOptionalParameters());
+
+        // interesting -- this example has optional parameters it happened to skip...
+        Assert.assertEquals(0, buffer.readableBytes());
+    }
+
+    @Test
+    public void decodeCancelSmResp() throws Exception {
+        ChannelBuffer buffer = BufferHelper.createBuffer("00000010800000080000000000004FE8");
+
+        CancelSmResp pdu0 = (CancelSmResp)transcoder.decode(buffer);
+
+        Assert.assertEquals(16, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_CANCEL_SM_RESP, pdu0.getCommandId());
+        Assert.assertEquals(0, pdu0.getCommandStatus());
+        Assert.assertEquals(20456, pdu0.getSequenceNumber());
+        Assert.assertEquals(true, pdu0.isResponse());
+
+        Assert.assertEquals(0, buffer.readableBytes());
+    }
+
+    @Test
+    public void decodeQuerySmResp() throws Exception {
+        ChannelBuffer buffer = BufferHelper.createBuffer("00000019800000030000000000004FE8313233343500000600");
+
+        QuerySmResp pdu0 = (QuerySmResp)transcoder.decode(buffer);
+
+        Assert.assertEquals(25, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_QUERY_SM_RESP, pdu0.getCommandId());
+        Assert.assertEquals(0, pdu0.getCommandStatus());
+        Assert.assertEquals(20456, pdu0.getSequenceNumber());
+        Assert.assertEquals("12345", pdu0.getMessageId());
+        Assert.assertEquals("", pdu0.getFinalDate());
+        Assert.assertEquals((byte)0x06, pdu0.getMessageState());
+        Assert.assertEquals((byte)0x00, pdu0.getErrorCode());
+        Assert.assertEquals(true, pdu0.isResponse());
+
         Assert.assertEquals(0, buffer.readableBytes());
     }
 }

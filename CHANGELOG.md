@@ -4,6 +4,50 @@ Cloudhopper by Twitter
 cloudhopper-smpp
 ----------------
 
+## 5.0.6 - 2014-04-02
+ - Support for low-level PDU listener (supports advanced logging, sniffing, and
+   discarding before normal processing). New methods overridable in
+   DefaultSmppSessionHandler are firePduRecived()
+ - Bug with doneDate null-check fixed in DeliveryReceipt.toShortMessage().
+ - Delivery receipt intermediate constant has a flag of bit 4 not 5. Please note
+   that esm_class does used bit 5.
+ - Bumped pom parent to v1.5
+ - Dependencies now have specific version rather than version range.
+ - Updated docs with user contributed demos
+
+## 5.0.5 - 2014-01-07
+ - Changed bindTimeout and writeTimeout implementations to adhere to documented
+   best practices:
+     http://netty.io/3.9/api/org/jboss/netty/channel/ChannelFuture.html
+	 http://netty.io/3.9/api/org/jboss/netty/handler/timeout/WriteTimeoutHandler.html
+   This solves a NullPointerException being thrown in the case where we were
+   calling ChannelFuture.getCause() before the read/write was complete (and thus null).
+ - Netty dependency changed from 3.7.0.Final to 3.9.0.Final
+
+## 5.0.4 - 2013-10-17
+ - Tweaked delivery receipt helper class to be more compliant w/ SMPP 3.4
+   specs by parsing err code as String rather than as an int. Previous int
+   methods were retained for backwards compatability, but accessing the raw
+   error code as a String is now possible.
+   Thx to williamd1618 for pull request:
+     https://github.com/twitter/cloudhopper-smpp/pull/42
+
+## 5.0.3 - 2013-10-13
+ - Netty dependency bumped from 3.5.8.Final to 3.7.0.Final
+ - Added support for a "writeTimeout" to channel writes.
+ - Added support for PDUEncoder to not include message_id in some edge cases.
+   Thx to chadselph for pull request:
+     https://github.com/twitter/cloudhopper-smpp/pull/31
+
+## 5.0.2 - 2013-04-10
+ - Added SSL support for servers and clients with unit and integration tests.
+
+## 5.0.1 - 2013-03-09
+ - Added support for cancel_sm and query_sm SMPP messages. Added unit and 
+   integration tests.
+ - Cleaned up intermittent unit test failures by added delays before session
+   close.
+
 ## 5.0.0 - 2012-10-26
  - No major code changes, mostly project layout changes in prep of release to
    Maven Central Repository

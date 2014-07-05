@@ -49,6 +49,7 @@ public class SmppConstants {
 
     public static final int DEFAULT_WINDOW_SIZE = 1;
     public static final long DEFAULT_WINDOW_WAIT_TIMEOUT = 60000;
+    public static final long DEFAULT_WRITE_TIMEOUT = 0; // For backwards compatibility, default to no timeout
     public static final long DEFAULT_CONNECT_TIMEOUT = 10000;
     public static final long DEFAULT_BIND_TIMEOUT = 5000;
     public static final long DEFAULT_REQUEST_EXPIRY_TIMEOUT = -1;   // disabled
@@ -207,10 +208,12 @@ public class SmppConstants {
     public static final byte REGISTERED_DELIVERY_SME_ACK_MANUAL_REQUESTED   = 0x08;
     public static final byte REGISTERED_DELIVERY_SME_ACK_BOTH_REQUESTED     = 0x0c;
 
-    //   Intermediate notification (bit 5)
-    public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_MASK = 0x20;
+    // Intermediate notification (bit 4)
+    // NOTE: SMPP 3.4 specs originally wrote (bit 5) but their matrix actually used bit 4
+    // the confirmed value is bit 4, not 5.
+    public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_MASK = 0x10;
     public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_NOT_REQUESTED = 0x0;
-    public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_REQUESTED = 0x20;
+    public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_REQUESTED = 0x10;
 
 
     // Replace if Present flag

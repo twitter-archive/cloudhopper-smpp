@@ -4,22 +4,23 @@
   <groupId>com.cloudhopper</groupId>
   <artifactId>ch-smpp</artifactId>
   <packaging>jar</packaging>
-  <version>5.0.1-SNAPSHOT</version>
+  <version>5.0.7-SNAPSHOT</version>
   <name>ch-smpp</name>
   <description>Efficient, scalable, and flexible Java implementation of the Short Messaging Peer to Peer Protocol (SMPP)</description>
   <url>https://github.com/twitter/cloudhopper-smpp</url>
   <inceptionYear>2009</inceptionYear>
     
   <scm>
-      <url>https://github.com/twitter/cloudhopper-smpp</url>
-      <connection>scm:git:https://github.com/twitter/cloudhopper-smpp.git</connection>
-    <tag>HEAD</tag>
+    <url>https://github.com/twitter/cloudhopper-smpp</url>
+    <connection>scm:git:https://github.com/twitter/cloudhopper-smpp.git</connection>
+    <developerConnection>scm:git:git@github.com:twitter/cloudhopper-smpp.git</developerConnection>
+    <tag>master</tag>
   </scm>
   
   <parent>
     <groupId>com.cloudhopper</groupId>
     <artifactId>ch-maven-parent-oss</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
   </parent>
 
   <dependencies>
@@ -44,7 +45,6 @@
       <artifactId>netty</artifactId>
       <version>${netty.version}</version>
     </dependency>
-
     <!-- provided scope -->
     <!-- runtime scope -->
     <!-- testing scope -->
@@ -57,7 +57,7 @@
     <dependency>
       <groupId>com.cloudhopper</groupId>
       <artifactId>ch-commons-gsm</artifactId>
-      <version>${ch-commons-gsm.version}</version>
+      <version>3.0.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -76,10 +76,10 @@
 
   <properties>
     <main.java.package>com.cloudhopper.smpp</main.java.package>
-    <ch-commons-util.version>[6.0.0,)</ch-commons-util.version>
-    <ch-commons-charset.version>[3.0.0,)</ch-commons-charset.version>
-    <ch-commons-gsm.version>[3.0.0,)</ch-commons-gsm.version>
-    <netty.version>3.5.8.Final</netty.version>
+    <ch-commons-util.version>6.0.1</ch-commons-util.version>
+    <ch-commons-charset.version>3.0.2</ch-commons-charset.version>
+    <ch-commons-gsm.version>3.0.0</ch-commons-gsm.version>
+    <netty.version>3.9.0.Final</netty.version>
   </properties>
 
 </project>

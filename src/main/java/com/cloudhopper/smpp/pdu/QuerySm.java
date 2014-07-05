@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.pdu;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2013 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,27 @@ package com.cloudhopper.smpp.pdu;
  * #L%
  */
 
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.commons.util.StringUtil;
+import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.type.Address;
+import com.cloudhopper.smpp.type.RecoverablePduException;
+import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.ChannelBufferUtil;
 import com.cloudhopper.smpp.util.PduUtil;
 import org.jboss.netty.buffer.ChannelBuffer;
 
 /**
- * 
- * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
+ * SMPP query_sm implementation.
+ *
+ * @author chris.matthews <idpromnut@gmail.com>
  */
-public abstract class BaseSmResp extends PduResponse {
+public class QuerySm extends PduRequest<QuerySmResp> {
 
     private String messageId;
+    private Address sourceAddress;
 
-    public BaseSmResp(int commandId, String name) {
-        super(commandId, name);
+    public QuerySm() {
+        super(SmppConstants.CMD_ID_QUERY_SM, "query_sm");
     }
 
     public String getMessageId() {
@@ -47,36 +51,55 @@ public abstract class BaseSmResp extends PduResponse {
         this.messageId = value;
     }
 
+    public Address getSourceAddress() {
+        return this.sourceAddress;
+    }
+
+    public void setSourceAddress(Address value) {
+        this.sourceAddress = value;
+    }
+
+
     @Override
     public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
-        // the body may or may not contain a messageId -- the helper utility
-        // method will take care of returning null if there aren't any readable bytes
         this.messageId = ChannelBufferUtil.readNullTerminatedString(buffer);
+        this.sourceAddress = ChannelBufferUtil.readAddress(buffer);
     }
 
     @Override
     public int calculateByteSizeOfBody() {
         int bodyLength = 0;
         bodyLength += PduUtil.calculateByteSizeOfNullTerminatedString(this.messageId);
+        bodyLength += PduUtil.calculateByteSizeOfAddress(this.sourceAddress);
         return bodyLength;
     }
 
     @Override
     public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
-        // when this PDU was parsed, it's possible it was missing the messageId instead
-        // of having a NULL messageId. If that's the case, the commandLength will be just
-        // enough for the headers (and theoretically any optional TLVs). Don't try to
-        // write the NULL byte for that case.
-        // See special note in 4.4.2 of SMPP 3.4 spec
-        if (!((buffer.writableBytes() == 0) && (this.messageId == null))) {
-            ChannelBufferUtil.writeNullTerminatedString(buffer, this.messageId);
-        }
+        ChannelBufferUtil.writeNullTerminatedString(buffer, this.messageId);
+        ChannelBufferUtil.writeAddress(buffer, this.sourceAddress);
     }
 
     @Override
     public void appendBodyToString(StringBuilder buffer) {
         buffer.append("(messageId [");
         buffer.append(StringUtil.toStringWithNullAsEmpty(this.messageId));
+        buffer.append("] sourceAddr [");
+        buffer.append(StringUtil.toStringWithNullAsEmpty(this.sourceAddress));
         buffer.append("])");
+
     }
+
+    @Override
+    public QuerySmResp createResponse() {
+        QuerySmResp resp = new QuerySmResp();
+        resp.setSequenceNumber(this.getSequenceNumber());
+        return resp;
+    }
+
+    @Override
+    public Class<QuerySmResp> getResponseClass() {
+        return QuerySmResp.class;
+    }
+
 }

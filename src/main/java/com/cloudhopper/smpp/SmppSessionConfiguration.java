@@ -20,6 +20,7 @@ package com.cloudhopper.smpp;
  * #L%
  */
 
+import com.cloudhopper.smpp.ssl.SslConfiguration;
 import com.cloudhopper.smpp.type.SmppConnectionConfiguration;
 import com.cloudhopper.smpp.type.LoggingOptions;
 import com.cloudhopper.smpp.type.Address;
@@ -31,6 +32,9 @@ import com.cloudhopper.smpp.type.Address;
  */
 public class SmppSessionConfiguration extends SmppConnectionConfiguration {
 
+    // SSL
+    private boolean useSsl = false;
+    private SslConfiguration sslConfiguration;
     // other behavioral settings
     private String name;
     private int windowSize;
@@ -48,6 +52,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
     // if > 0, then activated
     private long requestExpiryTimeout;
     private long windowMonitorInterval;
+    private long writeTimeout;
     private boolean countersEnabled;
 
     public SmppSessionConfiguration() {
@@ -70,6 +75,7 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
         this.windowWaitTimeout = SmppConstants.DEFAULT_WINDOW_WAIT_TIMEOUT;
         this.requestExpiryTimeout = SmppConstants.DEFAULT_REQUEST_EXPIRY_TIMEOUT;
         this.windowMonitorInterval = SmppConstants.DEFAULT_WINDOW_MONITOR_INTERVAL;
+        this.writeTimeout = SmppConstants.DEFAULT_WRITE_TIMEOUT;
         this.countersEnabled = false;
     }
 
@@ -157,6 +163,25 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
         return windowWaitTimeout;
     }
 
+    public void setUseSsl(boolean value) {
+	// By default, make an SslConfiguration that will trust everything.
+	if (getSslConfiguration() == null) setSslConfiguration(new SslConfiguration());
+	this.useSsl = value;
+    }
+
+    public boolean isUseSsl() { 
+	return this.useSsl;
+    }
+
+    public void setSslConfiguration(SslConfiguration value) {
+	this.sslConfiguration = value;
+	setUseSsl(true);
+    }
+
+    public SslConfiguration getSslConfiguration() {
+	return this.sslConfiguration;
+    }
+
     /**
      * Set the amount of time to wait until a slot opens up in the sendWindow.
      * Defaults to 60000.
@@ -195,6 +220,14 @@ public class SmppSessionConfiguration extends SmppConnectionConfiguration {
      */
     public void setWindowMonitorInterval(long windowMonitorInterval) {
         this.windowMonitorInterval = windowMonitorInterval;
+    }
+
+    public long getWriteTimeout() {
+        return writeTimeout;
+    }
+
+    public void setWriteTimeout(long writeTimeout) {
+        this.writeTimeout = writeTimeout;
     }
 
     public boolean isCountersEnabled() {
