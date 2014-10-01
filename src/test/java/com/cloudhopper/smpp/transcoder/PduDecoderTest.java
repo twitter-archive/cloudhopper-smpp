@@ -21,19 +21,26 @@ package com.cloudhopper.smpp.transcoder;
  */
 
 // third party imports
-import com.cloudhopper.smpp.pdu.*;
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.type.UnknownCommandIdException;
-import com.cloudhopper.smpp.type.TerminatingNullByteNotFoundException;
+
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.pdu.*;
+import com.cloudhopper.smpp.test.SmppAssert;
+import com.cloudhopper.smpp.test.SmppTestDataProvider;
 import com.cloudhopper.smpp.tlv.Tlv;
-import org.junit.*;
+import com.cloudhopper.smpp.type.*;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.buffer.CompositeChannelBuffer;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 // my imports
 
@@ -1311,5 +1318,119 @@ public class PduDecoderTest {
         Assert.assertEquals(true, pdu0.isResponse());
 
         Assert.assertEquals(0, buffer.readableBytes());
+    }
+
+    @Test
+    public void decodeSubmitMulti_SingleSmeAddress() throws Exception {
+        SubmitMulti expectedSubmitMulti = SmppTestDataProvider.getDefaultSubmitMulti();
+        List<SubmitMultiDestinationAddress> addressList = Collections.singletonList(
+                new SubmitMultiDestinationAddress(new Address((byte) 4, (byte) 5, "987654321")));
+        expectedSubmitMulti.setSubmitMultiDestinationAddressList(addressList);
+
+        String destinationAddressHex = "0101040539383736353433323100";
+
+        verifySubmitMultiDecoding(expectedSubmitMulti, destinationAddressHex);
+    }
+
+    @Test
+    public void decodeSubmitMulti_ManySmeAddresses() throws Exception {
+        SubmitMulti expectedSubmitMulti = SmppTestDataProvider.getDefaultSubmitMulti();
+        List<SubmitMultiDestinationAddress> addressList = Arrays.asList(
+                new SubmitMultiDestinationAddress(new Address((byte) 4, (byte) 5, "987654321")),
+                new SubmitMultiDestinationAddress(new Address((byte) 7, (byte) 8, "123454321")));
+        expectedSubmitMulti.setSubmitMultiDestinationAddressList(addressList);
+
+        String destinationAddressHex = "020104053938373635343332310001070831323334353433323100";
+
+        verifySubmitMultiDecoding(expectedSubmitMulti, destinationAddressHex);
+    }
+
+    @Test
+    public void decodeSubmitMulti_SingleDistributionListName() throws Exception {
+        SubmitMulti expectedSubmitMulti = SmppTestDataProvider.getDefaultSubmitMulti();
+        List<SubmitMultiDestinationAddress> addressList = Collections.singletonList(
+                new SubmitMultiDestinationAddress("ABC-DEF-123"));
+        expectedSubmitMulti.setSubmitMultiDestinationAddressList(addressList);
+
+        System.out.println(HexUtil.toHexString("ABC-DEF-123".getBytes()));
+        String destinationAddressHex = "01024142432D4445462D31323300";
+
+        verifySubmitMultiDecoding(expectedSubmitMulti, destinationAddressHex);
+    }
+
+    @Test
+    public void decodeSubmitMulti_ManyDistributionListNames() throws Exception {
+        SubmitMulti expectedSubmitMulti = SmppTestDataProvider.getDefaultSubmitMulti();
+        List<SubmitMultiDestinationAddress> addressList = Arrays.asList(
+                new SubmitMultiDestinationAddress("ABC-DEF-123"),
+                new SubmitMultiDestinationAddress("12345678901"));
+        expectedSubmitMulti.setSubmitMultiDestinationAddressList(addressList);
+
+        System.out.println(HexUtil.toHexString("12345678901".getBytes()));
+        String destinationAddressHex = "02024142432D4445462D3132330002313233343536373839303100";
+
+        verifySubmitMultiDecoding(expectedSubmitMulti, destinationAddressHex);
+    }
+
+    @Test
+    public void decodeSubmitMulti_Mixed() throws Exception {
+        SubmitMulti expectedSubmitMulti = SmppTestDataProvider.getDefaultSubmitMulti();
+        List<SubmitMultiDestinationAddress> addressList = Arrays.asList(
+                new SubmitMultiDestinationAddress(new Address((byte) 4, (byte) 5, "987654321")),
+                new SubmitMultiDestinationAddress("12345678901"),
+                new SubmitMultiDestinationAddress(new Address((byte) 7, (byte) 8, "123454321")));
+        expectedSubmitMulti.setSubmitMultiDestinationAddressList(addressList);
+
+        String destinationAddressHex = "03010405393837363534333231000231323334353637383930310001070831323334353433323100";
+
+        verifySubmitMultiDecoding(expectedSubmitMulti, destinationAddressHex);
+    }
+
+    @Test
+    public void decodeSubmitMultiResp_Success() throws Exception {
+        SubmitMultiResp expectedResponse = new SubmitMultiResp();
+        expectedResponse.setCommandLength(38);
+        expectedResponse.setCommandStatus(SmppConstants.STATUS_OK);
+        expectedResponse.setSequenceNumber(20456);
+        expectedResponse.setMessageId("a1-b2-c3-d4-e5-f6-g7");
+        expectedResponse.setUnsuccessSmes(null);
+        verifySubmitMultiRespDecoding(expectedResponse,
+                "00000026800000210000000000004FE861312D62322D63332D64342D65352D66362D67370000");
+    }
+
+    @Test
+    public void decodeSubmitMultiResp_Failed() throws Exception {
+        SubmitMultiResp expectedResponse = new SubmitMultiResp();
+        expectedResponse.setCommandLength(51);
+        expectedResponse.setCommandStatus(SmppConstants.STATUS_SUBMITFAIL);
+        expectedResponse.setSequenceNumber(20456);
+        expectedResponse.setMessageId("a1-b2-c3-d4-e5-f6-g7");
+
+        List<SubmitMultiUnsuccessSme> list = new ArrayList<SubmitMultiUnsuccessSme>(1);
+        list.add(new SubmitMultiUnsuccessSme(new Address((byte) 4, (byte) 5, "123456"), SmppConstants.STATUS_SUBMITFAIL));
+        expectedResponse.setUnsuccessSmes(list);
+
+        verifySubmitMultiRespDecoding(expectedResponse,
+                "00000033800000210000004500004FE861312D62322D63332D64342D65352D66362D6737000104053132333435360000000045");
+
+        expectedResponse.setCommandLength(64);
+        list.add(new SubmitMultiUnsuccessSme(new Address((byte) 8, (byte) 9, "654321"), SmppConstants.STATUS_OK));
+        verifySubmitMultiRespDecoding(expectedResponse,
+                "00000040800000210000004500004FE861312D62322D63332D64342D65352D66362D673700020405313233343536000000004508093635343332310000000000");
+    }
+
+    private void verifySubmitMultiDecoding(SubmitMulti expectedSubmitMulti,
+                                           String submitMultiDestinationAddressHex) throws Exception {
+        final String hex = SmppTestDataProvider.getDefaultSubmitMultiPduHex(submitMultiDestinationAddressHex);
+        ChannelBuffer buffer = BufferHelper.createBuffer(hex);
+        SubmitMulti actualSubmitMulti = (SubmitMulti) transcoder.decode(buffer);
+        expectedSubmitMulti.setCommandLength(hex.length() / 2);
+        SmppAssert.assertSubmitMulti(expectedSubmitMulti, actualSubmitMulti);
+    }
+
+    private void verifySubmitMultiRespDecoding(SubmitMultiResp expectedResponse, String pduHex) throws Exception {
+        ChannelBuffer buffer = BufferHelper.createBuffer(pduHex);
+        SubmitMultiResp submitMultiResp = (SubmitMultiResp) transcoder.decode(buffer);
+        SmppAssert.assertSubmitMultiResp(expectedResponse, submitMultiResp);
     }
 }

@@ -22,6 +22,10 @@ package com.cloudhopper.smpp.util;
 
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.type.Address;
+import com.cloudhopper.smpp.type.SubmitMultiDestinationAddress;
+import com.cloudhopper.smpp.type.SubmitMultiUnsuccessSme;
+
+import java.util.List;
 
 /**
  *
@@ -54,6 +58,37 @@ public class PduUtil {
         } else {
             return value.calculateByteSize();
         }
+    }
+
+    /**
+     * Calculates the byte size of number_of_dests + dest_address(es) for submit_multi.
+     * If called with null or empty list parameter returns 0 (although note that SMPP spec
+     * requires at least 1 destination address).
+     *
+     * @param addressList submit_multi destination address list
+     * @return byte size
+     */
+    static public int calculateByteSizeOfSubmitMultiAddressList(List<SubmitMultiDestinationAddress> addressList) {
+        if (addressList == null || addressList.isEmpty()) {
+            return 0;
+        }
+
+        int size = 1; //number_of_dests
+        for (SubmitMultiDestinationAddress address : addressList) {
+            size += address.calculateByteSize();
+        }
+
+        return size;
+    }
+
+    static public int calculateByteSizeOfSubmitMultiUnsucessSmeList(List<SubmitMultiUnsuccessSme> list) {
+        int size = 1; //no_unsuccess
+        if (list != null) {
+            for (SubmitMultiUnsuccessSme unsuccessSme : list) {
+                size += unsuccessSme.calculateByteSizeOfBody();
+            }
+        }
+        return size;
     }
 
     static public boolean isRequestCommandId(int commandId) {

@@ -21,18 +21,24 @@ package com.cloudhopper.smpp.transcoder;
  */
 
 // third party imports
-import com.cloudhopper.commons.util.HexString;
-import com.cloudhopper.smpp.pdu.*;
-import com.cloudhopper.smpp.type.Address;
+
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.pdu.*;
+import com.cloudhopper.smpp.test.SmppTestDataProvider;
 import com.cloudhopper.smpp.tlv.Tlv;
+import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
-import java.io.UnsupportedEncodingException;
-import org.junit.*;
+import com.cloudhopper.smpp.type.SubmitMultiDestinationAddress;
+import com.cloudhopper.smpp.type.SubmitMultiUnsuccessSme;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.junit.Assert;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 // my imports
 
@@ -493,4 +499,102 @@ public class PduEncoderTest {
 //        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
         Assert.assertArrayEquals(HexUtil.toByteArray("00000019800000030000000000004FE8313233343500000600"), BufferHelper.createByteArray(buffer));
     }
+
+    @Test
+    public void encodeSubmitMulti_SingleSmeAddress() throws Exception {
+        List<SubmitMultiDestinationAddress> list = new ArrayList<SubmitMultiDestinationAddress>(1);
+        list.add(new SubmitMultiDestinationAddress(new Address((byte) 4, (byte) 5, "44951361920")));
+
+        String destinationHex = "01010405343439353133363139323000";
+
+        verifyEncodeSubmitMulti(list, destinationHex);
+    }
+
+    @Test
+    public void encodeSubmitMulti_ManySmeAddress() throws Exception {
+        List<SubmitMultiDestinationAddress> list = new ArrayList<SubmitMultiDestinationAddress>(2);
+        list.add(new SubmitMultiDestinationAddress(new Address((byte) 4, (byte) 5, "44951361920")));
+        list.add(new SubmitMultiDestinationAddress(new Address((byte) 7, (byte) 8, "55511100012")));
+
+        String destinationHex = "02010405343439353133363139323000010708353535313131303030313200";
+
+        verifyEncodeSubmitMulti(list, destinationHex);
+    }
+
+    @Test
+    public void encodeSubmitMulti_SingleDistributionListName() throws Exception {
+        List<SubmitMultiDestinationAddress> list = new ArrayList<SubmitMultiDestinationAddress>(1);
+        list.add(new SubmitMultiDestinationAddress("44951361920"));
+
+        String destinationHex = "0102343439353133363139323000";
+
+        verifyEncodeSubmitMulti(list, destinationHex);
+    }
+
+    @Test
+    public void encodeSubmitMulti_ManyDistributionListName() throws Exception {
+        List<SubmitMultiDestinationAddress> list = new ArrayList<SubmitMultiDestinationAddress>(1);
+        list.add(new SubmitMultiDestinationAddress("44951361920"));
+        list.add(new SubmitMultiDestinationAddress("55511100012"));
+
+        String destinationHex = "020234343935313336313932300002353535313131303030313200";
+
+        verifyEncodeSubmitMulti(list, destinationHex);
+    }
+
+    @Test
+    public void encodeSubmitMulti_Mixed() throws Exception {
+        List<SubmitMultiDestinationAddress> list = new ArrayList<SubmitMultiDestinationAddress>(1);
+        list.add(new SubmitMultiDestinationAddress("44951361920"));
+        list.add(new SubmitMultiDestinationAddress(new Address((byte) 4, (byte) 5, "12345678912")));
+        list.add(new SubmitMultiDestinationAddress("55511100012"));
+
+        String destinationHex = "030234343935313336313932300001040531323334353637383931320002353535313131303030313200";
+
+        verifyEncodeSubmitMulti(list, destinationHex);
+    }
+
+    @Test
+    public void encodeSubmitMultiResp_Success() throws Exception {
+        SubmitMultiResp pdu = SmppTestDataProvider.getDefaultSubmitMultiResp();
+        String unsuccessSmeHex = "00";
+        verifySubmitMultiResp(pdu, unsuccessSmeHex);
+    }
+
+    @Test
+    public void encodeSubmitMultiResp_Failed() throws Exception {
+        SubmitMultiResp pdu = SmppTestDataProvider.getDefaultSubmitMultiResp();
+        pdu.setCommandStatus(SmppConstants.STATUS_SUBMITFAIL);
+        final ArrayList<SubmitMultiUnsuccessSme> list = new ArrayList<SubmitMultiUnsuccessSme>(2);
+        list.add(new SubmitMultiUnsuccessSme(new Address((byte) 4, (byte) 5, "12345678912"), SmppConstants.STATUS_SUBMITFAIL));
+        list.add(new SubmitMultiUnsuccessSme(new Address((byte) 6, (byte) 7, "55511100012"), SmppConstants.STATUS_OK));
+        pdu.setUnsuccessSmes(list);
+
+        String unsuccessSmeHex = "02040531323334353637383931320000000045060735353531313130303031320000000000";
+
+        verifySubmitMultiResp(pdu, unsuccessSmeHex);
+    }
+
+    private void verifyEncodeSubmitMulti(List<SubmitMultiDestinationAddress> addressList,
+                                         String submitMultiDestinationHex) throws Exception {
+        SubmitMulti pdu = SmppTestDataProvider.getDefaultSubmitMulti();
+        pdu.setSubmitMultiDestinationAddressList(addressList);
+        ChannelBuffer buffer = transcoder.encode(pdu);
+        String pduHex = SmppTestDataProvider.getDefaultSubmitMultiPduHex(submitMultiDestinationHex);
+        Assert.assertArrayEquals(HexUtil.toByteArray(pduHex), BufferHelper.createByteArray(buffer));
+    }
+
+    private void verifySubmitMultiResp(SubmitMultiResp pdu, String unsuccessSmeHex) throws Exception {
+        String statusHex = HexUtil.toHexString(pdu.getCommandStatus());
+        String pduHex = getSubmitMultiResponsePduHex(statusHex, unsuccessSmeHex);
+        ChannelBuffer buffer = transcoder.encode(pdu);
+        Assert.assertArrayEquals(HexUtil.toByteArray(pduHex), BufferHelper.createByteArray(buffer));
+    }
+
+    private String getSubmitMultiResponsePduHex(final String statusHex, final String unsuccessSmeHex) {
+        int length = 37 + (unsuccessSmeHex.length() / 2);
+        return String.format("%s80000021%s00004FE861312D62322D63332D64342D65352D66362D673700%s",
+                HexUtil.toHexString(length), statusHex, unsuccessSmeHex);
+    }
+
 }
