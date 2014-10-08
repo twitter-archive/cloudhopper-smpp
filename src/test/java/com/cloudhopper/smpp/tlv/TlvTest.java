@@ -288,7 +288,7 @@ public class TlvTest {
     public void testEquals() throws Exception{
         Tlv tlv0 = new Tlv((short) 0x88, "equals".getBytes());
         // Trivial case
-        Assert.assertEquals(tlv0.equals(tlv0));
+        Assert.assertTrue(tlv0.equals(tlv0));
         Tlv tlv0Mirror = new Tlv((short) 0x88, "equals".getBytes());
         // Reflexivity
         Assert.assertEquals(tlv0, tlv0);
