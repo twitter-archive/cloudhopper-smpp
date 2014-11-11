@@ -173,7 +173,7 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
     public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
         this.serviceType = ChannelBufferUtil.readNullTerminatedString(buffer);
         this.sourceAddress = ChannelBufferUtil.readAddress(buffer);
-        this.destAddress = ChannelBufferUtil.readAddress(buffer);
+        readDestinationAddress(buffer);
         this.esmClass = buffer.readByte();
         this.protocolId = buffer.readByte();
         this.priority = buffer.readByte();
@@ -194,7 +194,7 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
         int bodyLength = 0;
         bodyLength += PduUtil.calculateByteSizeOfNullTerminatedString(this.serviceType);
         bodyLength += PduUtil.calculateByteSizeOfAddress(this.sourceAddress);
-        bodyLength += PduUtil.calculateByteSizeOfAddress(this.destAddress);
+        bodyLength += calculateDestinationAddressSize();
         bodyLength += 3;    // esmClass, priority, protocolId
         bodyLength += PduUtil.calculateByteSizeOfNullTerminatedString(this.scheduleDeliveryTime);
         bodyLength += PduUtil.calculateByteSizeOfNullTerminatedString(this.validityPeriod);
@@ -207,7 +207,7 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
     public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
         ChannelBufferUtil.writeNullTerminatedString(buffer, this.serviceType);
         ChannelBufferUtil.writeAddress(buffer, this.sourceAddress);
-        ChannelBufferUtil.writeAddress(buffer, this.destAddress);
+        writeDestinationAddress(buffer);
         buffer.writeByte(this.esmClass);
         buffer.writeByte(this.protocolId);
         buffer.writeByte(this.priority);
@@ -229,8 +229,7 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
         buffer.append(StringUtil.toStringWithNullAsEmpty(this.serviceType));
         buffer.append("] sourceAddr [");
         buffer.append(StringUtil.toStringWithNullAsEmpty(this.sourceAddress));
-        buffer.append("] destAddr [");
-        buffer.append(StringUtil.toStringWithNullAsEmpty(this.destAddress));
+        appendDestinationAddressToString(buffer);
 
         buffer.append("] esmCls [0x");
         buffer.append(HexUtil.toHexString(this.esmClass));
@@ -242,5 +241,22 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
         buffer.append("] message [");
         HexUtil.appendHexString(buffer, this.shortMessage);
         buffer.append("])");
+    }
+
+    protected void readDestinationAddress(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+        this.destAddress = ChannelBufferUtil.readAddress(buffer);
+    }
+
+    protected void writeDestinationAddress(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+        ChannelBufferUtil.writeAddress(buffer, this.destAddress);
+    }
+
+    protected int calculateDestinationAddressSize() {
+        return PduUtil.calculateByteSizeOfAddress(this.destAddress);
+    }
+
+    protected void appendDestinationAddressToString(StringBuilder buffer) {
+        buffer.append("] destAddr [");
+        buffer.append(StringUtil.toStringWithNullAsEmpty(this.destAddress));
     }
 }

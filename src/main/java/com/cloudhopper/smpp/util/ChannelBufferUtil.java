@@ -21,13 +21,12 @@ package com.cloudhopper.smpp.util;
  */
 
 import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.type.Address;
-import com.cloudhopper.smpp.type.NotEnoughDataInBufferException;
-import com.cloudhopper.smpp.type.RecoverablePduException;
-import com.cloudhopper.smpp.type.TerminatingNullByteNotFoundException;
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import com.cloudhopper.smpp.type.*;
 import com.cloudhopper.smpp.tlv.Tlv;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +71,92 @@ public class ChannelBufferUtil {
             value.write(buffer);
         }
     }
-    
+
+    /**
+     * Read and create a list of submit_multi addresses from a buffer.
+     *
+     * @param buffer the buffer to read from
+     * @return submit_multi address list
+     */
+    public static List<SubmitMultiDestinationAddress> readSubmitMultiAddressList(ChannelBuffer buffer)
+            throws UnrecoverablePduException, RecoverablePduException {
+        /* submit_multi has to have at least 3 bytes:
+         * 1 byte for number_of_dests field
+         * 1 byte for dest_flag field
+         * at least 1 possible null byte in case of empty distribution list name */
+        int requiredReadableBytes = 3;
+        int readableBytes = buffer.readableBytes();
+
+        if (readableBytes < requiredReadableBytes) {
+            throw new NotEnoughDataInBufferException(
+                    "Parsing submit_multi destination address", readableBytes, requiredReadableBytes);
+        }
+
+        final int numberOfDestinations = buffer.readByte();
+        final List<SubmitMultiDestinationAddress> addressList =
+                new ArrayList<SubmitMultiDestinationAddress>(numberOfDestinations);
+
+        for (int i = 0; i < numberOfDestinations; i++) {
+            final SubmitMultiDestinationAddress address = new SubmitMultiDestinationAddress();
+            address.read(buffer);
+            addressList.add(address);
+        }
+
+        return addressList;
+    }
+
+    /**
+     * Writes an submit_multi destination address structure to a buffer
+     *
+     * @param buffer      the buffer to write to
+     * @param addressList submit_multi address list
+     */
+    public static void writeSubmitMultiAddressList(ChannelBuffer buffer, List<SubmitMultiDestinationAddress> addressList)
+            throws UnrecoverablePduException, RecoverablePduException {
+
+        if (addressList == null || addressList.isEmpty()) {
+            String msg = "submit_multi must contain at least 1 SME address or distribution list name";
+            throw new SmppInvalidArgumentException(msg);
+        } else if (addressList.size() > 254) {
+            String msg = "A maximum of 254 destination addresses are allowed, actual count was " + addressList.size();
+            throw new SmppInvalidArgumentException(msg);
+        } else {
+            buffer.writeByte(addressList.size());
+            for (SubmitMultiDestinationAddress address : addressList) {
+                address.write(buffer);
+            }
+        }
+    }
+
+    public static void writeSubmitMultiUnsuccessSmeList(ChannelBuffer buffer, List<SubmitMultiUnsuccessSme> list)
+            throws UnrecoverablePduException, RecoverablePduException {
+
+        int numberOfUnsuccessSmes = list == null || list.isEmpty() ? 0 : list.size();
+        buffer.writeByte(numberOfUnsuccessSmes);
+        if (numberOfUnsuccessSmes > 0) {
+            for (SubmitMultiUnsuccessSme unsuccessSme : list) {
+                unsuccessSme.writeBody(buffer);
+            }
+        }
+    }
+
+    public static List<SubmitMultiUnsuccessSme> readSubmitMultiUnsuccessSmeList(ChannelBuffer buffer)
+            throws UnrecoverablePduException, RecoverablePduException {
+
+        List<SubmitMultiUnsuccessSme> list = null;
+        byte numberOfUnsuccess = buffer.readByte();
+
+        if (numberOfUnsuccess > 0) {
+            list = new ArrayList<SubmitMultiUnsuccessSme>(numberOfUnsuccess);
+            for (int i = 0; i < numberOfUnsuccess; i++) {
+                SubmitMultiUnsuccessSme unsuccessSme = new SubmitMultiUnsuccessSme();
+                unsuccessSme.readBody(buffer);
+                list.add(unsuccessSme);
+            }
+        }
+
+        return list;
+    }
 
     /**
      * Reads a TLV from a buffer. This method is greedy and will read bytes
@@ -191,6 +275,5 @@ public class ChannelBufferUtil {
 
         return result;
     }
-
 
 }
