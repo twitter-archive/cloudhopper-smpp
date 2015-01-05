@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.impl;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,12 @@ import com.cloudhopper.smpp.channel.*;
 import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.ssl.SslConfiguration;
 import com.cloudhopper.smpp.ssl.SslContextFactory;
+import com.cloudhopper.smpp.type.*;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.SmppBindException;
 import com.cloudhopper.smpp.type.SmppChannelConnectException;
 import com.cloudhopper.smpp.type.SmppChannelConnectTimeoutException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLEngine;
-import com.cloudhopper.smpp.type.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -48,20 +43,25 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import java.net.InetSocketAddress;
+import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLEngine;
-import java.net.InetSocketAddress;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Default implementation to "bootstrap" client SMPP sessions (create & bind).
@@ -86,7 +86,10 @@ public class DefaultSmppClient implements SmppClient {
      * An Executors.newCachedDaemonThreadPool will be used for IO worker threads.
      */
     public DefaultSmppClient() {
-        this(new NioEventLoopGroup());
+        //this(new NioEventLoopGroup());
+	//@trustin: new NioEventLoopGroup() does not create daemon threads. You have to specify a ThreadFactory do to that. For example:
+	this(new NioEventLoopGroup(0, new DefaultThreadFactory(SmppClient.class, true)));
+	//.. where DefaultThreadFactory is a new utility class in Netty 4.
     }
 
     /**
@@ -122,14 +125,16 @@ public class DefaultSmppClient implements SmppClient {
         this.clientBootstrap.channel(NioSocketChannel.class);
         // we use the same default pipeline for all new channels - no need for a factory
         this.clientConnector = new SmppClientConnector(this.channels);
-
+	//@trustin: You don't need to use a ChannelInitializer in this case, because all it does is to replace itself with the clientConnector.
+	/*
         this.clientBootstrap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
                 ch.pipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, clientConnector);
             }
         });
-
+	*/
+	this.clientBootstrap.handler(this.clientConnector);
         this.monitorExecutor = monitorExecutor;
     }
     
@@ -232,6 +237,21 @@ public class DefaultSmppClient implements SmppClient {
     protected DefaultSmppSession createSession(Channel channel, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.CLIENT, config, channel, sessionHandler, monitorExecutor);
 
+	//TODO @trustin: Please consider using the new SSL abstraction introduced in Netty 4.0.19.
+	//               It will also allow you to accelerate SSL performance using OpenSSL.
+	//               It might also be a good idea to set the sensible list of enabled cipher
+	//               suites rather than the JDK default. E.g.:
+	//     "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", // since JDK 8
+	//     "TLS_ECDHE_RSA_WITH_RC4_128_SHA",
+	//     "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+	//     "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+	//     "TLS_RSA_WITH_AES_128_GCM_SHA256", // since JDK 8
+	//     "SSL_RSA_WITH_RC4_128_SHA",
+	//     "SSL_RSA_WITH_RC4_128_MD5",
+	//     "TLS_RSA_WITH_AES_128_CBC_SHA",
+	//     "TLS_RSA_WITH_AES_256_CBC_SHA",
+	//     "SSL_RSA_WITH_DES_CBC_SHA"
+	
         // add SSL handler
         if (config.isUseSsl()) {
             SslConfiguration sslConfig = config.getSslConfiguration();

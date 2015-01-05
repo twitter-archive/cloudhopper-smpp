@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.impl;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,18 +396,18 @@ public class DefaultSmppSessionTest {
 
             // send 1 byte
             logger.debug("Sending 1 byte");
-            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("00")).await();
+            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("00")).sync();
 
             // nothing received yet
             Assert.assertEquals(0, sessionHandler.getReceivedPduRequests().size());
 
             // send 14 more bytes
             logger.debug("Sending 14 more bytes");
-            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("00001000000015000000000a342e")).await();
+            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("00001000000015000000000a342e")).sync();
 
             // send 1 more byte
             logger.debug("Sending 1 more bytes");
-            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("e7")).await();
+            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("e7")).sync();
 
             // we should have received a PDU request, poll for it
             PduRequest pdu0 = sessionHandler.getReceivedPduRequests().poll(2000, TimeUnit.MILLISECONDS);
@@ -514,7 +514,7 @@ public class DefaultSmppSessionTest {
 
         try {
             // send some bytes that should trigger a MAJOR issue during parsing
-            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("F000001000000015000000000a342ee7")).await();
+            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("F000001000000015000000000a342ee7")).sync();
 
             // we should have received an Unrecoverable exception, poll for it
             Throwable t = sessionHandler.getThrowables().poll(2000, TimeUnit.MILLISECONDS);
@@ -543,7 +543,7 @@ public class DefaultSmppSessionTest {
 
         try {
             // send some bytes that should trigger a MAJOR issue during parsing
-            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("00000010000000150000000080000000")).await();
+            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("00000010000000150000000080000000")).sync();
 
             // we should have received an Unrecoverable exception, poll for it
             Throwable t = sessionHandler.getThrowables().poll(2000, TimeUnit.MILLISECONDS);
@@ -572,7 +572,7 @@ public class DefaultSmppSessionTest {
 
         try {
             // send some bytes that should trigger a MAJOR issue during parsing
-            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("0000001180000004000000000a342ee139")).await();
+            simulator0.getChannel().writeAndFlush(BufferHelper.createBuffer("0000001180000004000000000a342ee139")).sync();
 
             // we should have received an Unrecoverable exception, poll for it
             Throwable t = sessionHandler.getThrowables().poll(2000, TimeUnit.MILLISECONDS);

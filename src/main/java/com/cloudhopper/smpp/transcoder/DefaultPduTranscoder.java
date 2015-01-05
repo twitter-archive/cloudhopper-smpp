@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.transcoder;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,10 +62,23 @@ public class DefaultPduTranscoder implements PduTranscoder {
             pdu.calculateAndSetCommandLength();
         }
 
+	// @trustin:
+	// You don't need to call buffer.order(ByteOrder.BIG_ENDIAN).  It's always big endian in Netty 4.
+	// Instead of allocating an unpooled buffer, please use ByteBufAllocator.buffer(...). To do this,
+	// PduTranscoder.encode() must have ByteBufAllocator as an additional parameter.  In your handler,
+	// you'll usually get your allocator using ChannelHandlerContext.alloc() (or Channel.alloc()) method:
+	//     ByteBuf pduBuf = transcoder.encode(ctx.alloc());
+	// The default implementation is an unpooled allocator, so you will not see the difference.
+	// In your bootstrap code, set the following option:
+	//     serverBootstrap.childOption(
+	//             ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+	//     clientBootstrap.option(
+	//             ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+
         // create the buffer and add the header
         ByteBuf buffer = Unpooled.buffer(pdu.getCommandLength());
         //TODO: directBuffer?
-        buffer.order(ByteOrder.BIG_ENDIAN);
+        //buffer.order(ByteOrder.BIG_ENDIAN);
         buffer.writeInt(pdu.getCommandLength());
         buffer.writeInt(pdu.getCommandId());
         buffer.writeInt(pdu.getCommandStatus());

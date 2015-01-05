@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.pdu;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ public class BufferHelper
 {
 
     static public ByteBuf createBuffer(byte[] bytes) throws Exception {
-        return Unpooled.wrappedBuffer(bytes).order(ByteOrder.BIG_ENDIAN);
+	// @trusin: No need to call order(BIG_ENDIAN).  All Netty 4 buffers are by default big endian.
+	// return Unpooled.wrappedBuffer(bytes).order(ByteOrder.BIG_ENDIAN);
+        return Unpooled.wrappedBuffer(bytes);
     }
 
     static public ByteBuf createBuffer(String hexString) throws Exception {

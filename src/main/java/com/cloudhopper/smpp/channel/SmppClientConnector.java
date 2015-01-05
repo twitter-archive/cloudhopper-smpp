@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.channel;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,7 @@ public class SmppClientConnector extends LoggingChannelInboundHandlerAdapter {
     }
 
     //TODO is channelActive is the same as channelConnected?
-    // @Override
-    // public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    // @trustin: Yes for client channels or accepted channels. For server channels, it is same with channelBound.
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // called every time a new channel connects
@@ -59,8 +58,7 @@ public class SmppClientConnector extends LoggingChannelInboundHandlerAdapter {
     }
 
     //TODO is channelInactive is the same as channelDisconnected?
-    // @Override
-    // public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    // @trustin: Yes for client channels or accepted channels. For server channels, it is same with channelUnbound.
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // called every time a channel disconnects
@@ -72,6 +70,7 @@ public class SmppClientConnector extends LoggingChannelInboundHandlerAdapter {
      * Invoked when an exception was raised by an I/O thread or an upstream handler.
      * NOTE: Not implementing this causes annoying log statements to STDERR
      * TODO: do we need this anymore? This is the default impl.
+     * /@trustin: Not in this case, because your handler merely forwards the exception to the next handler.
      */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {

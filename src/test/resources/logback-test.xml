@@ -28,7 +28,7 @@
   </appender>
   
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    <file>tests.log</file>
+    <file>target/tests.log</file>
     <append>true</append>
     <layout class="ch.qos.logback.classic.PatternLayout">
       <Pattern>%-23d [%thread] %-5level %logger{32} - %m%n</Pattern>

@@ -3,6 +3,11 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+## 6.0.0-netty4-beta-1
+ - Pre-release of port to Netty 4. Includes community contributions and changes based
+   on Trustin's review.
+ - Netty dependency changed to 4.0.25.Final.
+
 ## 5.0.5 - 2014-01-0?
  - Changed bindTimeout and writeTimeout implementations to adhere to documented
    best practices:
@@ -10,7 +15,7 @@ cloudhopper-smpp
 	 http://netty.io/3.9/api/org/jboss/netty/handler/timeout/WriteTimeoutHandler.html
    This solves a NullPointerException being thrown in the case where we were
    calling ChannelFuture.getCause() before the read/write was complete (and thus null).
-- Netty dependency changed from 3.7.0.Final to 3.9.0.Final
+ - Netty dependency changed from 3.7.0.Final to 3.9.0.Final
 
 ## 5.0.4 - 2013-10-17
  - Tweaked delivery receipt helper class to be more compliant w/ SMPP 3.4
