@@ -60,7 +60,7 @@ public class SlowServerMain {
         System.in.read();
 
         logger.info("SMPP server stopping");
-        smppServer.stop();
+        smppServer.destroy();
         logger.info("SMPP server stopped");
     }
 

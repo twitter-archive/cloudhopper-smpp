@@ -90,9 +90,11 @@ public class ServerMain {
         System.in.read();
 
         logger.info("Stopping SMPP server...");
-        smppServer.stop();
+        smppServer.destroy();
         logger.info("SMPP server stopped");
-        
+
+	monitorExecutor.shutdown();
+	
         logger.info("Server counters: {}", smppServer.getCounters());
     }
 
