@@ -164,7 +164,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         if (configuration.isJmxEnabled()) {
             // register the this queue manager as an mbean
             try {
-                ObjectName name = new ObjectName(configuration.getJmxDomain() + ":name=" + configuration.getName());
+                ObjectName name = new ObjectName(configuration.getJmxDomain() + ":name=" + ObjectName.quote(configuration.getName()));
                 ManagementFactory.getPlatformMBeanServer().registerMBean(this, name);
             } catch (Exception e) {
                 // log the error, but don't throw an exception for this datasource
@@ -180,7 +180,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         if (configuration.isJmxEnabled()) {
             // register the this queue manager as an mbean
             try {
-                ObjectName name = new ObjectName(configuration.getJmxDomain() + ":name=" + configuration.getName());
+                ObjectName name = new ObjectName(configuration.getJmxDomain() + ":name=" + ObjectName.quote(configuration.getName()));
                 ManagementFactory.getPlatformMBeanServer().unregisterMBean(name);
             } catch (Exception e) {
                 // log the error, but don't throw an exception for this datasource
