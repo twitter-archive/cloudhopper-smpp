@@ -1,7 +1,17 @@
 Cloudhopper SMPP by Twitter [![Build Status](https://secure.travis-ci.org/twitter/cloudhopper-smpp.png?branch=master)](http://travis-ci.org/twitter/cloudhopper-smpp)
 ============================
 
-cloudhopper-smpp
+News
+------------------------
+ * Netty 4 beta is available at Maven Central. Please test and submit issues this month (1/2015).
+
+        <dependency>
+          <groupId>com.cloudhopper</groupId>
+          <artifactId>ch-smpp</artifactId>
+          <version>6.0.0-netty4-beta-1</version>
+        </dependency>
+
+Overview
 ------------------------
 
 Efficient, scalable, rock-solid, and flexible Java implementation of the Short
@@ -50,7 +60,7 @@ any commercial questions/ideas pertaining to this library, feel free to reach
 out to [Mfizz](http://mfizz.com).
 
 - Joe Lauer (Twitter: [@jjlauer](http://twitter.com/jjlauer))
-- Garth Patil (Twitter: [@trg](http://twitter.com/trg))
+- Garth (Twitter: [@trg](http://twitter.com/trg))
 
 Installation
 ------------

@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.transcoder;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
