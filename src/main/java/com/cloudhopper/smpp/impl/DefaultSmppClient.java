@@ -318,7 +318,8 @@ public class DefaultSmppClient implements SmppClient {
                 throw new SmppChannelConnectTimeoutException("Unable to connect to host [" + host + "] and port [" + port + "] within " + connectTimeoutMillis + " ms", connectFuture.cause());
             } else {
                 logger.warn("Client did not connect.", connectFuture.cause());
-                throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " + connectFuture.cause().getMessage(), connectFuture.cause());
+                throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " +
+						      (connectFuture.cause() != null ? connectFuture.cause().getMessage() : "ChannelFuture failed without cause."), connectFuture.cause());
             }
         }
 
