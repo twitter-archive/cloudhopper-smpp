@@ -3,12 +3,35 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+## 6.0.0-netty4-beta-2
+ - ch-commons-util version bumped from 6.0.1 to 6.0.2 to fix race condition bug 
+   in WindowFuture:
+     https://github.com/twitter/cloudhopper-smpp/issues/61
+
 ## 6.0.0-netty4-beta-1
  - Pre-release of port to Netty 4. Includes community contributions and changes based
    on Trustin's review.
  - Netty dependency changed to 4.0.25.Final.
 
-## 5.0.5 - 2014-01-0?
+## 5.0.7 - 2015-02-02
+ - ch-commons-util version bumped from 6.0.1 to 6.0.2 to fix race condition bug 
+   in WindowFuture:
+     https://github.com/twitter/cloudhopper-smpp/issues/61
+ - Netty dependency bumped from 3.9.0.Final to 3.9.6.Final
+ 
+## 5.0.6 - 2014-04-02
+ - Support for low-level PDU listener (supports advanced logging, sniffing, and
+   discarding before normal processing). New methods overridable in
+   DefaultSmppSessionHandler are firePduRecived()
+ - Bug with doneDate null-check fixed in DeliveryReceipt.toShortMessage().
+ - Delivery receipt intermediate constant has a flag of bit 4 not 5. Please note
+   that esm_class does used bit 5.
+ - Bumped pom parent to v1.5
+ - Dependencies now have specific version rather than version range.
+ - Updated docs with user contributed demos
+
+## 5.0.5 - 2014-01-07
+>>>>>>> master
  - Changed bindTimeout and writeTimeout implementations to adhere to documented
    best practices:
      http://netty.io/3.9/api/org/jboss/netty/channel/ChannelFuture.html

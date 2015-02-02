@@ -125,8 +125,9 @@ public class SmppUtilTest {
     public void isIntermediateReceiptRequested() {
         Assert.assertEquals(false, SmppUtil.isIntermediateReceiptRequested((byte)0x00));
         Assert.assertEquals(false, SmppUtil.isIntermediateReceiptRequested((byte)0x01));
-        Assert.assertEquals(true, SmppUtil.isIntermediateReceiptRequested((byte)0x22));
-        Assert.assertEquals(true, SmppUtil.isIntermediateReceiptRequested((byte)0x20));
+        Assert.assertEquals(true, SmppUtil.isIntermediateReceiptRequested((byte)0x12));
+        // this is actually bit 4 not bit 5 (SMPP 3.4 specs originally had both bits mentioned)
+        Assert.assertEquals(true, SmppUtil.isIntermediateReceiptRequested((byte)0x10));
         Assert.assertEquals(false, SmppUtil.isIntermediateReceiptRequested((byte)0x02));
     }
 
