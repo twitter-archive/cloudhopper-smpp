@@ -3,7 +3,12 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
-
+## 5.0.7 - 2015-02-02
+ - ch-commons-util version bumped from 6.0.1 to 6.0.2 to fix race condition bug 
+   in WindowFuture:
+     https://github.com/twitter/cloudhopper-smpp/issues/61
+ - Netty dependency bumped from 3.9.0.Final to 3.9.6.Final
+ 
 ## 5.0.6 - 2014-04-02
  - Support for low-level PDU listener (supports advanced logging, sniffing, and
    discarding before normal processing). New methods overridable in
