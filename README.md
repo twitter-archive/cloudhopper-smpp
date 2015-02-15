@@ -8,7 +8,7 @@ News
         <dependency>
           <groupId>com.cloudhopper</groupId>
           <artifactId>ch-smpp</artifactId>
-          <version>6.0.0-netty4-beta-1</version>
+          <version>6.0.0-netty4-beta-2</version>
         </dependency>
 
 Overview
@@ -17,7 +17,7 @@ Overview
 Efficient, scalable, rock-solid, and flexible Java implementation of the Short
 Messaging Peer to Peer Protocol (SMPP).
 
- * Real-world used library by Twitter across nearly every SMSC vendor and 
+ * Real-world used library by Twitter across nearly every SMSC vendor and
    mobile operator around the world.  We've seen almost every variance in the
    SMPP protocol and this library handles it flawlessly.
  * Rigorous unit testing
@@ -28,7 +28,7 @@ Messaging Peer to Peer Protocol (SMPP).
  * Uses non-blocking (NIO) sockets (via underlying Netty dependency, one thread
    can support 1 or more SMPP sessions)
  * Can support thousands of binds/connections using minimal resources and threads
- * Supports both client and server modes of the SMPP protocol (yes you can 
+ * Supports both client and server modes of the SMPP protocol (yes you can
    write your own SMPP server using this library as well as be a client to one)
  * Supports synchronous request mode (send request and block until response
    received)
@@ -79,7 +79,7 @@ Demo Code / Tutorials
 
 There are numerous examples of how to use various parts of this library:
 
-    src/test/java/com/cloudhopper/commons/util/demo
+    src/test/java/com/cloudhopper/smpp/demo/
 
 To run some of the samples, there is a Makefile to simplify the syntax required
 by Maven:
@@ -93,6 +93,7 @@ by Maven:
     make dlr
     make ssl-client
     make ssl-server
+    make persist-client
 
 On Windows, the examples can run with `nmake` instead of `make`.
 
@@ -107,6 +108,8 @@ In the second shell, run:
 
 You'll see the client bind to the server and a few different type of requests
 exchanged back and forth.
+
+You can also try `make persist-client` instead of `make client` which demonstrates a persistent SMPP connection.
 
 User Contributed Demos
 ----------------------
