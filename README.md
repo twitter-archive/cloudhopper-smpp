@@ -8,7 +8,7 @@ News
         <dependency>
           <groupId>com.cloudhopper</groupId>
           <artifactId>ch-smpp</artifactId>
-          <version>6.0.0-netty4-beta-1</version>
+          <version>6.0.0-netty4-beta-2</version>
         </dependency>
 
 Overview
