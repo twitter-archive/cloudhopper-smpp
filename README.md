@@ -79,7 +79,7 @@ Demo Code / Tutorials
 
 There are numerous examples of how to use various parts of this library:
 
-    src/test/java/com/cloudhopper/commons/util/demo
+    src/test/java/com/cloudhopper/smpp/demo/
 
 To run some of the samples, there is a Makefile to simplify the syntax required
 by Maven:
@@ -93,6 +93,7 @@ by Maven:
     make dlr
     make ssl-client
     make ssl-server
+    make persist-client
 
 On Windows, the examples can run with `nmake` instead of `make`.
 
