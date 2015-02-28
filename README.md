@@ -94,6 +94,7 @@ by Maven:
     make ssl-client
     make ssl-server
     make persist-client
+    make server-echo
 
 On Windows, the examples can run with `nmake` instead of `make`.
 
@@ -110,6 +111,8 @@ You'll see the client bind to the server and a few different type of requests
 exchanged back and forth.
 
 You can also try `make persist-client` instead of `make client` which demonstrates a persistent SMPP connection.
+
+`make server-echo` will echo back any MT as an MO. This makes it easier to test handling of MO messages.
 
 User Contributed Demos
 ----------------------
