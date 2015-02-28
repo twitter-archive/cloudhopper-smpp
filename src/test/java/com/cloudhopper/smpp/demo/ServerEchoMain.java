@@ -9,9 +9,9 @@ package com.cloudhopper.smpp.demo;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -165,20 +165,42 @@ public class ServerEchoMain {
                 Address mtDestinationAddress = mt.getDestAddress();
                 byte dataCoding = mt.getDataCoding();
                 byte[] shortMessage = mt.getShortMessage();
-                sendMessage(session, mtDestinationAddress, mtSourceAddress, shortMessage, dataCoding);
+
+                //sendDeliveryReceipt(session, mtDestinationAddress, mtSourceAddress, dataCoding);
+                sendMoMessage(session, mtDestinationAddress, mtSourceAddress, shortMessage, dataCoding);
             }
 
             return response;
         }
 
-        private void sendMessage(SmppSession session, Address moSourceAddress, Address moDestinationAddress, byte [] textBytes, byte dataCoding) {
+        private void sendDeliveryReceipt(SmppSession session, Address mtDestinationAddress, Address mtSourceAddress, byte dataCoding) {
+
+            DeliverSm deliver = new DeliverSm();
+            deliver.setEsmClass(SmppConstants.ESM_CLASS_MT_SMSC_DELIVERY_RECEIPT);
+            deliver.setSourceAddress(mtDestinationAddress);
+            deliver.setDestAddress(mtSourceAddress);
+            deliver.setDataCoding(dataCoding);
+            sendRequestPdu(session, deliver);
+        }
+
+        private void sendMoMessage(SmppSession session, Address moSourceAddress, Address moDestinationAddress, byte [] textBytes, byte dataCoding) {
+
+            DeliverSm deliver = new DeliverSm();
+
+            deliver.setSourceAddress(moSourceAddress);
+            deliver.setDestAddress(moDestinationAddress);
+            deliver.setDataCoding(dataCoding);
             try {
-                DeliverSm deliver = new DeliverSm();
+              deliver.setShortMessage(textBytes);
+            } catch (Exception e) {
+              logger.error("Error!", e);
+            }
 
-                deliver.setSourceAddress(moSourceAddress);
-                deliver.setDestAddress(moDestinationAddress);
-                deliver.setShortMessage(textBytes);
+            sendRequestPdu(session, deliver);
+        }
 
+        private void sendRequestPdu(SmppSession session, DeliverSm deliver) {
+            try {
                 WindowFuture<Integer,PduRequest,PduResponse> future = session.sendRequestPdu(deliver, 10000, false);
                 if (!future.await()) {
                     logger.error("Failed to receive deliver_sm_resp within specified time");
