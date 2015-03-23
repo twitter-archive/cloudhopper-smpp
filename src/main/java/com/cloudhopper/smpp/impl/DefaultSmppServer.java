@@ -242,8 +242,8 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
             throw new SmppChannelException("Unable to start: server is destroyed");
         }
         try {
-            serverChannel = this.serverBootstrap.bind(new InetSocketAddress(configuration.getPort()));
-            logger.info("{} started on SMPP port [{}]", configuration.getName(), configuration.getPort());
+            serverChannel = this.serverBootstrap.bind(new InetSocketAddress(configuration.getHost(), configuration.getPort()));
+            logger.info("{} started at {}:{}", configuration.getName(), configuration.getHost(), configuration.getPort());
         } catch (ChannelException e) {
             throw new SmppChannelException(e.getMessage(), e);
         }
@@ -261,7 +261,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
             this.serverChannel.close().awaitUninterruptibly();
             this.serverChannel = null;
         }
-        logger.info("{} stopped on SMPP port [{}]", configuration.getName(), configuration.getPort());
+        logger.info("{} stopped at {}:{}", configuration.getName(), configuration.getHost(), configuration.getPort());
     }
     
     @Override
