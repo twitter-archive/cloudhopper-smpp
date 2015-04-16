@@ -293,6 +293,14 @@ public class DeliveryReceiptTest {
         Assert.assertEquals("id:12345678901 sub:000 dlvrd:000 submit date:0000000000 done date:0000000000 stat:BADSTAT err:000 text:", receipt0);
     }
 
+
+    @Test
+    public void toShortMessageWithFullConstructor() throws DeliveryReceiptException {
+        DeliveryReceipt dlr = new DeliveryReceipt("12345", 1, 1, new DateTime(0), new DateTime(0), SmppConstants.STATE_ENROUTE, 0, "text");
+        String receipt = dlr.toShortMessage();
+        Assert.assertEquals("id:12345 sub:001 dlvrd:001 submit date:6912311600 done date:6912311600 stat:ENROUTE err:000 text:text", receipt);
+    }
+
     @Test
     public void parseShortMessageWith11DigitLongMessageId() throws Exception {
         DeliveryReceipt dlr = DeliveryReceipt.parseShortMessage("id:98765432101 sub:000 dlvrd:000 submit date:1001010000 done date:1001010000 stat:ENROUTE err:000 text:", DateTimeZone.UTC);
