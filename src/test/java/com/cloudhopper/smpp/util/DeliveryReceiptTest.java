@@ -296,9 +296,12 @@ public class DeliveryReceiptTest {
 
     @Test
     public void toShortMessageWithFullConstructor() throws DeliveryReceiptException {
-        DeliveryReceipt dlr = new DeliveryReceipt("12345", 1, 1, new DateTime(0), new DateTime(0), SmppConstants.STATE_ENROUTE, 0, "text");
+        DeliveryReceipt dlr = new DeliveryReceipt("12345", 1, 1, new DateTime(0L, DateTimeZone.UTC),
+                new DateTime(0L, DateTimeZone.UTC), SmppConstants.STATE_ENROUTE, 0, "text");
+
         String receipt = dlr.toShortMessage();
-        Assert.assertEquals("id:12345 sub:001 dlvrd:001 submit date:6912311600 done date:6912311600 stat:ENROUTE err:000 text:text", receipt);
+
+        Assert.assertEquals("id:12345 sub:001 dlvrd:001 submit date:7001010000 done date:7001010000 stat:ENROUTE err:000 text:text", receipt);
     }
 
     @Test
