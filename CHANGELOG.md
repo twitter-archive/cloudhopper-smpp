@@ -3,6 +3,12 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+## 5.0.8 - 2015-04-17
+ - Fixed issue where rawErrorCode not set on DeliveryReceipt (khaing211)
+ - Support for host address in SmppServerConfiguration (pgoergler)
+ - Improved demo for echo server (dwilkie)
+ - Tlv class supports equals and hashCode (skytreader)
+
 ## 5.0.7 - 2015-02-02
  - ch-commons-util version bumped from 6.0.1 to 6.0.2 to fix race condition bug 
    in WindowFuture:

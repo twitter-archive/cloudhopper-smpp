@@ -3,7 +3,9 @@ Cloudhopper SMPP by Twitter [![Build Status](https://secure.travis-ci.org/twitte
 
 News
 ------------------------
- * Netty 4 beta is available at Maven Central. Please test and submit issues this month (1/2015).
+ * Netty 4 beta is available at Maven Central. Please test and submit issues.
+ Since stability & reliability is critical for this library and how netty-4
+ required significant changes -- we still need your help with beta testing.
 
         <dependency>
           <groupId>com.cloudhopper</groupId>
@@ -71,7 +73,7 @@ Just add the following dependency to your project maven pom.xml:
     <dependency>
       <groupId>com.cloudhopper</groupId>
       <artifactId>ch-smpp</artifactId>
-      <version>[5.0.0,)</version>
+      <version>5.0.8</version>
     </dependency>
 
 Demo Code / Tutorials
@@ -131,6 +133,6 @@ Please let us know if you have other tutorials worth mentioning!
 License
 -------
 
-Copyright (C) 2009-2014 Twitter, Inc.
+Copyright (C) 2009-2015 Twitter, Inc.
 
 This work is licensed under the Apache License, Version 2.0. See LICENSE for details.
