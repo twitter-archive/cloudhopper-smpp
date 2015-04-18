@@ -730,8 +730,9 @@ public class DefaultSmppSessionTest {
         Thread.sleep(500);
 
         Assert.assertEquals(1, sessionHandler.getClosedCount());
-        // DEFAULT handling is that we don't do anything special with this...
-        Assert.assertEquals(true, session.isBound());
+        // the session is closed when the channel is
+        Assert.assertEquals(false, session.isBound());
+        Assert.assertEquals(true, session.isClosed());
 
         // unbind the session now -- this should work okay even though the channel is closed
         session.unbind(100);
