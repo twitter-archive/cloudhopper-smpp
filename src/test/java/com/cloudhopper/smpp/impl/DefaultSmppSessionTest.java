@@ -629,6 +629,7 @@ public class DefaultSmppSessionTest {
 
         Assert.assertEquals(0, sessionHandler.getClosedCount());
         Assert.assertEquals(false, session.isBound());
+        Assert.assertEquals(true, session.isClosed());
     }
 
 
@@ -650,6 +651,7 @@ public class DefaultSmppSessionTest {
 
         Assert.assertEquals(0, sessionHandler.getClosedCount());
         Assert.assertEquals(false, session.isBound());
+        Assert.assertEquals(true, session.isClosed());
     }
     
     @Test
@@ -676,6 +678,7 @@ public class DefaultSmppSessionTest {
 
         Assert.assertEquals(0, sessionHandler.getClosedCount());
         Assert.assertEquals(false, session.isBound());
+        Assert.assertEquals(true, session.isClosed());
     }
 
     @Test
