@@ -198,7 +198,7 @@ public class DefaultSmppClient implements SmppClient {
             // close the session if we weren't able to bind correctly
             if (session != null && !session.isBound()) {
                 // make sure that the resources are always cleaned up
-                try { session.close(); } catch (Exception e) { }
+                try { session.destroy(); } catch (Exception e) { }
             }
         }
         return session;
@@ -226,7 +226,7 @@ public class DefaultSmppClient implements SmppClient {
         return createSession(channel, config, sessionHandler);
     }
 
-    protected DefaultSmppSession createSession(Channel channel, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
+    protected DefaultSmppSession createSession(Channel channel, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppChannelException {
         DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.CLIENT, config, channel, sessionHandler, monitorExecutor);
 
 	// add SSL handler 
@@ -239,6 +239,7 @@ public class DefaultSmppClient implements SmppClient {
 		sslEngine.setUseClientMode(true);
 		channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
 	    } catch (Exception e) {
+		session.destroy();
 		throw new SmppChannelConnectException("Unable to create SSL session]: " + e.getMessage(), e);
 	    }
 	}
