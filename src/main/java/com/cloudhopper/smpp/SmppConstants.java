@@ -320,7 +320,15 @@ public class SmppConstants {
     // SMPP Data Coding
     //
     public static final byte DATA_CODING_DEFAULT 	= (byte)0x00;	// SMSC Default Alphabet
-    public static final byte DATA_CODING_GSM 		= (byte)0x01;	// IA5 (CCITT T.50)/ASCII (ANSI X3.4)
+    public static final byte DATA_CODING_IA5		= (byte)0x01;	// IA5 (CCITT T.50)/ASCII (ANSI X3.4)
+
+    /**
+     * @deprecated May be removed in a future version
+     *      Please use IA5 for DCS 0x01 or DEFAULT for DCS 0x00
+     */
+    @Deprecated
+    public static final byte DATA_CODING_GSM		= (byte)0x01;
+
     public static final byte DATA_CODING_8BITA		= (byte)0x02;	// Octet unspecified (8-bit binary) defined for TDMA and/ or CDMA but not defined for GSM
     public static final byte DATA_CODING_LATIN1		= (byte)0x03;	// Latin 1 (ISO-8859-1)
     public static final byte DATA_CODING_8BIT		= (byte)0x04;	// Octet unspecified (8-bit binary) ALL TECHNOLOGIES
