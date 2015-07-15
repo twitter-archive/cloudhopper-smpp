@@ -225,6 +225,13 @@ public class SmppConstants {
 
     /** ESM Class */
 
+    /** Message Mode (bits 1-0) */
+    public static final byte ESM_CLASS_MM_MASK          = 0x03;  // BIN 00000011
+    public static final byte ESM_CLASS_MM_DEFAULT       = 0x00;  // BIN 00000000
+    public static final byte ESM_CLASS_MM_DATAGRAM      = 0x01;  // BIN 00000001
+    public static final byte ESM_CLASS_MM_TRANSACTION   = 0x02;  // BIN 00000010
+    public static final byte ESM_CLASS_MM_STORE_FORWARD = 0x03;  // BIN 00000011
+
     /** Message Type (bits 5-2) */
     public static final byte ESM_CLASS_MT_MASK = (byte)0x1C;                          // BIN:  11100
     public static final byte ESM_CLASS_MT_SMSC_DELIVERY_RECEIPT = (byte)0x04;         // BIN:    100, Recv Msg contains SMSC delivery receipt
