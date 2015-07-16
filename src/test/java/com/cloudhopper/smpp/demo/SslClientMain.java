@@ -24,7 +24,7 @@ import com.cloudhopper.commons.charset.CharsetUtil;
 import com.cloudhopper.commons.util.windowing.WindowFuture;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.SmppBindType;
-import com.cloudhopper.smpp.SmppSession;
+import com.cloudhopper.smpp.SmppClientSession;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.type.Address;
@@ -34,7 +34,6 @@ import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.cloudhopper.smpp.pdu.SubmitSmResp;
-import com.cloudhopper.smpp.ssl.SslConfiguration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
@@ -112,7 +111,7 @@ public class SslClientMain {
         //
         // create session, enquire link, submit an sms, close session
         //
-        SmppSession session0 = null;
+        SmppClientSession session0 = null;
 
         try {
             // create session a session by having the bootstrap connect a

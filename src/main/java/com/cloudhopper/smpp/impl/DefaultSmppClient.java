@@ -23,6 +23,7 @@ package com.cloudhopper.smpp.impl;
 import com.cloudhopper.smpp.SmppClient;
 import com.cloudhopper.smpp.util.DaemonExecutors;
 import com.cloudhopper.smpp.SmppBindType;
+import com.cloudhopper.smpp.SmppClientSession;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.SmppSession;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
@@ -186,8 +187,8 @@ public class DefaultSmppClient implements SmppClient {
     }
 
     @Override
-    public SmppSession bind(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, SmppBindException, UnrecoverablePduException, InterruptedException {
-        DefaultSmppSession session = null;
+    public SmppClientSession bind(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, SmppBindException, UnrecoverablePduException, InterruptedException {
+        SmppClientSession session = null;
         try {
             // connect to the remote system and create the session
             session = doOpen(config, sessionHandler);
@@ -204,7 +205,7 @@ public class DefaultSmppClient implements SmppClient {
         return session;
     }
 
-    protected void doBind(DefaultSmppSession session, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, SmppBindException, UnrecoverablePduException, InterruptedException {
+    protected void doBind(SmppClientSession session, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, SmppBindException, UnrecoverablePduException, InterruptedException {
         // create the bind request we'll use (may throw an exception)
         BaseBind bindRequest = createBindRequest(config);
         BaseBindResp bindResp = null;
@@ -219,16 +220,15 @@ public class DefaultSmppClient implements SmppClient {
         }
     }
 
-    protected DefaultSmppSession doOpen(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
+    protected SmppClientSession doOpen(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         // create and connect a channel to the remote host
         Channel channel = createConnectedChannel(config.getHost(), config.getPort(), config.getConnectTimeout());
         // tie this new opened channel with a new session
         return createSession(channel, config, sessionHandler);
     }
 
-    protected DefaultSmppSession createSession(Channel channel, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
-        DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.CLIENT, config, channel, sessionHandler, monitorExecutor);
-
+    protected SmppClientSession createSession(Channel channel, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
+        DefaultSmppClientSession session = new DefaultSmppClientSession(SmppSession.Type.CLIENT, config, channel, sessionHandler, monitorExecutor);
 	// add SSL handler 
         if (config.isUseSsl()) {
 	    SslConfiguration sslConfig = config.getSslConfiguration();
@@ -251,7 +251,7 @@ public class DefaultSmppClient implements SmppClient {
         }
 
         // create the logging handler (for bytes sent/received on wire)
-        SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
+        SmppSessionLogger loggingHandler = new SmppSessionLogger(session.getClass().getCanonicalName(), config.getLoggingOptions());
         channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
 
 	// add a writeTimeout handler after the logger

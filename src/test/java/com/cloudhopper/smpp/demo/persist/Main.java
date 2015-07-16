@@ -65,7 +65,7 @@ public class Main {
 							long sent = alreadySent.incrementAndGet();
 							while (sent <= messagesToSend) {
 								final OutboundClient next = balancedList.getNext();
-								final SmppSession session = next.getSession();
+								final SmppClientSession session = next.getSession();
 								if (session != null && session.isBound()) {
 									String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
 									byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);

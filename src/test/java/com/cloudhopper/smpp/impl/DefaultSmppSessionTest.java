@@ -26,6 +26,7 @@ import com.cloudhopper.commons.util.windowing.OfferTimeoutException;
 import com.cloudhopper.commons.util.windowing.WindowFuture;
 import com.cloudhopper.smpp.PduAsyncResponse;
 import com.cloudhopper.smpp.SmppBindType;
+import com.cloudhopper.smpp.SmppClientSession;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.SmppSession;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
@@ -120,9 +121,9 @@ public class DefaultSmppSessionTest {
         // change this to a port we know a server isn't running on
         configuration.setPort(PORT+1);
         
-        DefaultSmppSession session = null;
+        SmppClientSession session = null;
         try {
-            session = (DefaultSmppSession)bootstrap.bind(configuration);
+            session = (SmppClientSession)bootstrap.bind(configuration);
             Assert.fail();
         } catch (SmppChannelConnectException e) {
             // correct behavior
@@ -137,9 +138,9 @@ public class DefaultSmppSessionTest {
         // change to a host that doesn't exist
         configuration.setHost("jfjdjdjdjdjjdjd");
 
-        DefaultSmppSession session = null;
+        SmppClientSession session = null;
         try {
-            session = (DefaultSmppSession)bootstrap.bind(configuration);
+            session = (SmppClientSession)bootstrap.bind(configuration);
             Assert.fail();
         } catch (SmppChannelConnectException e) {
             // correct behavior
@@ -156,9 +157,9 @@ public class DefaultSmppSessionTest {
         configuration.setHost("www.twitter.com");
         configuration.setPort(81);
 
-        DefaultSmppSession session = null;
+        SmppClientSession session = null;
         try {
-            session = (DefaultSmppSession)bootstrap.bind(configuration);
+            session = (SmppClientSession)bootstrap.bind(configuration);
             Assert.fail();
         } catch (SmppChannelConnectTimeoutException e) {
             // correct behavior
@@ -173,9 +174,9 @@ public class DefaultSmppSessionTest {
         SmppSessionConfiguration configuration = createDefaultConfiguration();
         unregisterServerBindProcessor();
 
-        DefaultSmppSession session = null;
+        SmppClientSession session = null;
         try {
-            session = (DefaultSmppSession)bootstrap.bind(configuration);
+            session = (SmppClientSession)bootstrap.bind(configuration);
             Assert.fail();
         } catch (SmppTimeoutException e) {
             // correct behavior (underlying cause MUST be a response timeout)
@@ -194,9 +195,9 @@ public class DefaultSmppSessionTest {
         // set a bad system id
         configuration.setSystemId("BADID");
 
-        DefaultSmppSession session = null;
+        SmppClientSession session = null;
         try {
-            session = (DefaultSmppSession)bootstrap.bind(configuration);
+            session = (SmppClientSession)bootstrap.bind(configuration);
             Assert.fail();
         } catch (SmppBindException e) {
             // correct behavior
@@ -212,7 +213,7 @@ public class DefaultSmppSessionTest {
         SmppSessionConfiguration configuration = createDefaultConfiguration();
         registerServerBindProcessor();
 
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration);
 
         // verify the session stuff...
         Assert.assertEquals(true, session.isBound());
@@ -227,7 +228,7 @@ public class DefaultSmppSessionTest {
         clearAllServerSessions();
 
         // bind and get the simulator session
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration);
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         // register a generic nack will come next
         simulator0.setPduProcessor(new SmppSimulatorPduProcessor() {
@@ -257,7 +258,7 @@ public class DefaultSmppSessionTest {
         clearAllServerSessions();
 
         // bind and get the simulator session
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration);
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         // create an enquire link response back -- we should skip it and wait for a response instead
         simulator0.setPduProcessor(new SmppSimulatorPduProcessor() {
@@ -291,7 +292,7 @@ public class DefaultSmppSessionTest {
         clearAllServerSessions();
 
         // bind and get the simulator session
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration);
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         // create an enquire link response back -- we should skip it and wait for a response instead
         simulator0.setPduProcessor(new SmppSimulatorPduProcessor() {
@@ -323,7 +324,7 @@ public class DefaultSmppSessionTest {
         configuration.setWindowSize(3);
 
         // bind and get the simulator session
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration);
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         // make sure the processor is null
         simulator0.setPduProcessor(null);
@@ -400,7 +401,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -443,7 +444,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(new SmppSimulatorPduProcessor() {
@@ -483,7 +484,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -521,7 +522,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -579,7 +580,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -619,7 +620,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -640,7 +641,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -660,7 +661,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(new SmppSimulatorPduProcessor() {
@@ -686,7 +687,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -719,7 +720,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -750,7 +751,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -789,7 +790,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -834,7 +835,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -892,7 +893,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -938,7 +939,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -976,7 +977,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);
@@ -1006,7 +1007,7 @@ public class DefaultSmppSessionTest {
 
         // bind and get the simulator session
         PollableSmppSessionHandler sessionHandler = new PollableSmppSessionHandler();
-        DefaultSmppSession session = (DefaultSmppSession)bootstrap.bind(configuration, sessionHandler);
+        SmppClientSession session = (SmppClientSession)bootstrap.bind(configuration, sessionHandler);
 
         SmppSimulatorSessionHandler simulator0 = server.pollNextSession(1000);
         simulator0.setPduProcessor(null);

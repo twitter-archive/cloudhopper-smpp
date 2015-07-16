@@ -24,6 +24,7 @@ import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.SmppServer;
 import com.cloudhopper.smpp.SmppServerConfiguration;
 import com.cloudhopper.smpp.SmppServerHandler;
+import com.cloudhopper.smpp.SmppServerSession;
 import com.cloudhopper.smpp.SmppSession;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.channel.SmppChannelConstants;
@@ -330,14 +331,14 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         byte interfaceVersion = this.autoNegotiateInterfaceVersion(config.getInterfaceVersion());
 
         // create a new server session associated with this server
-        DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.SERVER, config, channel, this, sessionId, preparedBindResponse, interfaceVersion, monitorExecutor);
-
+        SmppServerSession session = new DefaultSmppServerSession(SmppSession.Type.SERVER, config, channel, this, sessionId, preparedBindResponse, interfaceVersion, monitorExecutor);
+        
         // replace name of thread used for renaming
         SmppSessionThreadRenamer threadRenamer = (SmppSessionThreadRenamer)channel.getPipeline().get(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME);
         threadRenamer.setThreadName(config.getName());
 
         // add a logging handler after the thread renamer
-        SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
+        SmppSessionLogger loggingHandler = new SmppSessionLogger(session.getClass().getCanonicalName(), config.getLoggingOptions());
         channel.getPipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
 
 	// add a writeTimeout handler after the logger
@@ -369,7 +370,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     }
 
 
-    protected void destroySession(Long sessionId, DefaultSmppSession session) {
+    protected void destroySession(Long sessionId, SmppServerSession session) {
         // session destroyed, now pass it upstream
         counters.incrementSessionDestroyedAndGet();
         decrementSessionSizeCounters(session);
@@ -381,7 +382,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         }
     }
     
-    private void incrementSessionSizeCounters(DefaultSmppSession session) {
+    private void incrementSessionSizeCounters(SmppServerSession session) {
         this.counters.incrementSessionSizeAndGet();
         switch (session.getBindType()) {
             case TRANSCEIVER:
@@ -396,7 +397,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         }
     }
     
-    private void decrementSessionSizeCounters(DefaultSmppSession session) {
+    private void decrementSessionSizeCounters(SmppServerSession session) {
         this.counters.decrementSessionSizeAndGet();
         switch (session.getBindType()) {
             case TRANSCEIVER:

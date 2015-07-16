@@ -22,16 +22,17 @@ package com.cloudhopper.smpp;
 
 import com.cloudhopper.commons.util.windowing.Window;
 import com.cloudhopper.commons.util.windowing.WindowFuture;
+import com.cloudhopper.smpp.impl.SmppSessionChannelListener;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppTimeoutException;
 import com.cloudhopper.smpp.pdu.EnquireLink;
 import com.cloudhopper.smpp.pdu.EnquireLinkResp;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
-import com.cloudhopper.smpp.pdu.SubmitSm;
-import com.cloudhopper.smpp.pdu.SubmitSmResp;
+import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import com.cloudhopper.smpp.util.SequenceNumber;
 
 /**
  * Defines a common interface for either a Client (ESME) or Server (SMSC) SMPP
@@ -39,7 +40,7 @@ import com.cloudhopper.smpp.type.UnrecoverablePduException;
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-public interface SmppSession {
+public interface SmppSession extends SmppSessionChannelListener {
 
     /**
      * The type of SMPP session.  Will be either Server (SMSC) or Client (ESME).
@@ -104,6 +105,12 @@ public interface SmppSession {
      * @return The current state of the session by name such as "CLOSED"
      */
     public String getStateName();
+    
+    /**
+     * Return the sequence number object of the session
+     * @return 
+     */
+    public SequenceNumber getSequenceNumber();
 
     /**
      * Gets the interface version currently in use between local and remote
@@ -122,6 +129,11 @@ public interface SmppSession {
      */
     public boolean areOptionalParametersSupported();
 
+    /**
+     * Return the pdu Transcoder used by the session
+     * @return PduTranscoder
+     */
+    public PduTranscoder getTranscoder();
 
     /**
      * Checks if the session is currently in the "OPEN" state.  The "OPEN" state
@@ -252,32 +264,6 @@ public interface SmppSession {
     public EnquireLinkResp enquireLink(EnquireLink request, long timeoutMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
 
     /**
-     * Synchronously sends a "submit" request to the remote endpoint and
-     * waits for up to a specified number of milliseconds for a response. The
-     * timeout value includes both waiting for a "window" slot, the time it
-     * takes to transmit the actual bytes on the socket, and for the remote
-     * endpoint to send a response back.
-     * @param request The request to send to the remote endpoint
-     * @param timeoutMillis The number of milliseconds to wait until a valid
-     *      response is received.
-     * @return A valid response to the request
-     * @throws RecoverablePduException Thrown when a recoverable PDU error occurs.
-     *      A recoverable PDU error includes the partially decoded PDU in order
-     *      to generate a negative acknowledgement (NACK) response.
-     * @throws UnrecoverablePduException Thrown when an unrecoverable PDU error
-     *      occurs. This indicates a seriours error occurred and usually indicates
-     *      the session should be immediately terminated.
-     * @throws SmppTimeoutException A timeout occurred while waiting for a response
-     *      from the remote endpoint.  A timeout can either occur with an unresponse
-     *      remote endpoint or the bytes were not written in time.
-     * @throws SmppChannelException Thrown when the underlying socket/channel was
-     *      unable to write the request.
-     * @throws InterruptedException The calling thread was interrupted while waiting
-     *      to acquire a lock or write/read the bytes from the socket/channel.
-     */
-    public SubmitSmResp submit(SubmitSm request, long timeoutMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
-
-    /**
      * Main underlying method for sending a request PDU to the remote endpoint.
      * If no sequence number was assigned to the PDU, this method will assign one.
      * The PDU will be converted into a sequence of bytes by the underlying transcoder.
@@ -337,4 +323,24 @@ public interface SmppSession {
      *      to acquire a lock or write/read the bytes from the socket/channel.
      */
     public void sendResponsePdu(PduResponse response) throws RecoverablePduException, UnrecoverablePduException, SmppChannelException, InterruptedException;
+    
+    /**
+     * Sends a PDU request and gets a PDU response that matches its sequence #.
+     * NOTE: This PDU response may not be the actual response the caller was
+     * expecting, it needs to verify it afterwards.
+     * @param requestPdu
+     * @param timeoutInMillis
+     * @return 
+     * @throws com.cloudhopper.smpp.type.RecoverablePduException
+     * @throws com.cloudhopper.smpp.type.UnrecoverablePduException
+     * @throws com.cloudhopper.smpp.type.SmppTimeoutException
+     * @throws com.cloudhopper.smpp.type.SmppChannelException
+     * @throws java.lang.InterruptedException
+     */
+    public PduResponse sendRequestAndGetResponse(PduRequest requestPdu, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException;
+    
+    public void registerMBean(String objectName);
+    
+    public void unregisterMBean(String objectName);
+    
 }
