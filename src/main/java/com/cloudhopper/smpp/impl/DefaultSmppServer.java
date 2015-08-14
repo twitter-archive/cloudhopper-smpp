@@ -113,7 +113,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
      *      sockets are used.
      */
     public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler, ExecutorService executor) {
-        this(configuration, serverHandler, DaemonExecutors.newCachedDaemonThreadPool(), null);
+        this(configuration, serverHandler, executor, null);
     }
 
     /**
