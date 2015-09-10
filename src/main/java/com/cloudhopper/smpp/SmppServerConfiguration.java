@@ -21,16 +21,16 @@ package com.cloudhopper.smpp;
  */
 
 import com.cloudhopper.smpp.ssl.SslConfiguration;
+import com.cloudhopper.smpp.type.SmppConnectionConfiguration;
 
 /**
  * Configuration of an SMPP server.
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-public class SmppServerConfiguration {
+public class SmppServerConfiguration extends SmppConnectionConfiguration {
 
     private String name;
-    private int port;
     // SSL
     private boolean useSsl = false;
     private SslConfiguration sslConfiguration;
@@ -60,6 +60,7 @@ public class SmppServerConfiguration {
     private boolean defaultSessionCountersEnabled = false;
 
     public SmppServerConfiguration() {
+        super("0.0.0.0", 2775, SmppConstants.DEFAULT_BIND_TIMEOUT);
         this.name = "SmppServer";
         this.port = 2775;
         this.bindTimeout = SmppConstants.DEFAULT_BIND_TIMEOUT;
@@ -142,14 +143,6 @@ public class SmppServerConfiguration {
 
     public String getName() {
         return this.name;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
     }
 
     public void setUseSsl(boolean value) {

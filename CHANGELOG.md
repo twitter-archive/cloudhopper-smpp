@@ -13,6 +13,12 @@ cloudhopper-smpp
    on Trustin's review.
  - Netty dependency changed to 4.0.25.Final.
 
+## 5.0.8 - 2015-04-17
+ - Fixed issue where rawErrorCode not set on DeliveryReceipt (khaing211)
+ - Support for host address in SmppServerConfiguration (pgoergler)
+ - Improved demo for echo server (dwilkie)
+ - Tlv class supports equals and hashCode (skytreader)
+
 ## 5.0.7 - 2015-02-02
  - ch-commons-util version bumped from 6.0.1 to 6.0.2 to fix race condition bug 
    in WindowFuture:
@@ -31,7 +37,6 @@ cloudhopper-smpp
  - Updated docs with user contributed demos
 
 ## 5.0.5 - 2014-01-07
->>>>>>> master
  - Changed bindTimeout and writeTimeout implementations to adhere to documented
    best practices:
      http://netty.io/3.9/api/org/jboss/netty/channel/ChannelFuture.html

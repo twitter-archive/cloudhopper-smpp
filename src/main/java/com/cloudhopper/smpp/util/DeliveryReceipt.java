@@ -103,7 +103,7 @@ public class DeliveryReceipt {
 		this.submitDate = submitDate;
 		this.doneDate = doneDate;
 		this.state = state;
-		this.errorCode = errorCode;
+		setErrorCode(errorCode);
 		this.text = text;
 	}
 
