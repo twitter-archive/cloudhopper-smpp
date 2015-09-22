@@ -234,8 +234,8 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
             throw new SmppChannelException("Unable to start: server is destroyed");
         }
         try {
-            ChannelFuture f = this.serverBootstrap.bind(new InetSocketAddress(configuration.getPort()));
-
+            ChannelFuture f = this.serverBootstrap.bind(new InetSocketAddress(configuration.getHost(), configuration.getPort()));
+            logger.info("{} started at {}:{}", configuration.getName(), configuration.getHost(), configuration.getPort());
             // wait until the connection is made successfully
             boolean timeout = !f.await(configuration.getBindTimeout());
 	    // From @trustin: You don't really set a timeout for bind operation.  I would do this instead:
@@ -278,7 +278,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
                 logger.warn("Thread interrupted closing server channel.", e);
             }
         }
-        logger.info("{} stopped on SMPP port [{}]", configuration.getName(), configuration.getPort());
+        logger.info("{} stopped at {}:{}", configuration.getName(), configuration.getHost(), configuration.getPort());
     }
 
     @Override
