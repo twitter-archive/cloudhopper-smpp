@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.impl;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ public class DefaultSmppSessionTest {
     public void bindToFirewalledHostThrowsSmppChannelConnectTimeoutException() throws Exception {
         SmppSessionConfiguration configuration = createDefaultConfiguration();
         // change to a host and port that are definitely firewalled
-        configuration.setHost("www.google.com");
+        configuration.setHost("www.twitter.com");
         configuration.setPort(81);
 
         DefaultSmppSession session = null;

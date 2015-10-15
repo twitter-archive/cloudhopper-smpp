@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.channel;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,5 +38,6 @@ public class SmppChannelConstants {
     public static final String PIPELINE_SESSION_PDU_DECODER_NAME = "smppSessionPduDecoder";
     public static final String PIPELINE_SESSION_WRAPPER_NAME = "smppSessionWrapper";
     public static final String PIPELINE_SESSION_SSL_NAME = "smppSessionSSL"; 
+    public static final String PIPELINE_SESSION_WRITE_TIMEOUT_NAME = "smppSessionWriteTimeout";
 
 }

@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.impl;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ package com.cloudhopper.smpp.impl;
 
 import com.cloudhopper.smpp.PduAsyncResponse;
 import com.cloudhopper.smpp.SmppSessionHandler;
+import com.cloudhopper.smpp.SmppSessionListener;
+import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.type.RecoverablePduException;
@@ -37,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-public class DefaultSmppSessionHandler implements SmppSessionHandler {
+public class DefaultSmppSessionHandler implements SmppSessionListener {
     private final Logger logger;
 
     public DefaultSmppSessionHandler() {
@@ -102,6 +104,18 @@ public class DefaultSmppSessionHandler implements SmppSessionHandler {
     @Override
     public void firePduRequestExpired(PduRequest pduRequest) {
         logger.warn("Default handling is to discard expired request PDU: {}", pduRequest);
+    }
+
+    @Override
+    public boolean firePduReceived(Pdu pdu) {
+        // default handling is to accept pdu for processing up chain
+        return true;
+    }
+
+    @Override
+    public boolean firePduDispatch(Pdu pdu) {
+        // default handling is to accept pdu for processing up chain
+        return true;
     }
     
 }

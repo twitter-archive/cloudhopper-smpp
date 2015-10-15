@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.impl;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.ObjectName;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -57,6 +58,7 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.oio.OioServerSocketChannelFactory;
+import org.jboss.netty.handler.timeout.WriteTimeoutHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,10 +78,12 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     private ExecutorService bossThreadPool;
     private ChannelFactory channelFactory;
     private ServerBootstrap serverBootstrap;
-    private Channel serverChannel;
+    private Channel serverChannel; 
+    // shared instance of a timer for session writeTimeout timing
+    private final org.jboss.netty.util.Timer writeTimeoutTimer;
     // shared instance of a timer background thread to close unbound channels
     private final Timer bindTimer;
-    // shared instance of a session id generator (an atomic long)
+   // shared instance of a session id generator (an atomic long)
     private final AtomicLong sessionIdSequence;
     // shared instance for monitor executors
     private final ScheduledExecutorService monitorExecutor;
@@ -109,7 +113,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
      *      sockets are used.
      */
     public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler, ExecutorService executor) {
-        this(configuration, serverHandler, DaemonExecutors.newCachedDaemonThreadPool(), null);
+        this(configuration, serverHandler, executor, null);
     }
 
     /**
@@ -149,6 +153,8 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         // we use the same default pipeline for all new channels - no need for a factory
         this.serverConnector = new SmppServerConnector(channels, this);
         this.serverBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, this.serverConnector);
+	// a shared instance of a timer for session writeTimeout timing
+	this.writeTimeoutTimer = new org.jboss.netty.util.HashedWheelTimer();
         // a shared timer used to make sure new channels are bound within X milliseconds
         this.bindTimer = new Timer(configuration.getName() + "-BindTimer0", true);
         // NOTE: this would permit us to customize the "transcoding" context for a server if needed
@@ -236,8 +242,8 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
             throw new SmppChannelException("Unable to start: server is destroyed");
         }
         try {
-            serverChannel = this.serverBootstrap.bind(new InetSocketAddress(configuration.getPort()));
-            logger.info("{} started on SMPP port [{}]", configuration.getName(), configuration.getPort());
+            serverChannel = this.serverBootstrap.bind(new InetSocketAddress(configuration.getHost(), configuration.getPort()));
+            logger.info("{} started at {}:{}", configuration.getName(), configuration.getHost(), configuration.getPort());
         } catch (ChannelException e) {
             throw new SmppChannelException(e.getMessage(), e);
         }
@@ -255,7 +261,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
             this.serverChannel.close().awaitUninterruptibly();
             this.serverChannel = null;
         }
-        logger.info("{} stopped on SMPP port [{}]", configuration.getName(), configuration.getPort());
+        logger.info("{} stopped at {}:{}", configuration.getName(), configuration.getHost(), configuration.getPort());
     }
     
     @Override
@@ -264,6 +270,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         stop();
         this.serverBootstrap.releaseExternalResources();
         this.serverBootstrap = null;
+	this.writeTimeoutTimer.stop();
         unregisterMBean();
         logger.info("{} destroyed on SMPP port [{}]", configuration.getName(), configuration.getPort());
     }
@@ -332,6 +339,12 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         // add a logging handler after the thread renamer
         SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
         channel.getPipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
+
+	// add a writeTimeout handler after the logger
+	if (config.getWriteTimeout() > 0) {
+	    WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(writeTimeoutTimer, config.getWriteTimeout(), TimeUnit.MILLISECONDS);
+	    channel.getPipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, SmppChannelConstants.PIPELINE_SESSION_WRITE_TIMEOUT_NAME, writeTimeoutHandler);
+	}
 
         // decoder in pipeline is ok (keep it)
 

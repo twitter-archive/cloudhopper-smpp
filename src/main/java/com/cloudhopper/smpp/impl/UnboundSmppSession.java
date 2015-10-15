@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.impl;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,7 @@ import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.channel.ChannelUtil;
-import com.cloudhopper.smpp.pdu.BaseBind;
-import com.cloudhopper.smpp.pdu.BaseBindResp;
-import com.cloudhopper.smpp.pdu.BindReceiver;
-import com.cloudhopper.smpp.pdu.BindTransceiver;
-import com.cloudhopper.smpp.pdu.BindTransmitter;
-import com.cloudhopper.smpp.pdu.Pdu;
-import com.cloudhopper.smpp.pdu.PduResponse;
+import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.type.LoggingOptions;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppProcessingException;
@@ -73,9 +67,57 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
         // always log the PDU received on an unbound session
         logger.info("received PDU: {}", pdu);
 
-        // only bind requests are permitted
-        if (!(pdu instanceof BaseBind)) {
-            logger.warn("Only bind requests are permitted on new connections, closing connection [{}]", channelName);
+        // only bind and enquire_link requests are permitted
+        if (pdu instanceof BaseBind) {
+            // delegate any bind request to the server handler
+            // variables we track for a successful bind request
+            BaseBind bindRequest = (BaseBind)pdu;
+
+            // create a default session configuration based on this bind request
+            SmppSessionConfiguration sessionConfiguration = createSessionConfiguration(bindRequest);
+
+            // assign a new identifier for this session
+            Long sessionId = server.nextSessionId();
+
+            try {
+                // delegate the bind request upstream to server handler
+                this.server.bindRequested(sessionId, sessionConfiguration, bindRequest);
+            } catch (SmppProcessingException e) {
+                logger.warn("Bind request rejected or failed for connection [{}] with error [{}]", channelName, e.getMessage());
+                // create a failed bind response and send back to connection
+                BaseBindResp bindResponse = server.createBindResponse(bindRequest, e.getErrorCode());
+                this.sendResponsePdu(bindResponse);
+                // cancel the timer task & close connection
+                closeChannelAndCancelTimer();
+                return;
+            }
+
+            // if we got there then 98% "bound" -- we just need to create the
+            // new session and tie everything together -- cancel the bind timer
+            this.bindTimeoutTask.cancel();
+
+            // prepare an "OK" bind response that the session will send back once flagged as 'serverReady'
+            BaseBindResp preparedBindResponse = server.createBindResponse(bindRequest, SmppConstants.STATUS_OK);
+
+            try {
+                // create a new a new session and tie the bind response to it
+                server.createSession(sessionId, channel, sessionConfiguration, preparedBindResponse);
+            } catch (SmppProcessingException e) {
+                logger.warn("Bind request was approved, but createSession failed for connection [{}] with error [{}]", channelName, e.getMessage());
+                // create a failed bind response and send back to connection
+                BaseBindResp bindResponse = server.createBindResponse(bindRequest, e.getErrorCode());
+                this.sendResponsePdu(bindResponse);
+                // cancel the timer task & close connection
+                closeChannelAndCancelTimer();
+                return;
+            }
+        } else if (pdu instanceof EnquireLink) {
+            EnquireLinkResp response = ((EnquireLink) pdu).createResponse();
+            logger.info("Responding to enquire_link with response [{}]", response);
+            this.sendResponsePdu(response);
+            return;
+        } else {
+            logger.warn("Only bind or enquire_link requests are permitted on new connections, closing connection [{}]", channelName);
 
             // FIXME: we could create a response with an error and THEN close the connection...
 
@@ -84,48 +126,6 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
             return;
         }
 
-        // delegate any bind request to the server handler
-        // variables we track for a successful bind request
-        BaseBind bindRequest = (BaseBind)pdu;
-
-        // create a default session configuration based on this bind request
-        SmppSessionConfiguration sessionConfiguration = createSessionConfiguration(bindRequest);
-
-        // assign a new identifier for this session
-        Long sessionId = server.nextSessionId();
-
-        try {
-            // delegate the bind request upstream to server handler
-            this.server.bindRequested(sessionId, sessionConfiguration, bindRequest);
-        } catch (SmppProcessingException e) {
-            logger.warn("Bind request rejected or failed for connection [{}] with error [{}]", channelName, e.getMessage());
-            // create a failed bind response and send back to connection
-            BaseBindResp bindResponse = server.createBindResponse(bindRequest, e.getErrorCode());
-            this.sendResponsePdu(bindResponse);
-            // cancel the timer task & close connection
-            closeChannelAndCancelTimer();
-            return;
-        }
-
-        // if we got there then 98% "bound" -- we just need to create the
-        // new session and tie everything together -- cancel the bind timer
-        this.bindTimeoutTask.cancel();
-
-        // prepare an "OK" bind response that the session will send back once flagged as 'serverReady'
-        BaseBindResp preparedBindResponse = server.createBindResponse(bindRequest, SmppConstants.STATUS_OK);
-
-        try {
-            // create a new a new session and tie the bind response to it
-            server.createSession(sessionId, channel, sessionConfiguration, preparedBindResponse);
-        } catch (SmppProcessingException e) {
-            logger.warn("Bind request was approved, but createSession failed for connection [{}] with error [{}]", channelName, e.getMessage());
-            // create a failed bind response and send back to connection
-            BaseBindResp bindResponse = server.createBindResponse(bindRequest, e.getErrorCode());
-            this.sendResponsePdu(bindResponse);
-            // cancel the timer task & close connection
-            closeChannelAndCancelTimer();
-            return;
-        }
     }
 
     public void closeChannelAndCancelTimer() {

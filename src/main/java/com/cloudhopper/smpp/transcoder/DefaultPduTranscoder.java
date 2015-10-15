@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.transcoder;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.cloudhopper.smpp.type.UnknownCommandIdException;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.pdu.AlertNotification;
 import com.cloudhopper.smpp.pdu.BindReceiver;
 import com.cloudhopper.smpp.pdu.BindReceiverResp;
 import com.cloudhopper.smpp.pdu.BindTransceiver;
@@ -46,6 +47,8 @@ import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.pdu.QuerySm;
 import com.cloudhopper.smpp.pdu.QuerySmResp;
+import com.cloudhopper.smpp.pdu.ReplaceSm;
+import com.cloudhopper.smpp.pdu.ReplaceSmResp;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.cloudhopper.smpp.pdu.SubmitSmResp;
 import com.cloudhopper.smpp.pdu.Unbind;
@@ -53,6 +56,7 @@ import com.cloudhopper.smpp.pdu.UnbindResp;
 import com.cloudhopper.smpp.type.NotEnoughDataInBufferException;
 import com.cloudhopper.smpp.util.PduUtil;
 import com.cloudhopper.smpp.util.SequenceNumber;
+
 import org.jboss.netty.buffer.BigEndianHeapChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffer;
 
@@ -165,6 +169,8 @@ public class DefaultPduTranscoder implements PduTranscoder {
                 pdu = new CancelSm();
             } else if (commandId == SmppConstants.CMD_ID_QUERY_SM) {
                 pdu = new QuerySm();
+            } else if (commandId == SmppConstants.CMD_ID_REPLACE_SM) {
+                pdu = new ReplaceSm();
             } else if (commandId == SmppConstants.CMD_ID_BIND_TRANSCEIVER) {
                 pdu = new BindTransceiver();
             } else if (commandId == SmppConstants.CMD_ID_BIND_TRANSMITTER) {
@@ -173,6 +179,8 @@ public class DefaultPduTranscoder implements PduTranscoder {
                 pdu = new BindReceiver();
             } else if (commandId == SmppConstants.CMD_ID_UNBIND) {
                 pdu = new Unbind();
+            } else if (commandId == SmppConstants.CMD_ID_ALERT_NOTIFICATION) {
+                pdu = new AlertNotification();
             } else {
                 pdu = new PartialPdu(commandId);
             }
@@ -187,6 +195,8 @@ public class DefaultPduTranscoder implements PduTranscoder {
                 pdu = new CancelSmResp();
             } else if (commandId == SmppConstants.CMD_ID_QUERY_SM_RESP) {
                 pdu = new QuerySmResp();
+            } else if (commandId == SmppConstants.CMD_ID_REPLACE_SM_RESP) {
+                pdu = new ReplaceSmResp();
             } else if (commandId == SmppConstants.CMD_ID_ENQUIRE_LINK_RESP) {
                 pdu = new EnquireLinkResp();
             } else if (commandId == SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP) {

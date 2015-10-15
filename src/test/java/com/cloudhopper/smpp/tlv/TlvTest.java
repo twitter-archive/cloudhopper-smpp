@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.tlv;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -283,4 +283,50 @@ public class TlvTest {
             // correct behavior
         }
     }
+
+    @Test
+    public void testEquals() throws Exception{
+        Tlv tlv0 = new Tlv((short) 0x88, "equals".getBytes());
+        // Trivial case
+        Assert.assertTrue(tlv0.equals(tlv0));
+        Tlv tlv0Mirror = new Tlv((short) 0x88, "equals".getBytes());
+        // Reflexivity
+        Assert.assertEquals(tlv0, tlv0);
+        // Symmetry
+        Assert.assertTrue(tlv0.equals(tlv0Mirror));
+        Assert.assertTrue(tlv0Mirror.equals(tlv0));
+        
+        // Transitivity
+        Tlv tlv0Transitive = new Tlv((short) 0x88, "equals".getBytes());
+        Assert.assertTrue(tlv0.equals(tlv0Transitive));
+        Assert.assertTrue(tlv0Mirror.equals(tlv0Transitive));
+
+        // Non nullity
+        Assert.assertFalse(tlv0.equals(null));
+
+        // Some more non-equality tests
+        Tlv differentTag = new Tlv((short) 0x77, "equals".getBytes());
+        Tlv differentVal = new Tlv((short) 0x88, "nonequals".getBytes());
+        Tlv differentAll = new Tlv((short) 0x77, "nonequals".getBytes());
+
+        Assert.assertNotEquals(tlv0, differentTag);
+        Assert.assertNotEquals(tlv0, differentVal);
+        Assert.assertNotEquals(tlv0, differentAll);
+    }
+
+    @Test
+    public void testHashCode() throws Exception{
+        Tlv tlv0 = new Tlv((short) 0x88, "equals".getBytes());
+        Tlv tlv0Mirror = new Tlv((short) 0x88, "equals".getBytes());
+        Assert.assertEquals(tlv0.hashCode(), tlv0Mirror.hashCode());
+
+        Tlv differentTag = new Tlv((short) 0x77, "equals".getBytes());
+        Tlv differentVal = new Tlv((short) 0x88, "nonequals".getBytes());
+        Tlv differentAll = new Tlv((short) 0x77, "nonequals".getBytes());
+
+        Assert.assertNotEquals(tlv0.hashCode(), differentTag.hashCode());
+        Assert.assertNotEquals(tlv0.hashCode(), differentVal.hashCode());
+        Assert.assertNotEquals(tlv0.hashCode(), differentAll.hashCode());
+    }
+
 }

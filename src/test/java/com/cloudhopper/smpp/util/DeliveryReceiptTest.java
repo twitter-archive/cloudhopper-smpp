@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.util;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ package com.cloudhopper.smpp.util;
  */
 
 // third party imports
-import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.BufferHelper;
 import com.cloudhopper.smpp.pdu.DeliverSm;
@@ -30,7 +29,7 @@ import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.cloudhopper.smpp.transcoder.PduTranscoderContext;
-import com.cloudhopper.smpp.type.Address;
+import org.hamcrest.core.StringContains;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -294,6 +293,17 @@ public class DeliveryReceiptTest {
         Assert.assertEquals("id:12345678901 sub:000 dlvrd:000 submit date:0000000000 done date:0000000000 stat:BADSTAT err:000 text:", receipt0);
     }
 
+
+    @Test
+    public void toShortMessageWithFullConstructor() throws DeliveryReceiptException {
+        DeliveryReceipt dlr = new DeliveryReceipt("12345", 1, 1, new DateTime(0L, DateTimeZone.UTC),
+                new DateTime(0L, DateTimeZone.UTC), SmppConstants.STATE_ENROUTE, 0, "text");
+
+        String receipt = dlr.toShortMessage();
+
+        Assert.assertEquals("id:12345 sub:001 dlvrd:001 submit date:7001010000 done date:7001010000 stat:ENROUTE err:000 text:text", receipt);
+    }
+
     @Test
     public void parseShortMessageWith11DigitLongMessageId() throws Exception {
         DeliveryReceipt dlr = DeliveryReceipt.parseShortMessage("id:98765432101 sub:000 dlvrd:000 submit date:1001010000 done date:1001010000 stat:ENROUTE err:000 text:", DateTimeZone.UTC);
@@ -324,5 +334,51 @@ public class DeliveryReceiptTest {
         Assert.assertEquals(SmppConstants.STATE_DELIVERED, dlr.getState());
         Assert.assertEquals(0, dlr.getErrorCode());
         Assert.assertNull(dlr.getText());
+    }
+    
+    @Test
+    public void parseShortMessageWithSmpp3_4SpecCompliantErrAsStringValue() throws Exception {
+        String receipt0 = "id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:21b text:This is a sample mes";
+        
+        DeliveryReceipt dlr = DeliveryReceipt.parseShortMessage(receipt0, DateTimeZone.UTC);
+        
+        Assert.assertEquals("21b", dlr.getRawErrorCode());
+        
+        // being set if we cannot parse value
+        Assert.assertEquals(-1, dlr.getErrorCode());
+        
+        Assert.assertEquals(receipt0, dlr.toShortMessage());
+    }
+    
+    @Test
+    public void parseShortMessageWithSmpp3_4SpecCompliantErrAsIntValue() throws Exception {
+        String receipt0 = "id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:010 text:This is a sample mes";
+        
+        DeliveryReceipt dlr = DeliveryReceipt.parseShortMessage(receipt0, DateTimeZone.UTC);
+        
+        Assert.assertEquals("010", dlr.getRawErrorCode());
+        
+        // being set if we cannot parse value
+        Assert.assertEquals(10, dlr.getErrorCode());
+        
+        Assert.assertEquals(receipt0, dlr.toShortMessage());
+    }
+
+    @Test
+    public void parseReceiptWithOnlySubmitDate() throws DeliveryReceiptException {
+        DeliveryReceipt dlr = DeliveryReceipt.parseShortMessage("submit date:110206193041", DateTimeZone.UTC, false);
+        // uninitialized state is -1 for numeric primitives, null for references
+        Assert.assertNull(dlr.getMessageId());
+        Assert.assertEquals(-1, dlr.getSubmitCount());
+        Assert.assertEquals(-1, dlr.getDeliveredCount());
+        Assert.assertEquals(new DateTime(2011, 2, 6, 19, 30, 41, 0, DateTimeZone.UTC), dlr.getSubmitDate());
+        Assert.assertNull(dlr.getDoneDate());
+        Assert.assertEquals((byte) -1, dlr.getState());
+        Assert.assertEquals(-1, dlr.getErrorCode());
+        Assert.assertNull(dlr.getText());
+
+        // broken null-check caused date format to be applied to null date,
+        // which results in the current time being formatted instead of all-zeroes
+        Assert.assertThat(dlr.toShortMessage(), new StringContains(DeliveryReceipt.FIELD_DONE_DATE + "0000000000"));
     }
 }

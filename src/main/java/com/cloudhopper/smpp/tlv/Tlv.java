@@ -4,7 +4,7 @@ package com.cloudhopper.smpp.tlv;
  * #%L
  * ch-smpp
  * %%
- * Copyright (C) 2009 - 2012 Cloudhopper by Twitter
+ * Copyright (C) 2009 - 2015 Cloudhopper by Twitter
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ package com.cloudhopper.smpp.tlv;
 import com.cloudhopper.commons.util.ByteArrayUtil;
 import com.cloudhopper.commons.util.HexUtil;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 
 /**
  * Tag-Length-Value optional parameter in SMPP.
@@ -255,5 +256,36 @@ public class Tlv {
         } catch (IllegalArgumentException e) {
             throw new TlvConvertException("long", e.getMessage());
         }
+    }
+
+    /**
+     * Checks if another Tlv object is equal to this Tlv object. Two tlv objects
+     * are considered equal if they have the same tag and the same value.
+     * 
+     * @param t
+     * @return true if this and t have the same tag and value, false otherwise.
+     */
+    @Override
+    public boolean equals(Object t){
+        if (t == null){
+            return false;
+        } else if(this == t){
+            return true;
+        }
+        Tlv other = (Tlv) t;
+        return other.tag == this.tag && Arrays.equals(other.value, this.value);
+    }
+
+    /**
+     * Computes a valid hash code for this Tlv object.
+     * 
+     * @return int hash code for this object.
+     */
+    @Override
+    public int hashCode(){
+        int hash = 42;
+        hash = 31 * hash + ((int) this.tag);
+        hash = 31 * hash + Arrays.hashCode(this.value);
+        return hash;
     }
 }
