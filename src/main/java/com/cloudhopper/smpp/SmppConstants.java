@@ -362,154 +362,134 @@ public class SmppConstants {
 
     /** Command Length is invalid */
     public static final int STATUS_INVCMDLEN = 0x00000002;
-    
-    public static final int STATUS_INVCMDID = 0x00000003;
+
     // Invalid Command ID
-
-    public static final int STATUS_INVBNDSTS = 0x00000004;
+    public static final int STATUS_INVCMDID = 0x00000003;
     // Incorrect BIND Status for given command
-
-    public static final int STATUS_ALYBND = 0x00000005;
+    public static final int STATUS_INVBNDSTS = 0x00000004;
     // ESME Already in Bound State
-
-    public static final int STATUS_INVPRTFLG = 0x00000006;
+    public static final int STATUS_ALYBND = 0x00000005;
     // Invalid Priority Flag
-
-    public static final int STATUS_INVREGDLVFLG = 0x00000007;
+    public static final int STATUS_INVPRTFLG = 0x00000006;
     // Invalid Registered Delivery Flag
+    public static final int STATUS_INVREGDLVFLG = 0x00000007;
+    // System Error
+    public static final int STATUS_SYSERR = 0x00000008;
 
-    public static final int STATUS_SYSERR = 0x00000008; // System Error
-    
-    // Reserved = 0x00000009 Reserved
+    // 0x00000009 Reserved
 
-    public static final int STATUS_INVSRCADR = 0x0000000A;
     // Invalid Source Address
-
-    public static final int STATUS_INVDSTADR = 0x0000000B;
+    public static final int STATUS_INVSRCADR = 0x0000000A;
     // Invalid Dest Addr
-
-    public static final int STATUS_INVMSGID = 0x0000000C;
+    public static final int STATUS_INVDSTADR = 0x0000000B;
     // Message ID is invalid
-
-    public static final int STATUS_BINDFAIL = 0x0000000D; // Bind Failed
-
-    public static final int STATUS_INVPASWD = 0x0000000E; // Invalid Password
-
-    public static final int STATUS_INVSYSID = 0x0000000F;
+    public static final int STATUS_INVMSGID = 0x0000000C;
+    // Bind Failed
+    public static final int STATUS_BINDFAIL = 0x0000000D;
+    // Invalid Password
+    public static final int STATUS_INVPASWD = 0x0000000E;
     // Invalid System ID
+    public static final int STATUS_INVSYSID = 0x0000000F;
 
-    // Reserved = 0x00000010 Reserved
+    // 0x00000010 Reserved
 
-    public static final int STATUS_CANCELFAIL = 0x00000011;
     // Cancel SM Failed
+    public static final int STATUS_CANCELFAIL = 0x00000011;
 
-    // Reserved = 0x00000012 Reserved
-    public static final int STATUS_REPLACEFAIL = 0x00000013;
+    // 0x00000012 Reserved
 
     // Replace SM Failed
-    public static final int STATUS_MSGQFUL = 0x00000014;
-
+    public static final int STATUS_REPLACEFAIL = 0x00000013;
     // Message Queue Full
+    public static final int STATUS_MSGQFUL = 0x00000014;
+    // Invalid Service Type
     public static final int STATUS_INVSERTYP = 0x00000015;
 
-    // Invalid Service Type
-    // Reserved = 0x00000016-0x00000032
-    public static final int STATUS_INVNUMDESTS = 0x00000033;
+    // 0x00000016-0x00000032 Reserved
 
     // Invalid number of destinations
+    public static final int STATUS_INVNUMDESTS = 0x00000033;
+    // Invalid Distribution List name
     public static final int STATUS_INVDLNAME = 0x00000034;
 
-    // Invalid Distribution List name
-    // Reserved = 0x00000035-0x0000003F
-    public static final int STATUS_INVDESTFLAG = 0x00000040;
+    // 0x00000035-0x0000003F Reserved
 
     // Destination flag is invalid (submit_multi)
-    // Reserved = 0x00000041 Reserved
-    public static final int STATUS_INVSUBREP = 0x00000042;
+    public static final int STATUS_INVDESTFLAG = 0x00000040;
 
-    // Invalid submit with replace request
+    // 0x00000041 Reserved
+
+    // Invalid ‘submit with replace’ request
     // (i.e. submit_sm with replace_if_present_flag set)
-    public static final int STATUS_INVESMCLASS = 0x00000043;
-
+    public static final int STATUS_INVSUBREP = 0x00000042;
     // Invalid esm_class field data
-    public static final int STATUS_CNTSUBDL = 0x00000044;
-
+    public static final int STATUS_INVESMCLASS = 0x00000043;
     // Cannot Submit to Distribution List
+    public static final int STATUS_CNTSUBDL = 0x00000044;
+    // submit_sm or submit_multi failed
     public static final int STATUS_SUBMITFAIL = 0x00000045;
 
-    // submit_sm or submit_multi failed
-    // Reserved = 0x00000046-0x00000047 Reserved
-    public static final int STATUS_INVSRCTON = 0x00000048;
+    // 0x00000046-0x00000047 Reserved
 
     // Invalid Source address TON
-    public static final int STATUS_INVSRCNPI = 0x00000049;
-
+    public static final int STATUS_INVSRCTON = 0x00000048;
     // Invalid Source address NPI
-    public static final int STATUS_INVDSTTON = 0x00000050;
-
+    public static final int STATUS_INVSRCNPI = 0x00000049;
     // Invalid Destination address TON
+    public static final int STATUS_INVDSTTON = 0x00000050;
+    // Invalid Destination address NPI
     public static final int STATUS_INVDSTNPI = 0x00000051;
 
-    // Invalid Destination address NPI
-    // Reserved = 0x00000052 Reserved
-    public static final int STATUS_INVSYSTYP = 0x00000053;
+    // 0x00000052 Reserved
 
     // Invalid system_type field
-    public static final int STATUS_INVREPFLAG = 0x00000054;
-
+    public static final int STATUS_INVSYSTYP = 0x00000053;
     // Invalid replace_if_present flag
+    public static final int STATUS_INVREPFLAG = 0x00000054;
+    // Invalid number of messages
     public static final int STATUS_INVNUMMSGS = 0x00000055;
 
-    // Invalid number of messages
-    // Reserved = 0x00000056-0x00000057 Reserved
+    // 0x00000056-0x00000057 Reserved
+
+    // Throttling error (ESME has exceeded allowed message limits)
     public static final int STATUS_THROTTLED = 0x00000058;
 
-    // Throttling error (ESME has exceeded allowed message
-    // limits)
-    // Reserved = 0x00000059-0x00000060 Reserved
-    public static final int STATUS_INVSCHED = 0x00000061;
+    // 0x00000059-0x00000060 Reserved
 
     // Invalid Scheduled Delivery Time
-    public static final int STATUS_INVEXPIRY = 0x00000062;
-
+    public static final int STATUS_INVSCHED = 0x00000061;
     // Invalid message validity period (Expiry time)
-    public static final int STATUS_INVDFTMSGID = 0x00000063;
-
+    public static final int STATUS_INVEXPIRY = 0x00000062;
     // Predefined Message Invalid or Not Found
-    public static final int STATUS_X_T_APPN = 0x00000064;
-
+    public static final int STATUS_INVDFTMSGID = 0x00000063;
     // ESME Receiver Temporary App Error Code
-    public static final int STATUS_X_P_APPN = 0x00000065;
-
+    public static final int STATUS_X_T_APPN = 0x00000064;
     // ESME Receiver Permanent App Error Code
-    public static final int STATUS_X_R_APPN = 0x00000066;
-
+    public static final int STATUS_X_P_APPN = 0x00000065;
     // ESME Receiver Reject Message Error Code
+    public static final int STATUS_X_R_APPN = 0x00000066;
+    // query_sm request failed
     public static final int STATUS_QUERYFAIL = 0x00000067;
 
-    // query_sm request failed
-    // Reserved = 0x00000068-0x000000BF Reserved
-    public static final int STATUS_INVOPTPARSTREAM = 0x000000C0;
+    // 0x00000068-0x000000BF Reserved
 
     // Error in the optional part of the PDU Body.
-    public static final int STATUS_OPTPARNOTALLWD = 0x000000C1;
-
+    public static final int STATUS_INVOPTPARSTREAM = 0x000000C0;
     // Optional Parameter not allowed
-    public static final int STATUS_INVPARLEN = 0x000000C2;
-
+    public static final int STATUS_OPTPARNOTALLWD = 0x000000C1;
     // Invalid Parameter Length.
-    public static final int STATUS_MISSINGOPTPARAM = 0x000000C3;
-
+    public static final int STATUS_INVPARLEN = 0x000000C2;
     // Expected Optional Parameter missing
+    public static final int STATUS_MISSINGOPTPARAM = 0x000000C3;
+    // Invalid Optional Parameter Value
     public static final int STATUS_INVOPTPARAMVAL = 0x000000C4;
 
-    // Invalid Optional Parameter Value
-    // Reserved = 0x000000C5-0x000000FD Reserved
-    public static final int STATUS_DELIVERYFAILURE = 0x000000FE;
+    // 0x000000C5-0x000000FD Reserved
 
     // Delivery Failure (used for data_sm_resp)
-    public static final int STATUS_UNKNOWNERR = 0x000000FF; // Unknown Error
-
+    public static final int STATUS_DELIVERYFAILURE = 0x000000FE;
+    // Unknown Error
+    public static final int STATUS_UNKNOWNERR = 0x000000FF;
     // ESME Not authorised to use specified service_type
     public static final int STATUS_SERTYPUNAUTH = 0x00000100;
     // ESME Prohibited from using specified operation
