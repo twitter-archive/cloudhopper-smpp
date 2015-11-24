@@ -3,6 +3,16 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+
+## 5.0.9 - 2015-11-24
+ - Add support for missing pdus and tags
+ - Allow unbound channel to respond to enquire_link PDU
+ - Corrected name of DataCoding SmppConstant to IA5 (not GSM)
+ - Updated value of DATA_CODING_GSM constant and made it deprecated
+ - Add ESM_CLASS Message Mode constants
+ - DefaultSmppServer should use IO executor passed to its constructor
+ - Fix-up comments on the SMPP error code constants
+
 ## 5.0.8 - 2015-04-17
  - Fixed issue where rawErrorCode not set on DeliveryReceipt (khaing211)
  - Support for host address in SmppServerConfiguration (pgoergler)
