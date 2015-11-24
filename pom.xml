@@ -4,7 +4,7 @@
     <groupId>com.fizzed</groupId>
     <artifactId>ch-smpp</artifactId>
     <packaging>jar</packaging>
-    <version>5.0.9</version>
+    <version>5.0.10-SNAPSHOT</version>
     <name>ch-smpp</name>
     <description>Efficient, scalable, and flexible Java implementation of the Short Messaging Peer to Peer Protocol (SMPP)</description>
     <url>https://github.com/twitter/cloudhopper-smpp</url>
@@ -14,7 +14,7 @@
         <url>https://github.com/fizzed/cloudhopper-smpp</url>
         <connection>scm:git:https://github.com/fizzed/cloudhopper-smpp.git</connection>
         <developerConnection>scm:git:git@github.com:fizzed/cloudhopper-smpp.git</developerConnection>
-        <tag>v5.0.9</tag>
+        <tag>master</tag>
     </scm>
   
     <parent>
