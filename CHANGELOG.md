@@ -4,6 +4,8 @@ Cloudhopper by Twitter
 cloudhopper-smpp
 ----------------
 
+NOTE: Project moved to https://github.com/fizzed/cloudhopper-smpp
+
 ## 5.0.9 - 2015-11-24
  - Add support for missing pdus and tags
  - Allow unbound channel to respond to enquire_link PDU
