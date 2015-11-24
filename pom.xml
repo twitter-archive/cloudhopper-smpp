@@ -1,19 +1,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.cloudhopper</groupId>
+    <groupId>com.fizzed</groupId>
     <artifactId>ch-smpp</artifactId>
     <packaging>jar</packaging>
-    <version>5.0.10-SNAPSHOT</version>
+    <version>5.0.9-SNAPSHOT</version>
     <name>ch-smpp</name>
     <description>Efficient, scalable, and flexible Java implementation of the Short Messaging Peer to Peer Protocol (SMPP)</description>
     <url>https://github.com/twitter/cloudhopper-smpp</url>
     <inceptionYear>2009</inceptionYear>
     
     <scm>
-        <url>https://github.com/twitter/cloudhopper-smpp</url>
-        <connection>scm:git:https://github.com/twitter/cloudhopper-smpp.git</connection>
-        <developerConnection>scm:git:git@github.com:twitter/cloudhopper-smpp.git</developerConnection>
+        <url>https://github.com/fizzed/cloudhopper-smpp</url>
+        <connection>scm:git:https://github.com/fizzed/cloudhopper-smpp.git</connection>
+        <developerConnection>scm:git:git@github.com:fizzed/cloudhopper-smpp.git</developerConnection>
         <tag>master</tag>
     </scm>
   
@@ -30,6 +30,8 @@
         <ch-commons-gsm.version>3.0.0</ch-commons-gsm.version>
         <netty.version>3.9.6.Final</netty.version>
         <slf4j.version>1.7.13</slf4j.version>
+        <!-- workaround travis ci maven version requirement -->
+        <maven.enforce.version>3.2.5</maven.enforce.version>
     </properties>
 
     <dependencies>
