@@ -53,7 +53,7 @@ public interface SmppClient {
      * @throws InterruptedException Thrown if the calling thread is interrupted
      * while we are attempting the bind.
      */
-    public SmppSession bind(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, SmppBindException, UnrecoverablePduException, InterruptedException;
+    public SmppClientSession bind(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, SmppBindException, UnrecoverablePduException, InterruptedException;
 
     /**
      * Destroy a client by ensuring that all session sockets are closed and all

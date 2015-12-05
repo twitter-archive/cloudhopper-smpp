@@ -29,7 +29,7 @@ import com.cloudhopper.commons.util.windowing.WindowFuture;
 import com.cloudhopper.commons.util.windowing.WindowListener;
 import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.SmppServerSession;
+import com.cloudhopper.smpp.SmppSession;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.SmppSessionCounters;
@@ -43,8 +43,6 @@ import com.cloudhopper.smpp.pdu.EnquireLinkResp;
 import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
-import com.cloudhopper.smpp.pdu.SubmitSm;
-import com.cloudhopper.smpp.pdu.SubmitSmResp;
 import com.cloudhopper.smpp.pdu.Unbind;
 import com.cloudhopper.smpp.tlv.Tlv;
 import com.cloudhopper.smpp.tlv.TlvConvertException;
@@ -76,43 +74,25 @@ import org.slf4j.LoggerFactory;
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-public class DefaultSmppSession implements SmppServerSession, SmppSessionChannelListener, WindowListener<Integer,PduRequest,PduResponse>, DefaultSmppSessionMXBean {
-    private static final Logger logger = LoggerFactory.getLogger(DefaultSmppSession.class);
+public abstract class AbstractSmppSession implements SmppSession, WindowListener<Integer,PduRequest,PduResponse>, DefaultSmppSessionMXBean {
+    protected static final Logger logger = LoggerFactory.getLogger(AbstractSmppSession.class);
 
     // are we an "esme" or "smsc" session type?
     private final Type localType;
     // current state of this session
-    private final AtomicInteger state;
+    protected final AtomicInteger state;
     // the timestamp when we became "bound"
-    private final AtomicLong boundTime;
-    private final SmppSessionConfiguration configuration;
-    private final Channel channel;
-    private SmppSessionHandler sessionHandler;
-    private final SequenceNumber sequenceNumber;
-    private final PduTranscoder transcoder;
-    private final Window<Integer,PduRequest,PduResponse> sendWindow;
-    private byte interfaceVersion;
-    // only for server sessions
-    private DefaultSmppServer server;
-    // the session id assigned by the server to this particular instance
-    private Long serverSessionId;
-    // pre-prepared BindResponse to send back once we're flagged as ready
-    private BaseBindResp preparedBindResponse;
-    private ScheduledExecutorService monitorExecutor;
-    private DefaultSmppSessionCounters counters;
-
-    /**
-     * Creates an SmppSession for a server-based session.
-     */
-    public DefaultSmppSession(Type localType, SmppSessionConfiguration configuration, Channel channel, DefaultSmppServer server, Long serverSessionId, BaseBindResp preparedBindResponse, byte interfaceVersion, ScheduledExecutorService monitorExecutor) {
-        this(localType, configuration, channel, (SmppSessionHandler)null, monitorExecutor);
-        // default state for a server session is that it's binding
-        this.state.set(STATE_BINDING);
-        this.server = server;
-        this.serverSessionId = serverSessionId;
-        this.preparedBindResponse = preparedBindResponse;
-        this.interfaceVersion = interfaceVersion;
-    }
+    protected final AtomicLong boundTime;
+    protected final SmppSessionConfiguration configuration;
+    protected final Channel channel;
+    protected SmppSessionHandler sessionHandler;
+    protected final SequenceNumber sequenceNumber;
+    protected final PduTranscoder transcoder;
+    protected final Window<Integer,PduRequest,PduResponse> sendWindow;
+    protected byte interfaceVersion;
+    
+    protected ScheduledExecutorService monitorExecutor;
+    protected DefaultSmppSessionCounters counters;
 
     /**
      * Creates an SmppSession for a client-based session. It is <b>NOT</b> 
@@ -125,7 +105,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      *      needs to already be opened.
      * @param sessionHandler The handler for session events
      */
-    public DefaultSmppSession(Type localType, SmppSessionConfiguration configuration, Channel channel, SmppSessionHandler sessionHandler) {
+    public AbstractSmppSession(Type localType, SmppSessionConfiguration configuration, Channel channel, SmppSessionHandler sessionHandler) {
         this(localType, configuration, channel, sessionHandler, null);
     }
     
@@ -144,7 +124,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      *      statistics will be periodically executed under.  If null, monitoring
      *      will be disabled.
      */
-    public DefaultSmppSession(Type localType, SmppSessionConfiguration configuration, Channel channel, SmppSessionHandler sessionHandler, ScheduledExecutorService monitorExecutor) {
+    public AbstractSmppSession(Type localType, SmppSessionConfiguration configuration, Channel channel, SmppSessionHandler sessionHandler, ScheduledExecutorService monitorExecutor) {
         this.localType = localType;
         this.state = new AtomicInteger(STATE_OPEN);
         this.configuration = configuration;
@@ -164,15 +144,18 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             this.sendWindow = new Window<Integer,PduRequest,PduResponse>(configuration.getWindowSize());
         }
         
+        /*
         // these server-only items are null
         this.server = null;
         this.serverSessionId = null;
         this.preparedBindResponse = null;
+        */
         if (configuration.isCountersEnabled()) {
             this.counters = new DefaultSmppSessionCounters();
         }
     }
     
+    @Override
     public void registerMBean(String objectName) {
         // register the this queue manager as an mbean
         try {
@@ -184,6 +167,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         }
     }
     
+    @Override
     public void unregisterMBean(String objectName) {
         // register the this queue manager as an mbean
         try {
@@ -282,11 +266,13 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         return this.channel;
     }
 
+    @Override
     public SequenceNumber getSequenceNumber() {
         return this.sequenceNumber;
     }
 
-    protected PduTranscoder getTranscoder() {
+    @Override
+    public PduTranscoder getTranscoder() {
         return this.transcoder;
     }
     
@@ -308,21 +294,6 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
     @Override
     public SmppSessionCounters getCounters() {
         return this.counters;
-    }
-
-    @Override
-    public void serverReady(SmppSessionHandler sessionHandler) {
-        // properly setup the session handler (to handle notifications)
-        this.sessionHandler = sessionHandler;
-        // send the prepared bind response
-        try {
-            this.sendResponsePdu(this.preparedBindResponse);
-        } catch (Exception e) {
-            logger.error("{}", e);
-        }
-        // flag the channel is ready to read
-        this.channel.setReadable(true).awaitUninterruptibly();
-        this.setBound();
     }
 
     protected BaseBindResp bind(BaseBind request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppBindException, SmppTimeoutException, SmppChannelException, InterruptedException {
@@ -440,15 +411,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         SmppSessionUtil.assertExpectedResponse(request, response);
         return (EnquireLinkResp)response;
     }
-
-    @Override
-    public SubmitSmResp submit(SubmitSm request, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
-        assertValidRequest(request);
-        PduResponse response = sendRequestAndGetResponse(request, timeoutInMillis);
-        SmppSessionUtil.assertExpectedResponse(request, response);
-        return (SubmitSmResp)response;
-    }
-    
+  
     protected void assertValidRequest(PduRequest request) throws NullPointerException, RecoverablePduException, UnrecoverablePduException {
         if (request == null) {
             throw new NullPointerException("PDU request cannot be null");
@@ -459,8 +422,17 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
      * Sends a PDU request and gets a PDU response that matches its sequence #.
      * NOTE: This PDU response may not be the actual response the caller was
      * expecting, it needs to verify it afterwards.
+     * @param requestPdu
+     * @param timeoutInMillis
+     * @return 
+     * @throws com.cloudhopper.smpp.type.RecoverablePduException
+     * @throws com.cloudhopper.smpp.type.UnrecoverablePduException
+     * @throws com.cloudhopper.smpp.type.SmppTimeoutException
+     * @throws com.cloudhopper.smpp.type.SmppChannelException
+     * @throws java.lang.InterruptedException
      */
-    protected PduResponse sendRequestAndGetResponse(PduRequest requestPdu, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
+    @Override
+    public PduResponse sendRequestAndGetResponse(PduRequest requestPdu, long timeoutInMillis) throws RecoverablePduException, UnrecoverablePduException, SmppTimeoutException, SmppChannelException, InterruptedException {
         WindowFuture<Integer,PduRequest,PduResponse> future = sendRequestPdu(requestPdu, timeoutInMillis, true);
         boolean completedWithinTimeout = future.await();
         
@@ -677,12 +649,6 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
 
     @Override
     public void fireChannelClosed() {
-        // if this is a server session, we need to notify the server first
-        // NOTE: its important this happens first
-        if (this.server != null) {
-            this.server.destroySession(serverSessionId, this);
-        }
-        
         // most of the time when a channel is closed, we don't necessarily want
         // to do anything special -- however when a caller is waiting for a response
         // to a request and we know the channel closed, we should check for those

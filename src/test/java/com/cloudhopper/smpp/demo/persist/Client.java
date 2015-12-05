@@ -20,26 +20,26 @@ package com.cloudhopper.smpp.demo.persist;
  * #L%
  */
 
-import com.cloudhopper.smpp.SmppSession;
+import com.cloudhopper.smpp.SmppClientSession;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 
 public abstract class Client {
 
-	protected volatile SmppSession smppSession;
+	protected volatile SmppClientSession smppSession;
 
 	public SmppSessionConfiguration getConfiguration() {
 		return smppSession.getConfiguration();
 	}
 
 	public boolean isConnected() {
-		SmppSession session = smppSession;
+		SmppClientSession session = smppSession;
 		if (session != null) {
 			return session.isBound();
 		}
 		return false;
 	}
 
-	public SmppSession getSession() {
+	public SmppClientSession getSession() {
 		return smppSession;
 	}
 }

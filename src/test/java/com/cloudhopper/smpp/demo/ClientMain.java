@@ -24,7 +24,7 @@ import com.cloudhopper.commons.charset.CharsetUtil;
 import com.cloudhopper.commons.util.windowing.WindowFuture;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.SmppBindType;
-import com.cloudhopper.smpp.SmppSession;
+import com.cloudhopper.smpp.SmppClientSession;
 import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.type.Address;
@@ -98,7 +98,7 @@ public class ClientMain {
         config0.setHost("127.0.0.1");
         config0.setPort(2776);
         config0.setConnectTimeout(10000);
-        config0.setSystemId("1234567890");
+        config0.setSystemId("client");
         config0.setPassword("password");
         config0.getLoggingOptions().setLogBytes(true);
         // to enable monitoring (request expiration)
@@ -109,7 +109,7 @@ public class ClientMain {
         //
         // create session, enquire link, submit an sms, close session
         //
-        SmppSession session0 = null;
+        SmppClientSession session0 = null;
 
         try {
             // create session a session by having the bootstrap connect a
