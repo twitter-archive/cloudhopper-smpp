@@ -46,6 +46,7 @@ public class SmppConstants {
 
     public static final byte VERSION_3_3 = 0x33;
     public static final byte VERSION_3_4 = 0x34;
+    public static final byte VERSION_5_0 = 0x50;
 
     public static final int DEFAULT_WINDOW_SIZE = 1;
     public static final long DEFAULT_WINDOW_WAIT_TIMEOUT = 60000;
@@ -79,8 +80,12 @@ public class SmppConstants {
     public static final int CMD_ID_OUTBIND = 0x0000000B;
     public static final int CMD_ID_ENQUIRE_LINK = 0x00000015;
     public static final int CMD_ID_SUBMIT_MULTI = 0x00000021;
+    public static final int CMD_ID_ALERT_NOTIFICATION = 0x00000102;
     public static final int CMD_ID_DATA_SM = 0x00000103;
-    
+    public static final int CMD_ID_BROADCAST_SM = 0x00000111;
+    public static final int CMD_ID_QUERY_BROADCAST_SM = 0x00000112;
+    public static final int CMD_ID_CANCEL_BROADCAST_SM = 0x00000113;
+
     //
     // SMPP Command ID (Responses)
     //
@@ -97,10 +102,14 @@ public class SmppConstants {
     public static final int CMD_ID_ENQUIRE_LINK_RESP = 0x80000015;
     public static final int CMD_ID_SUBMIT_MULTI_RESP = 0x80000021;
     public static final int CMD_ID_DATA_SM_RESP = 0x80000103;
+    public static final int CMD_ID_BROADCAST_SM_RESP = 0x80000111;
+    public static final int CMD_ID_QUERY_BROADCAST_SM_RESP = 0x80000112;
+    public static final int CMD_ID_CANCEL_BROADCAST_SM_RESP = 0x80000113;
 
     //
     // Optional TLV Tags
     //
+    public static final short TAG_SOURCE_TELEMATICS_ID = 0x0010;
     public static final short TAG_PAYLOAD_TYPE = 0x0019;
     public static final short TAG_PRIVACY_INDICATOR = 0x0201;
     public static final short TAG_USER_MESSAGE_REFERENCE = 0x0204;
@@ -135,6 +144,8 @@ public class SmppConstants {
     public static final short TAG_MORE_MSGS_TO_FOLLOW = 0x0426;
     // Message State
     public static final short TAG_MSG_STATE = 0x0427;
+    // Congestion State
+    public static final short TAG_CONGESTION_STATE = 0x0428;
     // Callback Number Presentation  Indicator
     public static final short TAG_CALLBACK_NUM_PRES_IND = 0x0302;
     // Callback Number Alphanumeric Tag
@@ -151,6 +162,38 @@ public class SmppConstants {
     public static final short TAG_ITS_SESSION_INFO = 0x1383;
     // USSD Service Op
     public static final short TAG_USSD_SERVICE_OP = 0x0501;
+    // Broadcast Channel Indicator
+    public static final short TAG_BROADCAST_CHANNEL_INDICATOR = 0x0600;
+    // Broadcast Content Type
+    public static final short TAG_BROADCAST_CONTENT_TYPE = 0x0601;
+    // Broadcast Content Type Info
+    public static final short TAG_BROADCAST_CONTENT_TYPE_INFO = 0x0602;
+    // Broadcast Message Class
+    public static final short TAG_BROADCAST_MESSAGE_CLASS = 0x0603;
+    // Broadcast Rep Num
+    public static final short TAG_BROADCAST_REP_NUM = 0x0604;
+    // Broadcast Frequency Interval
+    public static final short TAG_BROADCAST_FREQUENCY_INTERVAL = 0x0605;
+    // Broadcast Area Identifier
+    public static final short TAG_BROADCAST_AREA_IDENTIFIER = 0x0606;
+    // Broadcast Error Status
+    public static final short TAG_BROADCAST_ERROR_STATUS = 0x0607;
+    // Broadcast Area Success
+    public static final short TAG_BROADCAST_AREA_SUCCESS = 0x0608;
+    // Broadcast End Time
+    public static final short TAG_BROADCAST_END_TIME = 0x0609;
+    // Broadcast Service Group
+    public static final short TAG_BROADCAST_SERVICE_GROUP = 0x060A;
+    // Source Network Id
+    public static final short TAG_SOURCE_NETWORK_ID = 0x060D;
+    // Dest Network Id
+    public static final short TAG_DEST_NETWORK_ID = 0x060E;
+    // Source Node Id
+    public static final short TAG_SOURCE_NODE_ID = 0x060F;
+    // Dest Node Id
+    public static final short TAG_DEST_NODE_ID = 0x0610;
+    // Billing Identification
+    public static final short TAG_BILLING_IDENTIFICATION = 0x060B;
     // Originating MSC Address
     public static final short TAG_ORIG_MSC_ADDR = (short)0x8081;
     // Destination MSC Address
@@ -177,12 +220,20 @@ public class SmppConstants {
     public static final short TAG_ADD_STATUS_INFO = 0x001D;
     // Receipted Message ID
     public static final short TAG_RECEIPTED_MSG_ID = 0x001E;
-
+    // MS Message Wait Facilities
+    public static final short TAG_MS_MSG_WAIT_FACILITIES = 0x0030;
 
     /** ESM Class */
 
+    /** Message Mode (bits 1-0) */
+    public static final byte ESM_CLASS_MM_MASK          = 0x03;  // BIN 00000011
+    public static final byte ESM_CLASS_MM_DEFAULT       = 0x00;  // BIN 00000000
+    public static final byte ESM_CLASS_MM_DATAGRAM      = 0x01;  // BIN 00000001
+    public static final byte ESM_CLASS_MM_TRANSACTION   = 0x02;  // BIN 00000010
+    public static final byte ESM_CLASS_MM_STORE_FORWARD = 0x03;  // BIN 00000011
+
     /** Message Type (bits 5-2) */
-    public static final byte ESM_CLASS_MT_MASK = (byte)0x1C;                    // BIN:  11100
+    public static final byte ESM_CLASS_MT_MASK = (byte)0x1C;                          // BIN:  11100
     public static final byte ESM_CLASS_MT_SMSC_DELIVERY_RECEIPT = (byte)0x04;         // BIN:    100, Recv Msg contains SMSC delivery receipt
     public static final byte ESM_CLASS_MT_ESME_DELIVERY_RECEIPT = (byte)0x08;         // BIN:   1000, Send/Recv Msg contains ESME delivery acknowledgement
     public static final byte ESM_CLASS_MT_MANUAL_USER_ACK = (byte)0x10;               // BIN:  10000, Send/Recv Msg contains manual/user acknowledgment
@@ -200,6 +251,7 @@ public class SmppConstants {
     public static final byte REGISTERED_DELIVERY_SMSC_RECEIPT_NOT_REQUESTED = 0x00;
     public static final byte REGISTERED_DELIVERY_SMSC_RECEIPT_REQUESTED     = 0x01;
     public static final byte REGISTERED_DELIVERY_SMSC_RECEIPT_ON_FAILURE    = 0x02;
+    public static final byte REGISTERED_DELIVERY_SMSC_RECEIPT_ON_SUCCESS    = 0x03;
 
     //   SME originated acknowledgement (bits 3 & 2)
     public static final byte REGISTERED_DELIVERY_SME_ACK_MASK               = 0x0c;
@@ -211,9 +263,9 @@ public class SmppConstants {
     // Intermediate notification (bit 4)
     // NOTE: SMPP 3.4 specs originally wrote (bit 5) but their matrix actually used bit 4
     // the confirmed value is bit 4, not 5.
-    public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_MASK = 0x10;
-    public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_NOT_REQUESTED = 0x0;
-    public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_REQUESTED = 0x10;
+    public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_MASK          = 0x10;
+    public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_NOT_REQUESTED = 0x00;
+    public static final byte REGISTERED_DELIVERY_INTERMEDIATE_NOTIFICATION_REQUESTED     = 0x10;
 
 
     // Replace if Present flag
@@ -275,7 +327,15 @@ public class SmppConstants {
     // SMPP Data Coding
     //
     public static final byte DATA_CODING_DEFAULT 	= (byte)0x00;	// SMSC Default Alphabet
-    public static final byte DATA_CODING_GSM 		= (byte)0x01;	// IA5 (CCITT T.50)/ASCII (ANSI X3.4)
+    public static final byte DATA_CODING_IA5		= (byte)0x01;	// IA5 (CCITT T.50)/ASCII (ANSI X3.4)
+
+    /**
+     * @deprecated May be removed in a future version
+     *      Please use IA5 for DCS 0x01 or DEFAULT for DCS 0x00
+     */
+    @Deprecated
+    public static final byte DATA_CODING_GSM		= (byte)0x01;
+
     public static final byte DATA_CODING_8BITA		= (byte)0x02;	// Octet unspecified (8-bit binary) defined for TDMA and/ or CDMA but not defined for GSM
     public static final byte DATA_CODING_LATIN1		= (byte)0x03;	// Latin 1 (ISO-8859-1)
     public static final byte DATA_CODING_8BIT		= (byte)0x04;	// Octet unspecified (8-bit binary) ALL TECHNOLOGIES
@@ -302,153 +362,160 @@ public class SmppConstants {
 
     /** Command Length is invalid */
     public static final int STATUS_INVCMDLEN = 0x00000002;
-    
-    public static final int STATUS_INVCMDID = 0x00000003;
+
     // Invalid Command ID
-
-    public static final int STATUS_INVBNDSTS = 0x00000004;
+    public static final int STATUS_INVCMDID = 0x00000003;
     // Incorrect BIND Status for given command
-
-    public static final int STATUS_ALYBND = 0x00000005;
+    public static final int STATUS_INVBNDSTS = 0x00000004;
     // ESME Already in Bound State
-
-    public static final int STATUS_INVPRTFLG = 0x00000006;
+    public static final int STATUS_ALYBND = 0x00000005;
     // Invalid Priority Flag
-
-    public static final int STATUS_INVREGDLVFLG = 0x00000007;
+    public static final int STATUS_INVPRTFLG = 0x00000006;
     // Invalid Registered Delivery Flag
+    public static final int STATUS_INVREGDLVFLG = 0x00000007;
+    // System Error
+    public static final int STATUS_SYSERR = 0x00000008;
 
-    public static final int STATUS_SYSERR = 0x00000008; // System Error
-    
-    // Reserved = 0x00000009 Reserved
+    // 0x00000009 Reserved
 
-    public static final int STATUS_INVSRCADR = 0x0000000A;
     // Invalid Source Address
-
-    public static final int STATUS_INVDSTADR = 0x0000000B;
+    public static final int STATUS_INVSRCADR = 0x0000000A;
     // Invalid Dest Addr
-
-    public static final int STATUS_INVMSGID = 0x0000000C;
+    public static final int STATUS_INVDSTADR = 0x0000000B;
     // Message ID is invalid
-
-    public static final int STATUS_BINDFAIL = 0x0000000D; // Bind Failed
-
-    public static final int STATUS_INVPASWD = 0x0000000E; // Invalid Password
-
-    public static final int STATUS_INVSYSID = 0x0000000F;
+    public static final int STATUS_INVMSGID = 0x0000000C;
+    // Bind Failed
+    public static final int STATUS_BINDFAIL = 0x0000000D;
+    // Invalid Password
+    public static final int STATUS_INVPASWD = 0x0000000E;
     // Invalid System ID
+    public static final int STATUS_INVSYSID = 0x0000000F;
 
-    // Reserved = 0x00000010 Reserved
+    // 0x00000010 Reserved
 
-    public static final int STATUS_CANCELFAIL = 0x00000011;
     // Cancel SM Failed
+    public static final int STATUS_CANCELFAIL = 0x00000011;
 
-    // Reserved = 0x00000012 Reserved
-    public static final int STATUS_REPLACEFAIL = 0x00000013;
+    // 0x00000012 Reserved
 
     // Replace SM Failed
-    public static final int STATUS_MSGQFUL = 0x00000014;
-
+    public static final int STATUS_REPLACEFAIL = 0x00000013;
     // Message Queue Full
+    public static final int STATUS_MSGQFUL = 0x00000014;
+    // Invalid Service Type
     public static final int STATUS_INVSERTYP = 0x00000015;
 
-    // Invalid Service Type
-    // Reserved = 0x00000016-0x00000032
-    public static final int STATUS_INVNUMDESTS = 0x00000033;
+    // 0x00000016-0x00000032 Reserved
 
     // Invalid number of destinations
+    public static final int STATUS_INVNUMDESTS = 0x00000033;
+    // Invalid Distribution List name
     public static final int STATUS_INVDLNAME = 0x00000034;
 
-    // Invalid Distribution List name
-    // Reserved = 0x00000035-0x0000003F
-    public static final int STATUS_INVDESTFLAG = 0x00000040;
+    // 0x00000035-0x0000003F Reserved
 
     // Destination flag is invalid (submit_multi)
-    // Reserved = 0x00000041 Reserved
-    public static final int STATUS_INVSUBREP = 0x00000042;
+    public static final int STATUS_INVDESTFLAG = 0x00000040;
 
-    // Invalid submit with replace request
+    // 0x00000041 Reserved
+
+    // Invalid ‘submit with replace’ request
     // (i.e. submit_sm with replace_if_present_flag set)
-    public static final int STATUS_INVESMCLASS = 0x00000043;
-
+    public static final int STATUS_INVSUBREP = 0x00000042;
     // Invalid esm_class field data
-    public static final int STATUS_CNTSUBDL = 0x00000044;
-
+    public static final int STATUS_INVESMCLASS = 0x00000043;
     // Cannot Submit to Distribution List
+    public static final int STATUS_CNTSUBDL = 0x00000044;
+    // submit_sm or submit_multi failed
     public static final int STATUS_SUBMITFAIL = 0x00000045;
 
-    // submit_sm or submit_multi failed
-    // Reserved = 0x00000046-0x00000047 Reserved
-    public static final int STATUS_INVSRCTON = 0x00000048;
+    // 0x00000046-0x00000047 Reserved
 
     // Invalid Source address TON
-    public static final int STATUS_INVSRCNPI = 0x00000049;
-
+    public static final int STATUS_INVSRCTON = 0x00000048;
     // Invalid Source address NPI
-    public static final int STATUS_INVDSTTON = 0x00000050;
-
+    public static final int STATUS_INVSRCNPI = 0x00000049;
     // Invalid Destination address TON
+    public static final int STATUS_INVDSTTON = 0x00000050;
+    // Invalid Destination address NPI
     public static final int STATUS_INVDSTNPI = 0x00000051;
 
-    // Invalid Destination address NPI
-    // Reserved = 0x00000052 Reserved
-    public static final int STATUS_INVSYSTYP = 0x00000053;
+    // 0x00000052 Reserved
 
     // Invalid system_type field
-    public static final int STATUS_INVREPFLAG = 0x00000054;
-
+    public static final int STATUS_INVSYSTYP = 0x00000053;
     // Invalid replace_if_present flag
+    public static final int STATUS_INVREPFLAG = 0x00000054;
+    // Invalid number of messages
     public static final int STATUS_INVNUMMSGS = 0x00000055;
 
-    // Invalid number of messages
-    // Reserved = 0x00000056-0x00000057 Reserved
+    // 0x00000056-0x00000057 Reserved
+
+    // Throttling error (ESME has exceeded allowed message limits)
     public static final int STATUS_THROTTLED = 0x00000058;
 
-    // Throttling error (ESME has exceeded allowed message
-    // limits)
-    // Reserved = 0x00000059-0x00000060 Reserved
-    public static final int STATUS_INVSCHED = 0x00000061;
+    // 0x00000059-0x00000060 Reserved
 
     // Invalid Scheduled Delivery Time
-    public static final int STATUS_INVEXPIRY = 0x00000062;
-
+    public static final int STATUS_INVSCHED = 0x00000061;
     // Invalid message validity period (Expiry time)
-    public static final int STATUS_INVDFTMSGID = 0x00000063;
-
+    public static final int STATUS_INVEXPIRY = 0x00000062;
     // Predefined Message Invalid or Not Found
-    public static final int STATUS_X_T_APPN = 0x00000064;
-
+    public static final int STATUS_INVDFTMSGID = 0x00000063;
     // ESME Receiver Temporary App Error Code
-    public static final int STATUS_X_P_APPN = 0x00000065;
-
+    public static final int STATUS_X_T_APPN = 0x00000064;
     // ESME Receiver Permanent App Error Code
-    public static final int STATUS_X_R_APPN = 0x00000066;
-
+    public static final int STATUS_X_P_APPN = 0x00000065;
     // ESME Receiver Reject Message Error Code
+    public static final int STATUS_X_R_APPN = 0x00000066;
+    // query_sm request failed
     public static final int STATUS_QUERYFAIL = 0x00000067;
 
-    // query_sm request failed
-    // Reserved = 0x00000068-0x000000BF Reserved
-    public static final int STATUS_INVOPTPARSTREAM = 0x000000C0;
+    // 0x00000068-0x000000BF Reserved
 
     // Error in the optional part of the PDU Body.
-    public static final int STATUS_OPTPARNOTALLWD = 0x000000C1;
-
+    public static final int STATUS_INVOPTPARSTREAM = 0x000000C0;
     // Optional Parameter not allowed
-    public static final int STATUS_INVPARLEN = 0x000000C2;
-
+    public static final int STATUS_OPTPARNOTALLWD = 0x000000C1;
     // Invalid Parameter Length.
-    public static final int STATUS_MISSINGOPTPARAM = 0x000000C3;
-
+    public static final int STATUS_INVPARLEN = 0x000000C2;
     // Expected Optional Parameter missing
+    public static final int STATUS_MISSINGOPTPARAM = 0x000000C3;
+    // Invalid Optional Parameter Value
     public static final int STATUS_INVOPTPARAMVAL = 0x000000C4;
 
-    // Invalid Optional Parameter Value
-    // Reserved = 0x000000C5-0x000000FD Reserved
-    public static final int STATUS_DELIVERYFAILURE = 0x000000FE;
+    // 0x000000C5-0x000000FD Reserved
 
     // Delivery Failure (used for data_sm_resp)
-    public static final int STATUS_UNKNOWNERR = 0x000000FF; // Unknown Error
+    public static final int STATUS_DELIVERYFAILURE = 0x000000FE;
+    // Unknown Error
+    public static final int STATUS_UNKNOWNERR = 0x000000FF;
+    // ESME Not authorised to use specified service_type
+    public static final int STATUS_SERTYPUNAUTH = 0x00000100;
+    // ESME Prohibited from using specified operation
+    public static final int STATUS_PROHIBITED = 0x00000101;
+    // Specified service_type is unavailable
+    public static final int STATUS_SERTYPUNAVAIL = 0x00000102;
+    // Specified service_type is denied
+    public static final int STATUS_SERTYPDENIED = 0x00000103;
+    // Invalid Data Coding Scheme
+    public static final int STATUS_INVDCS = 0x00000104;
+    // Source Address Sub unit is Invalid
+    public static final int STATUS_INVSRCADDRSUBUNIT = 0x00000105;
+    // Destination Address Sub unit is Invalid
+    public static final int STATUS_INVDSTADDRSUBUNIT = 0x00000106;
+    // Broadcast Frequency Interval is invalid
+    public static final int STATUS_INVBCASTFREQINT = 0x00000107;
+    // Broadcast Alias Name is invalid
+    public static final int STATUS_INVBCASTALIAS_NAME = 0x00000108;
+    // Broadcast Area Format is invalid
+    public static final int STATUS_INVBCASTAREAFMT = 0x00000109;
+    // Numberof Broadcast Areas is invalid
+    public static final int STATUS_INVNUMBCAST_AREAS = 0x0000010A;
+    // Broadcast Content Type is invalid
+    public static final int STATUS_INVBCASTCNTTYPE = 0x0000010B;
+    // Broadcast Message Class is invalid
+    public static final int STATUS_INVBCASTMSGCLASS = 0x0000010C;
 
     public static final Map<Integer,String> STATUS_MESSAGE_MAP;
     public static final Map<Short,String> TAG_NAME_MAP;
@@ -503,8 +570,22 @@ public class SmppConstants {
         STATUS_MESSAGE_MAP.put(STATUS_INVOPTPARAMVAL, "Optional parameter value invalid");
         STATUS_MESSAGE_MAP.put(STATUS_DELIVERYFAILURE, "Deliver SM failed");
         STATUS_MESSAGE_MAP.put(STATUS_UNKNOWNERR, "Unknown error");
+        STATUS_MESSAGE_MAP.put(STATUS_SERTYPUNAUTH, "Not authorised to use specified service_type");
+        STATUS_MESSAGE_MAP.put(STATUS_PROHIBITED, "Prohibited from using specified operation");
+        STATUS_MESSAGE_MAP.put(STATUS_SERTYPUNAVAIL, "Specified service_type is unavailable");
+        STATUS_MESSAGE_MAP.put(STATUS_SERTYPDENIED, "Specified service_type is denied");
+        STATUS_MESSAGE_MAP.put(STATUS_INVDCS, "Invalid Data Coding Scheme");
+        STATUS_MESSAGE_MAP.put(STATUS_INVSRCADDRSUBUNIT, "Source Address Sub unit is Invalid");
+        STATUS_MESSAGE_MAP.put(STATUS_INVDSTADDRSUBUNIT, "Destination Address Sub unit is Invalid");
+        STATUS_MESSAGE_MAP.put(STATUS_INVBCASTFREQINT, "Broadcast Frequency Interval is invalid");
+        STATUS_MESSAGE_MAP.put(STATUS_INVBCASTALIAS_NAME, "Broadcast Alias Name is invalid");
+        STATUS_MESSAGE_MAP.put(STATUS_INVBCASTAREAFMT, "Broadcast Area Format is invalid");
+        STATUS_MESSAGE_MAP.put(STATUS_INVNUMBCAST_AREAS, "Number of Broadcast Areas is invalid");
+        STATUS_MESSAGE_MAP.put(STATUS_INVBCASTCNTTYPE, "Broadcast Content Type is invalid");
+        STATUS_MESSAGE_MAP.put(STATUS_INVBCASTMSGCLASS, "Broadcast Message Class is invalid");
 
         TAG_NAME_MAP = new HashMap<Short,String>();
+        TAG_NAME_MAP.put(TAG_SOURCE_TELEMATICS_ID, "source_telematics_id");
         TAG_NAME_MAP.put(TAG_PAYLOAD_TYPE, "payload_type");
         TAG_NAME_MAP.put(TAG_PRIVACY_INDICATOR, "privacy_indicator");
         TAG_NAME_MAP.put(TAG_USER_MESSAGE_REFERENCE, "user_message_reference");
@@ -529,6 +610,7 @@ public class SmppConstants {
         TAG_NAME_MAP.put(TAG_DELIVERY_FAILURE_REASON, "delivery_failure_reason");
         TAG_NAME_MAP.put(TAG_MORE_MSGS_TO_FOLLOW, "more_msgs_to_follow");
         TAG_NAME_MAP.put(TAG_MSG_STATE, "message_state");
+        TAG_NAME_MAP.put(TAG_CONGESTION_STATE, "congestion_state");
         TAG_NAME_MAP.put(TAG_CALLBACK_NUM_PRES_IND, "callback_num_pres_ind");
         TAG_NAME_MAP.put(TAG_CALLBACK_NUM_ATAG, "callback_num_atag");
         TAG_NAME_MAP.put(TAG_NUM_MSGS, "num_msgs_in_mailbox");
@@ -537,6 +619,22 @@ public class SmppConstants {
         TAG_NAME_MAP.put(TAG_ITS_REPLY_TYPE, "its_reply_type");
         TAG_NAME_MAP.put(TAG_ITS_SESSION_INFO, "its_session_info");
         TAG_NAME_MAP.put(TAG_USSD_SERVICE_OP, "ussd_service_op");
+        TAG_NAME_MAP.put(TAG_BROADCAST_CHANNEL_INDICATOR, "broadcast_channel_indicator");
+        TAG_NAME_MAP.put(TAG_BROADCAST_CONTENT_TYPE, "broadcast_content_type");
+        TAG_NAME_MAP.put(TAG_BROADCAST_CONTENT_TYPE_INFO, "broadcast_content_type_info");
+        TAG_NAME_MAP.put(TAG_BROADCAST_MESSAGE_CLASS, "broadcast_message_class");
+        TAG_NAME_MAP.put(TAG_BROADCAST_REP_NUM, "broadcast_rep_num");
+        TAG_NAME_MAP.put(TAG_BROADCAST_FREQUENCY_INTERVAL, "broadcast_frequency_interval");
+        TAG_NAME_MAP.put(TAG_BROADCAST_AREA_IDENTIFIER, "broadcast_area_identifier");
+        TAG_NAME_MAP.put(TAG_BROADCAST_ERROR_STATUS, "broadcast_error_status");
+        TAG_NAME_MAP.put(TAG_BROADCAST_AREA_SUCCESS, "broadcast_area_success");
+        TAG_NAME_MAP.put(TAG_BROADCAST_END_TIME, "broadcast_end_time");
+        TAG_NAME_MAP.put(TAG_BROADCAST_SERVICE_GROUP, "broadcast_service_group");
+        TAG_NAME_MAP.put(TAG_SOURCE_NETWORK_ID, "source_network_id");
+        TAG_NAME_MAP.put(TAG_DEST_NETWORK_ID, "dest_network_id");
+        TAG_NAME_MAP.put(TAG_SOURCE_NODE_ID, "source_node_id");
+        TAG_NAME_MAP.put(TAG_DEST_NODE_ID, "dest_node_id");
+        TAG_NAME_MAP.put(TAG_BILLING_IDENTIFICATION, "billing_identification");
         TAG_NAME_MAP.put(TAG_ORIG_MSC_ADDR, "orig_msc_addr");
         TAG_NAME_MAP.put(TAG_DEST_MSC_ADDR, "dest_msc_addr");
         TAG_NAME_MAP.put(TAG_DEST_ADDR_SUBUNIT, "dest_addr_subunit");
@@ -550,6 +648,7 @@ public class SmppConstants {
         TAG_NAME_MAP.put(TAG_QOS_TIME_TO_LIVE, "qos_time_to_live");
         TAG_NAME_MAP.put(TAG_ADD_STATUS_INFO, "additional_status_info");
         TAG_NAME_MAP.put(TAG_RECEIPTED_MSG_ID, "receipted_message_id");
+        TAG_NAME_MAP.put(TAG_MS_MSG_WAIT_FACILITIES, "ms_msg_wait_facilities");
     }
 
 }
