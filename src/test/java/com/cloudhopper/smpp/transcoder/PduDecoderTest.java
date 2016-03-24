@@ -1317,7 +1317,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeReplaceSm() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000050000000070000000000004FE86D73672D313233343500010135353532373130303030003135303230333034303530363730382B00303130323033303430353036303030520001020474657874");
+        ByteBuf buffer = BufferHelper.createBuffer("00000050000000070000000000004FE86D73672D313233343500010135353532373130303030003135303230333034303530363730382B00303130323033303430353036303030520001020474657874");
 
         ReplaceSm pdu0 = (ReplaceSm)transcoder.decode(buffer);
 
@@ -1342,7 +1342,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeReplaceSmResp() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000010800000070000000200004FE8");
+        ByteBuf buffer = BufferHelper.createBuffer("00000010800000070000000200004FE8");
 
         ReplaceSmResp pdu0 = (ReplaceSmResp)transcoder.decode(buffer);
 
@@ -1357,7 +1357,7 @@ public class PduDecoderTest {
 
     @Test
     public void decodeAlertNotification() throws Exception {
-        ChannelBuffer buffer = BufferHelper.createBuffer("00000025000001020000000200004FE8010135353532373130303030000101343034303400");
+        ByteBuf buffer = BufferHelper.createBuffer("00000025000001020000000200004FE8010135353532373130303030000101343034303400");
 
         AlertNotification pdu0 = (AlertNotification)transcoder.decode(buffer);
 

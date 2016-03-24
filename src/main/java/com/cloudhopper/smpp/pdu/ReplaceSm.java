@@ -27,10 +27,9 @@ import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.util.ChannelBufferUtil;
+import com.cloudhopper.smpp.util.ByteBufUtil;
 import com.cloudhopper.smpp.util.PduUtil;
-
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class ReplaceSm extends PduRequest<ReplaceSmResp> {
 
@@ -123,11 +122,11 @@ public class ReplaceSm extends PduRequest<ReplaceSmResp> {
     }
 
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
-        this.messageId = ChannelBufferUtil.readNullTerminatedString(buffer); 
-        this.sourceAddress = ChannelBufferUtil.readAddress(buffer);
-        this.scheduleDeliveryTime = ChannelBufferUtil.readNullTerminatedString(buffer);
-        this.validityPeriod = ChannelBufferUtil.readNullTerminatedString(buffer);
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
+        this.messageId = ByteBufUtil.readNullTerminatedString(buffer); 
+        this.sourceAddress = ByteBufUtil.readAddress(buffer);
+        this.scheduleDeliveryTime = ByteBufUtil.readNullTerminatedString(buffer);
+        this.validityPeriod = ByteBufUtil.readNullTerminatedString(buffer);
         this.registeredDelivery = buffer.readByte();
         this.defaultMsgId = buffer.readByte();
         // this is always an unsigned version of the short message length
@@ -149,11 +148,11 @@ public class ReplaceSm extends PduRequest<ReplaceSmResp> {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
-        ChannelBufferUtil.writeNullTerminatedString(buffer, this.messageId);
-        ChannelBufferUtil.writeAddress(buffer, this.sourceAddress);
-        ChannelBufferUtil.writeNullTerminatedString(buffer, this.scheduleDeliveryTime);
-        ChannelBufferUtil.writeNullTerminatedString(buffer, this.validityPeriod);
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
+        ByteBufUtil.writeNullTerminatedString(buffer, this.messageId);
+        ByteBufUtil.writeAddress(buffer, this.sourceAddress);
+        ByteBufUtil.writeNullTerminatedString(buffer, this.scheduleDeliveryTime);
+        ByteBufUtil.writeNullTerminatedString(buffer, this.validityPeriod);
         buffer.writeByte(this.registeredDelivery);
         buffer.writeByte(this.defaultMsgId);
         buffer.writeByte((byte)getShortMessageLength());

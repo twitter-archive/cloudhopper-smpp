@@ -508,7 +508,7 @@ public class PduEncoderTest {
         pdu0.setDefaultMsgId((byte)0x02);
         pdu0.setShortMessage("text".getBytes("ISO-8859-1"));
 
-        ChannelBuffer buffer = transcoder.encode(pdu0);
+        ByteBuf buffer = transcoder.encode(pdu0);
 
         String expectedHex = "00000050000000070000000000004FE86D73672D313233343500010135353532373130303030003135303230333034303530363730382B00303130323033303430353036303030520001020474657874";
         String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
@@ -523,7 +523,7 @@ public class PduEncoderTest {
         pdu0.setSequenceNumber(20456);
         pdu0.setCommandStatus( 2 );
 
-        ChannelBuffer buffer = transcoder.encode(pdu0);
+        ByteBuf buffer = transcoder.encode(pdu0);
 
         String expectedHex = "00000010800000070000000200004FE8";
         String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
@@ -539,7 +539,7 @@ public class PduEncoderTest {
         pdu0.setSourceAddress( new Address((byte)0x01, (byte)0x01, "5552710000") );
         pdu0.setEsmeAddress( new Address((byte)0x01, (byte)0x01, "40404") );
 
-        ChannelBuffer buffer = transcoder.encode(pdu0);
+        ByteBuf buffer = transcoder.encode(pdu0);
 
         String expectedHex = "00000025000001020000000200004FE8010135353532373130303030000101343034303400";
         String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();

@@ -20,15 +20,14 @@ package com.cloudhopper.smpp.pdu;
  * #L%
  */
 
-import org.jboss.netty.buffer.ChannelBuffer;
-
 import com.cloudhopper.commons.util.StringUtil;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.util.ChannelBufferUtil;
+import com.cloudhopper.smpp.util.ByteBufUtil;
 import com.cloudhopper.smpp.util.PduUtil;
+import io.netty.buffer.ByteBuf;
 
 public class AlertNotification extends Pdu {
 
@@ -64,15 +63,15 @@ public class AlertNotification extends Pdu {
     }
 
     @Override
-    public void readBody( ChannelBuffer buffer ) throws UnrecoverablePduException, RecoverablePduException{
-        this.sourceAddress = ChannelBufferUtil.readAddress(buffer);
-        this.esmeAddress = ChannelBufferUtil.readAddress(buffer);
+    public void readBody( ByteBuf buffer ) throws UnrecoverablePduException, RecoverablePduException{
+        this.sourceAddress = ByteBufUtil.readAddress(buffer);
+        this.esmeAddress = ByteBufUtil.readAddress(buffer);
     }
 
     @Override
-    public void writeBody( ChannelBuffer buffer ) throws UnrecoverablePduException, RecoverablePduException{
-        ChannelBufferUtil.writeAddress(buffer, this.sourceAddress);
-        ChannelBufferUtil.writeAddress(buffer, this.esmeAddress);
+    public void writeBody( ByteBuf buffer ) throws UnrecoverablePduException, RecoverablePduException{
+        ByteBufUtil.writeAddress(buffer, this.sourceAddress);
+        ByteBufUtil.writeAddress(buffer, this.esmeAddress);
     }
 
     @Override
