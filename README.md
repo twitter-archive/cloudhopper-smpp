@@ -65,12 +65,20 @@ If you're looking for commercial support, please contact [Fizzed](http://fizzed.
 Installation
 ------------
 
-Library is available via maven central
+Library is available via maven central.  For netty-3 and a stable version:
 
     <dependency>
       <groupId>com.fizzed</groupId>
       <artifactId>ch-smpp</artifactId>
       <version>5.0.9</version>
+    </dependency>
+
+For netty-4 and a little more bleeding edge.  Visit [netty-4 branch](https://github.com/fizzed/cloudhopper-smpp/tree/netty4)
+
+    <dependency>
+      <groupId>com.fizzed</groupId>
+      <artifactId>ch-smpp</artifactId>
+      <version>6.0.0-netty4-beta-3</version>
     </dependency>
 
 Demo Code / Tutorials
