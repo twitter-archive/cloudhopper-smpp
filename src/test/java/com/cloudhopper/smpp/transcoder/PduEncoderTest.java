@@ -493,4 +493,56 @@ public class PduEncoderTest {
 //        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
         Assert.assertArrayEquals(HexUtil.toByteArray("00000019800000030000000000004FE8313233343500000600"), BufferHelper.createByteArray(buffer));
     }
+
+
+    @Test
+    public void encodeReplaceSM() throws Exception {
+        ReplaceSm pdu0 = new ReplaceSm();
+
+        pdu0.setSequenceNumber(20456);
+        pdu0.setMessageId("msg-12345");
+        pdu0.setSourceAddress(new Address((byte)0x01, (byte)0x01, "5552710000"));
+        pdu0.setScheduleDeliveryTime("150203040506708+");
+        pdu0.setValidityPeriod("010203040506000R");
+        pdu0.setRegisteredDelivery((byte)0x01);
+        pdu0.setDefaultMsgId((byte)0x02);
+        pdu0.setShortMessage("text".getBytes("ISO-8859-1"));
+
+        ByteBuf buffer = transcoder.encode(pdu0);
+
+        String expectedHex = "00000050000000070000000000004FE86D73672D313233343500010135353532373130303030003135303230333034303530363730382B00303130323033303430353036303030520001020474657874";
+        String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
+
+        Assert.assertEquals(expectedHex, actualHex);
+    }
+
+    @Test
+    public void encodeReplaceSmResp() throws Exception {
+        ReplaceSmResp pdu0 = new ReplaceSmResp();
+
+        pdu0.setSequenceNumber(20456);
+        pdu0.setCommandStatus( 2 );
+
+        ByteBuf buffer = transcoder.encode(pdu0);
+
+        String expectedHex = "00000010800000070000000200004FE8";
+        String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
+        Assert.assertEquals(expectedHex, actualHex);
+    }
+
+    @Test
+    public void encodeAlertNotification() throws Exception {
+        AlertNotification pdu0 = new AlertNotification();
+
+        pdu0.setSequenceNumber(20456);
+        pdu0.setCommandStatus( 2 );
+        pdu0.setSourceAddress( new Address((byte)0x01, (byte)0x01, "5552710000") );
+        pdu0.setEsmeAddress( new Address((byte)0x01, (byte)0x01, "40404") );
+
+        ByteBuf buffer = transcoder.encode(pdu0);
+
+        String expectedHex = "00000025000001020000000200004FE8010135353532373130303030000101343034303400";
+        String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
+        Assert.assertEquals(expectedHex, actualHex);
+    }
 }

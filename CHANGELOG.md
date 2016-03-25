@@ -4,7 +4,7 @@ Cloudhopper by Twitter
 cloudhopper-smpp
 ----------------
 ## 6.0.0-netty4-beta-2
- - ch-commons-util version bumped from 6.0.1 to 6.0.2 to fix race condition bug 
+ - ch-commons-util version bumped from 6.0.1 to 6.0.2 to fix race condition bug
    in WindowFuture:
      https://github.com/twitter/cloudhopper-smpp/issues/61
 
@@ -12,6 +12,16 @@ cloudhopper-smpp
  - Pre-release of port to Netty 4. Includes community contributions and changes based
    on Trustin's review.
  - Netty dependency changed to 4.0.25.Final.
+
+
+## 5.0.9 - 2015-11-24
+ - Add support for missing pdus and tags
+ - Allow unbound channel to respond to enquire_link PDU
+ - Corrected name of DataCoding SmppConstant to IA5 (not GSM)
+ - Updated value of DATA_CODING_GSM constant and made it deprecated
+ - Add ESM_CLASS Message Mode constants
+ - DefaultSmppServer should use IO executor passed to its constructor
+ - Fix-up comments on the SMPP error code constants
 
 ## 5.0.8 - 2015-04-17
  - Fixed issue where rawErrorCode not set on DeliveryReceipt (khaing211)

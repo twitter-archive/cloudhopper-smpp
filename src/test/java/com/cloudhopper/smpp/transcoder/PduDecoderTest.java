@@ -1314,4 +1314,61 @@ public class PduDecoderTest {
 
         Assert.assertEquals(0, buffer.readableBytes());
     }
+
+    @Test
+    public void decodeReplaceSm() throws Exception {
+        ByteBuf buffer = BufferHelper.createBuffer("00000050000000070000000000004FE86D73672D313233343500010135353532373130303030003135303230333034303530363730382B00303130323033303430353036303030520001020474657874");
+
+        ReplaceSm pdu0 = (ReplaceSm)transcoder.decode(buffer);
+
+        Assert.assertEquals(80, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_REPLACE_SM, pdu0.getCommandId());
+        Assert.assertEquals(0, pdu0.getCommandStatus());
+        Assert.assertEquals(20456, pdu0.getSequenceNumber());
+        Assert.assertEquals(true, pdu0.isRequest());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        Assert.assertEquals("5552710000", pdu0.getSourceAddress().getAddress());
+        Assert.assertEquals("150203040506708+", pdu0.getScheduleDeliveryTime());
+        Assert.assertEquals("010203040506000R", pdu0.getValidityPeriod());
+        Assert.assertEquals((byte)0x01, pdu0.getRegisteredDelivery());
+        Assert.assertEquals((byte)0x02, pdu0.getDefaultMsgId());
+        Assert.assertEquals("text", new String(pdu0.getShortMessage(), "ISO-8859-1"));
+
+        Assert.assertEquals(null, pdu0.getOptionalParameters());
+
+        Assert.assertEquals(0, buffer.readableBytes());
+    }
+
+    @Test
+    public void decodeReplaceSmResp() throws Exception {
+        ByteBuf buffer = BufferHelper.createBuffer("00000010800000070000000200004FE8");
+
+        ReplaceSmResp pdu0 = (ReplaceSmResp)transcoder.decode(buffer);
+
+        Assert.assertEquals(16, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_REPLACE_SM_RESP, pdu0.getCommandId());
+        Assert.assertEquals(true, pdu0.isResponse());
+        Assert.assertEquals(2, pdu0.getCommandStatus());
+        Assert.assertEquals(20456, pdu0.getSequenceNumber());
+
+        Assert.assertEquals(0, buffer.readableBytes());
+    }
+
+    @Test
+    public void decodeAlertNotification() throws Exception {
+        ByteBuf buffer = BufferHelper.createBuffer("00000025000001020000000200004FE8010135353532373130303030000101343034303400");
+
+        AlertNotification pdu0 = (AlertNotification)transcoder.decode(buffer);
+
+        Assert.assertEquals(37, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_ALERT_NOTIFICATION, pdu0.getCommandId());
+        Assert.assertEquals(false, pdu0.isResponse());
+        Assert.assertEquals(2, pdu0.getCommandStatus());
+        Assert.assertEquals(20456, pdu0.getSequenceNumber());
+        Assert.assertEquals("5552710000", pdu0.getSourceAddress().getAddress());
+        Assert.assertEquals("40404", pdu0.getEsmeAddress().getAddress());
+
+        Assert.assertEquals(0, buffer.readableBytes());
+    }
 }

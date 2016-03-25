@@ -69,7 +69,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     private final EventLoopGroup bossGroup;
     private final EventLoopGroup workerGroup;
     private ServerBootstrap serverBootstrap;
-    private Channel serverChannel; 
+    private Channel serverChannel;
     // shared instance of a timer background thread to close unbound channels
     private final Timer bindTimer;
    // shared instance of a session id generator (an atomic long)
@@ -242,8 +242,8 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
 	    //                    this.serverBootstrap.bind(...).sync();
 	    //                ChannelFuture.sync() is a very useful operation.  It waits until the future is
 	    //                fulfilled and then rethrow the exception if the operation has failed.
-	    // Not sure if we can do this, as we actually need to retry on timeout.																       
-	    
+	    // Not sure if we can do this, as we actually need to retry on timeout.
+
             if (timeout)
                 throw new SmppChannelException("Can't bind to port " + configuration.getPort()
                         + " after " + configuration.getBindTimeout() + " milliseconds");
