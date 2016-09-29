@@ -708,6 +708,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
             // do nothing -- ignore it
             logger.debug("Unbind/close was requested, ignoring channelClosed event");
         } else {
+            this.state.set(STATE_CLOSED);
             this.sessionHandler.fireChannelUnexpectedlyClosed();
         }
     }
