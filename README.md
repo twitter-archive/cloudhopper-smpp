@@ -1,17 +1,23 @@
-Cloudhopper SMPP by Twitter [![Build Status](https://secure.travis-ci.org/twitter/cloudhopper-smpp.png?branch=master)](http://travis-ci.org/twitter/cloudhopper-smpp)
-============================
+Cloudhopper SMPP by Fizzed (forked from Twitter) 
+================================================
+
+[![Build Status](https://secure.travis-ci.org/Restcomm/cloudhopper-smpp.png?branch=master)](https://travis-ci.org/RestComm/cloudhopper-smpp)
 
 News
 ------------------------
- * Netty 4 beta is available at Maven Central. Please test and submit issues.
- Since stability & reliability is critical for this library and how netty-4
- required significant changes -- we still need your help with beta testing.
 
-        <dependency>
-          <groupId>com.cloudhopper</groupId>
-          <artifactId>ch-smpp</artifactId>
-          <version>6.0.0-netty4-beta-2</version>
-        </dependency>
+**Nov 2016**
+
+While Fizzed, Inc. took over from Twitter but because of an apparent lack of commits for almost a year and PR pending reviews for more than 6 months.
+The project was forked here and will be updated regularly as it is being used in Restcomm SMSC
+
+
+**Nov 2015**
+
+While Twitter still relies exclusively on `ch-smpp` for its global SMS
+infrastructure, Twitter stopped supporting this opensource project as of
+October 2015.  Fizzed, Inc. was the only company maintaining it, so any new
+support & development will occur here in its new home.
 
 Overview
 ------------------------
@@ -55,11 +61,9 @@ Background and Contributors
 
 This library was originally developed by Cloudhopper, Inc. in 2008. Cloudhopper
 was acquired by Twitter in April 2010. The main author of this library,
-Joe Lauer, left Twitter in April 2013. While folks at Twitter still contribute
-and maintain this library, Joe is now with [Fizzed, Inc](http://fizzed.com).
-Fizzed sponsors this project in conjunction with Twitter. If you have
-any commercial questions/ideas pertaining to this library, feel free to reach
-out to [Fizzed](http://fizzed.com).
+Joe Lauer, left Twitter in April 2013 to found Fizzed, Inc.  As of Nov 2015,
+[Fizzed, Inc](http://fizzed.com) is the official maintainer of the library.
+If you're looking for commercial support, please contact [Fizzed](http://fizzed.com).
 
 - Joe Lauer (Twitter: [@jjlauer](http://twitter.com/jjlauer))
 - Garth (Twitter: [@trg](http://twitter.com/trg))
@@ -67,13 +71,12 @@ out to [Fizzed](http://fizzed.com).
 Installation
 ------------
 
-Library versions >= 5.0.0 are now published to the Maven Central Repository.
-Just add the following dependency to your project maven pom.xml:
+Library is available via maven central
 
     <dependency>
-      <groupId>com.cloudhopper</groupId>
+      <groupId>com.fizzed</groupId>
       <artifactId>ch-smpp</artifactId>
-      <version>5.0.8</version>
+      <version>5.0.9</version>
     </dependency>
 
 Demo Code / Tutorials
@@ -133,6 +136,8 @@ Please let us know if you have other tutorials worth mentioning!
 License
 -------
 
+Copyright (C) 2015+ Fizzed, Inc.
 Copyright (C) 2009-2015 Twitter, Inc.
+Copyright (C) 2008-2009 Cloudhopper, Inc.
 
 This work is licensed under the Apache License, Version 2.0. See LICENSE for details.
