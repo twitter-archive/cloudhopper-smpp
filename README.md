@@ -1,7 +1,7 @@
 Cloudhopper SMPP by Fizzed (forked from Twitter) 
 ================================================
 
-[![Build Status](https://secure.travis-ci.org/Restcomm/cloudhopper-smpp.png?branch=master)](https://travis-ci.org/RestComm/cloudhopper-smpp)
+[![Build Status](https://travis-ci.org/RestComm/cloudhopper-smpp.svg?branch=master)](https://travis-ci.org/RestComm/cloudhopper-smpp)
 
 News
 ------------------------
