@@ -18,9 +18,9 @@
 	</scm>
 
 	<parent>
-		<groupId>com.cloudhopper</groupId>
-		<artifactId>ch-maven-parent-oss</artifactId>
-		<version>1.5</version>
+		<groupId>org.restcomm</groupId>
+		<artifactId>restcomm-parent</artifactId>
+		<version>3.0.4</version>
 	</parent>
 
 	<dependencies>
