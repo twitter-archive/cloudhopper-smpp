@@ -49,6 +49,14 @@ The library has been tested and certified with hundreds of mobile operators
 and suppliers around the world.  It's effective at being flexible with SMPP
 specifications that aren't truly compliant.
 
+Sponsored by
+------------
+
+Cloudhopper-SMPP is proudly sponsored by <a href="https://www.greenback.com">Greenback</a>.  We love the service and think you would too.
+
+<a href="https://www.greenback.com" title="Greenback - Expenses made simple"><img src="https://www.greenback.com/assets/images/logo-greenback.png" height="48" width="166" alt="Greenback"></a>
+
+<a href="https://www.greenback.com" title="Greenback - Expenses made simple">More engineering. Less paperwork. Expenses made simple.</a>
 
 Background and Contributors
 ---------------------------
@@ -60,7 +68,6 @@ Joe Lauer, left Twitter in April 2013 to found Fizzed, Inc.  As of Nov 2015,
 If you're looking for commercial support, please contact [Fizzed](http://fizzed.com).
 
 - Joe Lauer (Twitter: [@jjlauer](http://twitter.com/jjlauer))
-- Garth (Twitter: [@trg](http://twitter.com/trg))
 
 Installation
 ------------
