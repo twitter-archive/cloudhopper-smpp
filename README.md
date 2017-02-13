@@ -3,21 +3,22 @@ Cloudhopper SMPP by Fizzed (forked from Twitter)
 
 [![Build Status](https://secure.travis-ci.org/fizzed/cloudhopper-smpp.png?branch=master)](http://travis-ci.org/fizzed/cloudhopper-smpp)
 
-News
-------------------------
+Sponsored by
+------------
 
-**Nov 2015**
+Cloudhopper-SMPP is proudly sponsored by <a href="https://www.greenback.com">Greenback</a>.  We love the service and think you would too.
 
-While Twitter still relies exclusively on `ch-smpp` for its global SMS
-infrastructure, Twitter stopped supporting this opensource project as of
-October 2015.  Fizzed, Inc. was the only company maintaining it, so any new
-support & development will occur here in its new home.
+<a href="https://www.greenback.com" title="Greenback - Expenses made simple"><img src="https://www.greenback.com/assets/images/logo-greenback.png" height="48" width="166" alt="Greenback"></a>
+
+<a href="https://www.greenback.com" title="Greenback - Expenses made simple">More engineering. Less paperwork. Expenses made simple.</a>
 
 Overview
 ------------------------
 
 Efficient, scalable, rock-solid, and flexible Java implementation of the Short
 Messaging Peer to Peer Protocol (SMPP).
+
+Twitter exclusively relies on this library for its global SMS infrastructure.
 
  * Real-world used library by Twitter across nearly every SMSC vendor and
    mobile operator around the world.  We've seen almost every variance in the
@@ -48,15 +49,6 @@ Messaging Peer to Peer Protocol (SMPP).
 The library has been tested and certified with hundreds of mobile operators
 and suppliers around the world.  It's effective at being flexible with SMPP
 specifications that aren't truly compliant.
-
-Sponsored by
-------------
-
-Cloudhopper-SMPP is proudly sponsored by <a href="https://www.greenback.com">Greenback</a>.  We love the service and think you would too.
-
-<a href="https://www.greenback.com" title="Greenback - Expenses made simple"><img src="https://www.greenback.com/assets/images/logo-greenback.png" height="48" width="166" alt="Greenback"></a>
-
-<a href="https://www.greenback.com" title="Greenback - Expenses made simple">More engineering. Less paperwork. Expenses made simple.</a>
 
 Background and Contributors
 ---------------------------
