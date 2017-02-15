@@ -125,7 +125,7 @@ public abstract class BaseBind<R extends PduResponse> extends PduRequest<R> {
         buffer.append("systemId [");
         buffer.append(StringUtil.toStringWithNullAsEmpty(this.systemId));
         buffer.append("] password [");
-        buffer.append(StringUtil.toStringWithNullAsEmpty(this.password));
+        buffer.append(StringUtil.toStringWithNullAsEmpty(this.password!=null?(this.password.length()>4?this.password.substring(0,1)+"**"+this.password.substring(this.password.length()-2, this.password.length()-1):this.password):null));
         buffer.append("] systemType [");
         buffer.append(StringUtil.toStringWithNullAsEmpty(this.systemType));
         buffer.append("] interfaceVersion [0x");
