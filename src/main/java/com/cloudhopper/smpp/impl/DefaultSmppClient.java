@@ -297,19 +297,23 @@ public class DefaultSmppClient implements SmppClient {
         // a socket address used to "bind" to the remote system
         InetSocketAddress socketAddr = new InetSocketAddress(host, port);
 
-	// set the timeout
-	this.clientBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int)connectTimeoutMillis);
+        // set the timeout
+        this.clientBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int)connectTimeoutMillis);
 
         // attempt to connect to the remote system
         ChannelFuture connectFuture = this.clientBootstrap.connect(socketAddr);
         
-        // wait until the connection is made successfully
-        // boolean timeout = !connectFuture.await(connectTimeoutMillis);
-        // BAD: using .await(timeout)
-        //      see http://netty.io/3.9/api/org/jboss/netty/channel/ChannelFuture.html
+        /* It turns out that under certain unknown circumstances the connect waits forever: https://github.com/twitter/cloudhopper-smpp/issues/117
+         * That's why the future is canceled 1 second after the specified timeout.
+         * This is a workaround and hopefully not needed after the switch to netty 4.
+         */
         logger.debug("Waiting for client connection to {}", socketAddr);
-        connectFuture.awaitUninterruptibly();
-        //assert connectFuture.isDone();
+        if (!connectFuture.await(connectTimeoutMillis + 1000)) {
+            logger.error("connectFuture did not finish in expected time! Try to cancel the connectFuture");
+            boolean isCanceled = connectFuture.cancel();
+            logger.error("connectFuture: isCanceled {} isDone {} isSuccess {}", isCanceled, connectFuture.isDone(), connectFuture.isSuccess());
+            throw new SmppChannelConnectTimeoutException("Could not connect to the server within timeout");
+        }
 
         if (connectFuture.isCancelled()) {
             logger.warn("Client connection cancelled.");

@@ -510,7 +510,9 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // write the pdu out & wait timeout amount of time
         ChannelFuture channelFuture = this.channel.writeAndFlush(buffer);
         if (configuration.getWriteTimeout() > 0){
-            channelFuture.await(configuration.getWriteTimeout());
+            if(!channelFuture.await(configuration.getWriteTimeout()))
+            	throw new SmppChannelException(channelFuture.cause() != null ? channelFuture.cause().getMessage()
+            	        : "ChannelFuture failed without cause.", channelFuture.cause());
         } else {
             channelFuture.await();
         }
@@ -518,8 +520,8 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // check if the write was a success
         if (!channelFuture.isSuccess()) {
             // the write failed, make sure to throw an exception
-	    if (channelFuture.cause() != null) throw new SmppChannelException(channelFuture.cause().getMessage(), channelFuture.cause());
-	    else throw new SmppChannelException("ChannelFuture failed without cause.");
+            throw new SmppChannelException(channelFuture.cause() != null ? channelFuture.getCause().getMessage()
+                    : "ChannelFuture failed without cause.", channelFuture.cause());
         }
         
         this.countSendRequestPdu(pdu);
@@ -562,7 +564,9 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // write the pdu out & wait timeout amount of time
         ChannelFuture channelFuture = this.channel.writeAndFlush(buffer);
         if(configuration.getWriteTimeout() > 0){
-            channelFuture.await(configuration.getWriteTimeout());
+            if(!channelFuture.await(configuration.getWriteTimeout()))
+                throw new SmppChannelException(channelFuture.cause() != null ? channelFuture.cause().getMessage()
+                        : "ChannelFuture failed without cause.", channelFuture.cause());
         } else {
             channelFuture.await();
         }
@@ -570,7 +574,8 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // check if the write was a success
         if (!channelFuture.isSuccess()) {
             // the write failed, make sure to throw an exception
-            throw new SmppChannelException(channelFuture.cause().getMessage(), channelFuture.cause());
+            throw new SmppChannelException(channelFuture.cause() != null ? channelFuture.cause().getMessage()
+                    : "ChannelFuture failed without cause.", channelFuture.cause());
         }
     }
 
