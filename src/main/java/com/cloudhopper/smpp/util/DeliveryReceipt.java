@@ -362,6 +362,29 @@ public class DeliveryReceipt {
 	static public DeliveryReceipt parseShortMessage(String shortMessage,
 			DateTimeZone zone, boolean checkMissingFields)
 			throws DeliveryReceiptException {
+		return parseShortMessage(shortMessage, zone, checkMissingFields, true);
+	}
+
+	/**
+	 * Parses the text of the short message and creates a DeliveryReceipt from
+	 * the fields. This method is lenient as possible. The order of the fields
+	 * does not matter, as well as permitting some fields to be optional.
+	 * This method allows to completely switch off field validation, in which
+	 * case the returned DeliveryReceipt will contain default values for
+	 * missing fields, or fields that parsing failed
+	 *
+	 * @param shortMessage the body of the delivery receipt
+	 * @param zone the time zone to use for interpreting time stamps
+	 * @param checkMissingFields whether to throw exception if fields were missing
+	 * @param validateFields whether to throw exception if fields cannot be parsed
+	 * @return a DeliveryReceipt object from the parsed information in the short message
+	 * @throws DeliveryReceiptException if checkMissingFields is true and there are fields missing,
+	 * or if validateFields is true and fields cannot be parsed
+	 */
+	static public DeliveryReceipt parseShortMessage(String shortMessage,
+				DateTimeZone zone, boolean checkMissingFields,
+				boolean validateFields)
+			throws DeliveryReceiptException {
 		// for case insensitivity, convert to lowercase (normalized text)
 		String normalizedText = shortMessage.toLowerCase();
 
@@ -416,55 +439,66 @@ public class DeliveryReceipt {
 					try {
 						dlr.submitCount = Integer.parseInt(fieldValue);
 					} catch (NumberFormatException e) {
-						throw new DeliveryReceiptException(
-								"Unable to convert [sub] field with value ["
-										+ fieldValue + "] into an integer");
+                        if (validateFields) {
+                            throw new DeliveryReceiptException(
+                                    "Unable to convert [sub] field with value ["
+                                            + fieldValue + "] into an integer");
+                        }
 					}
 				} else if (fieldLabel.equalsIgnoreCase(FIELD_DLVRD)) {
 					try {
 						dlr.deliveredCount = Integer.parseInt(fieldValue);
 					} catch (NumberFormatException e) {
-						throw new DeliveryReceiptException(
-								"Unable to convert [dlvrd] field with value ["
-										+ fieldValue + "] into an integer");
+                        if (validateFields) {
+                            throw new DeliveryReceiptException(
+                                    "Unable to convert [dlvrd] field with value ["
+                                            + fieldValue + "] into an integer");
+                        }
 					}
 				} else if (fieldLabel.equalsIgnoreCase(FIELD_SUBMIT_DATE)) {
 					try {
 						dlr.submitDate = parseDateTimeHelper(fieldValue, zone);
 					} catch (IllegalArgumentException e) {
-						throw new DeliveryReceiptException(
-								"Unable to convert [submit date] field with value ["
-										+ fieldValue
-										+ "] into a datetime object");
+                        if (validateFields) {
+                            throw new DeliveryReceiptException(
+                                    "Unable to convert [submit date] field with value ["
+                                            + fieldValue
+                                            + "] into a datetime object");
+                        }
 					}
 				} else if (fieldLabel.equalsIgnoreCase(FIELD_DONE_DATE)) {
 					try {
 						dlr.doneDate = parseDateTimeHelper(fieldValue, zone);
 					} catch (IllegalArgumentException e) {
-						throw new DeliveryReceiptException(
-								"Unable to convert [done date] field with value ["
-										+ fieldValue
-										+ "] into a datetime object");
+                        if (validateFields) {
+                            throw new DeliveryReceiptException(
+                                    "Unable to convert [done date] field with value ["
+                                            + fieldValue
+                                            + "] into a datetime object");
+                        }
 					}
 				} else if (fieldLabel.equalsIgnoreCase(FIELD_STAT)) {
 					dlr.state = DeliveryReceipt.toState(fieldValue);
-					if (dlr.state < 0) {
+					if (dlr.state < 0 && validateFields) {
 						throw new DeliveryReceiptException(
 								"Unable to convert [stat] field with value ["
 										+ fieldValue + "] into a valid state");
 					}
 				} else if (fieldLabel.equalsIgnoreCase(FIELD_ERR)) {
-					if (isValidErrorCode(fieldValue))
-						dlr.setRawErrorCode(fieldValue);
-					else
-						throw new DeliveryReceiptException(
-								"The [err] field was not of a valid lengh of <= "
-										+ FIELD_ERR_MAX_LEN);
+					if (!validateFields || isValidErrorCode(fieldValue)) {
+                        dlr.setRawErrorCode(fieldValue);
+                    } else {
+                        throw new DeliveryReceiptException(
+                                "The [err] field was not of a valid lengh of <= "
+                                        + FIELD_ERR_MAX_LEN);
+                    }
 				} else if (fieldLabel.equalsIgnoreCase(FIELD_TEXT)) {
 					dlr.text = fieldValue;
 				} else {
-					throw new DeliveryReceiptException("Unsupported field ["
-							+ fieldValue + "] found");
+				    if (validateFields) {
+                        throw new DeliveryReceiptException("Unsupported field ["
+                                + fieldValue + "] found");
+                    }
 				}
 			}
 

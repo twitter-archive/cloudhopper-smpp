@@ -22,15 +22,21 @@ package com.cloudhopper.smpp.transcoder;
 
 // third party imports
 
+import java.util.List;
+
 import com.cloudhopper.commons.util.HexUtil;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.tlv.Tlv;
+import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.type.TerminatingNullByteNotFoundException;
 import com.cloudhopper.smpp.type.UnknownCommandIdException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import com.cloudhopper.smpp.type.UnsucessfulSME;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -771,6 +777,78 @@ public class PduDecoderTest {
 
         // interesting -- this example has optional parameters it happened to skip...
         Assert.assertEquals(0, buffer.readableBytes());
+    }
+    
+    @Test
+    public void decodeSubmitMulti() throws Exception {
+        ByteBuf buffer = BufferHelper
+                .createBuffer("00000065000000210000000000000002434d5400010031363136000201010036323831373635303436353700010100363238313736353034363538000000010000020111001f636c6f7564686f707065722d736d70702073696d706c7920617765736f6d65");
+
+        SubmitMulti pdu0 = (SubmitMulti) transcoder.decode(buffer);
+
+        Assert.assertEquals(101, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_SUBMIT_MULTI, pdu0.getCommandId());
+        Assert.assertEquals(0, pdu0.getCommandStatus());
+        Assert.assertEquals(2, pdu0.getSequenceNumber());
+        Assert.assertEquals(true, pdu0.isRequest());
+        Assert.assertEquals("CMT", pdu0.getServiceType());
+        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        Assert.assertEquals(0x00, pdu0.getSourceAddress().getNpi());
+        Assert.assertEquals("1616", pdu0.getSourceAddress().getAddress());
+        
+        Assert.assertEquals(2, pdu0.getNumberOfDest());
+        
+        List<Address> destAddresses = pdu0.getDestAddresses();
+        
+        Address add1 = destAddresses.get(0);
+        
+        Assert.assertEquals(0x01, add1.getTon());
+        Assert.assertEquals(0x00, add1.getNpi());
+        Assert.assertEquals("628176504657", add1.getAddress());
+        
+        Assert.assertEquals(0x00, pdu0.getEsmClass());
+        Assert.assertEquals(0x00, pdu0.getProtocolId());
+        Assert.assertEquals(0x01, pdu0.getPriority());
+        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
+        Assert.assertEquals("", pdu0.getValidityPeriod());
+        Assert.assertEquals(0x02, pdu0.getRegisteredDelivery());
+        Assert.assertEquals(0x01, pdu0.getReplaceIfPresent());
+        Assert.assertEquals(0x11, pdu0.getDataCoding());
+        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
+        Assert.assertEquals(31, pdu0.getShortMessage().length);
+        Assert.assertArrayEquals(HexUtil.toByteArray("636c6f7564686f707065722d736d70702073696d706c7920617765736f6d65"),
+                pdu0.getShortMessage());
+
+        Assert.assertEquals(null, pdu0.getOptionalParameters());
+
+        // interesting -- this example has optional parameters it happened to
+        // skip...
+        Assert.assertEquals(0, buffer.readableBytes());
+    }
+    
+    @Test
+    public void decodeSubmitMultiResp() throws Exception {
+        ByteBuf buffer = BufferHelper
+                .createBuffer("0000002d8000002100000000000000023363613761306364000101003632383137363530343635370000000004");
+
+        SubmitMultiResp pdu0 = (SubmitMultiResp) transcoder.decode(buffer);
+        
+        Assert.assertEquals(45, pdu0.getCommandLength());
+        Assert.assertEquals(SmppConstants.CMD_ID_SUBMIT_MULTI_RESP, pdu0.getCommandId());
+        Assert.assertEquals(0, pdu0.getCommandStatus());
+        Assert.assertEquals(2, pdu0.getSequenceNumber());
+        
+        Assert.assertEquals(1, pdu0.getNumberOfUnsucessfulDest());
+        
+        List<UnsucessfulSME> unsucessfulSmes = pdu0.getUnsucessfulSmes();
+        UnsucessfulSME unsucessfulSME = unsucessfulSmes.get(0);
+        Address add1 = unsucessfulSME.getAddress();
+        
+        Assert.assertEquals(0x01, add1.getTon());
+        Assert.assertEquals(0x00, add1.getNpi());
+        Assert.assertEquals("628176504657", add1.getAddress());
+        
+        Assert.assertEquals(0x04, unsucessfulSME.getErrorStatusCode());
     }
 
     @Test

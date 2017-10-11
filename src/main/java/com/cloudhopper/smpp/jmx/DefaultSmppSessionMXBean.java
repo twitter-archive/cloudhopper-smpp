@@ -107,6 +107,22 @@ public interface DefaultSmppSessionMXBean {
 
     public String getTxSubmitSMCounter();
     
+    public String getRxDataSMCounterAndReset();
+
+    public String getRxDeliverSMCounterAndReset();
+
+    public String getRxEnquireLinkCounterAndReset();
+
+    public String getRxSubmitSMCounterAndReset();
+
+    public String getTxDataSMCounterAndReset();
+
+    public String getTxDeliverSMCounterAndReset();
+
+    public String getTxEnquireLinkCounterAndReset();
+
+    public String getTxSubmitSMCounterAndReset();
+    
     public void enableLogBytes();
     
     public void disableLogBytes();

@@ -44,15 +44,15 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
     protected Address sourceAddress;
     protected Address destAddress;
     protected byte esmClass;
-    private byte protocolId;                    // not present in data_sm
-    private byte priority;                      // not present in data_sm
-    private String scheduleDeliveryTime;        // not present in data_sm
-    private String validityPeriod;              // not present in data_sm
+    protected byte protocolId;                    // not present in data_sm
+    protected byte priority;                      // not present in data_sm
+    protected String scheduleDeliveryTime;        // not present in data_sm
+    protected String validityPeriod;              // not present in data_sm
     protected byte registeredDelivery;
-    private byte replaceIfPresent;              // not present in data_sm
+    protected byte replaceIfPresent;              // not present in data_sm
     protected byte dataCoding;
-    private byte defaultMsgId;                  // not present in data_sm, not used in deliver_sm
-    private byte[] shortMessage;                // not present in data_sm         
+    protected byte defaultMsgId;                  // not present in data_sm, not used in deliver_sm
+    protected byte[] shortMessage;                // not present in data_sm         
 
     public BaseSm(int commandId, String name) {
         super(commandId, name);

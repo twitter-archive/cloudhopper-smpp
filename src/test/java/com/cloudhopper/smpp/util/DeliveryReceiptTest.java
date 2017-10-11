@@ -94,6 +94,61 @@ public class DeliveryReceiptTest {
     }
 
     @Test
+    public void parseShortMessageValidateFields() throws Exception {
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:a02 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:a01 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:a1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:a1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:aDELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:2050 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+    }
+
+    @Test
+    public void parseShortMessageDoNotValidateFields() throws Exception {
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:a02 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC, false, false));
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:a01 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC, false, false));
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:a1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC, false, false));
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:a1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC, false, false));
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:aDELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC, false, false));
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:2050 text:This is a sample mes", DateTimeZone.UTC, false, false));
+    }
+
+    @Test
     public void parseShortMessageMissingFields() throws Exception {
         try {
             DeliveryReceipt.parseShortMessage("i:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
