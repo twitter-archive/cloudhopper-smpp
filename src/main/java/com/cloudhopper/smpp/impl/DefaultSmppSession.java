@@ -520,7 +520,7 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         // check if the write was a success
         if (!channelFuture.isSuccess()) {
             // the write failed, make sure to throw an exception
-            throw new SmppChannelException(channelFuture.cause() != null ? channelFuture.getCause().getMessage()
+            throw new SmppChannelException(channelFuture.cause() != null ? channelFuture.cause().getMessage()
                     : "ChannelFuture failed without cause.", channelFuture.cause());
         }
         
