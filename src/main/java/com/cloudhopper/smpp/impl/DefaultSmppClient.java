@@ -34,32 +34,22 @@ import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.oio.OioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.channel.socket.oio.OioSocketChannel;
-import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import java.net.InetSocketAddress;
-import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngine;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -231,7 +221,8 @@ public class DefaultSmppClient implements SmppClient {
 
     protected DefaultSmppSession doOpen(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         // create and connect a channel to the remote host
-        this.clientChannel = createConnectedChannel(config.getHost(), config.getPort(), config.getConnectTimeout());
+        this.clientChannel = createConnectedChannel(config.getHost(), config.getPort(), config.getConnectTimeout(),
+                config.getClientBindHost(), config.getClientBindPort());
         // tie this new opened channel with a new session
         return createSession(clientChannel, config, sessionHandler);
     }
@@ -294,20 +285,29 @@ public class DefaultSmppClient implements SmppClient {
     }
 
     protected Channel createConnectedChannel(String host, int port, long connectTimeoutMillis) throws SmppTimeoutException, SmppChannelException, InterruptedException {
+        return createConnectedChannel(host, port, connectTimeoutMillis, null, 0);
+    }
+
+    protected Channel createConnectedChannel(
+            String host, int port, long connectTimeoutMillis, String clientLocalHost, int clientLocalPort
+    ) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         // a socket address used to "bind" to the remote system
         InetSocketAddress socketAddr = new InetSocketAddress(host, port);
 
         // set the timeout
         this.clientBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int)connectTimeoutMillis);
 
+        // a socket address used to "bind" in the local system (e.g. for using specific IP if current host has many)
+        InetSocketAddress localAddr = clientLocalHost == null ? null :
+                new InetSocketAddress(clientLocalHost, clientLocalPort);
         // attempt to connect to the remote system
-        ChannelFuture connectFuture = this.clientBootstrap.connect(socketAddr);
+        ChannelFuture connectFuture = this.clientBootstrap.connect(socketAddr, localAddr);
         
         /* It turns out that under certain unknown circumstances the connect waits forever: https://github.com/twitter/cloudhopper-smpp/issues/117
          * That's why the future is canceled 1 second after the specified timeout.
          * This is a workaround and hopefully not needed after the switch to netty 4.
          */
-        logger.debug("Waiting for client connection to {}", socketAddr);
+        logger.debug("Waiting for client connection to {} from {}", socketAddr, localAddr);
         if (!connectFuture.await(connectTimeoutMillis + 1000)) {
             logger.error("connectFuture did not finish in expected time! Try to cancel the connectFuture");
             boolean isCanceled = connectFuture.cancel(true);
