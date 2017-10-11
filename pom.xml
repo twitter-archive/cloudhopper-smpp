@@ -24,6 +24,8 @@
 	</parent>
 
 	<properties>
+		<maven.compiler.source>1.6</maven.compiler.source>
+		<maven.compiler.target>1.6</maven.compiler.target>
 		<main.java.package>com.cloudhopper.smpp</main.java.package>
 		<ch-commons-util.version>7.0.6</ch-commons-util.version>
 		<ch-commons-charset.version>7.0.6</ch-commons-charset.version>
