@@ -310,7 +310,7 @@ public class DefaultSmppClient implements SmppClient {
         logger.debug("Waiting for client connection to {}", socketAddr);
         if (!connectFuture.await(connectTimeoutMillis + 1000)) {
             logger.error("connectFuture did not finish in expected time! Try to cancel the connectFuture");
-            boolean isCanceled = connectFuture.cancel();
+            boolean isCanceled = connectFuture.cancel(true);
             logger.error("connectFuture: isCanceled {} isDone {} isSuccess {}", isCanceled, connectFuture.isDone(), connectFuture.isSuccess());
             throw new SmppChannelConnectTimeoutException("Could not connect to the server within timeout");
         }
