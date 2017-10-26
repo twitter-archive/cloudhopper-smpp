@@ -1,27 +1,21 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.restcomm.smpp</groupId>
+	<groupId>com.cytechmobile</groupId>
 	<artifactId>ch-smpp</artifactId>
 	<packaging>jar</packaging>
-	<version>6.0.0-netty4-beta-4-SNAPSHOT</version>
+	<version>6.0.0</version>
 	<name>ch-smpp</name>
 	<description>Efficient, scalable, and flexible Java implementation of the Short Messaging Peer to Peer Protocol (SMPP)</description>
-	<url>https://github.com/Restcomm/cloudhopper-smpp</url>
+	<url>https://github.com/cytechmobile/cloudhopper-smpp</url>
 	<inceptionYear>2009</inceptionYear>
 
 	<scm>
-		<url>https://github.com/Restcomm/cloudhopper-smpp</url>
-		<connection>scm:git:https://github.com/Restcomm/cloudhopper-smpp.git</connection>
-		<developerConnection>scm:git:git@github.com:Restcomm/cloudhopper-smpp.git</developerConnection>
+		<url>https://github.com/cytechmobile/cloudhopper-smpp</url>
+		<connection>scm:git:https://github.com/cytechmobile/cloudhopper-smpp.git</connection>
+		<developerConnection>scm:git:git@github.com:cytechmobile/cloudhopper-smpp.git</developerConnection>
 		<tag>netty4</tag>
 	</scm>
-
-	<parent>
-		<groupId>org.restcomm</groupId>
-		<artifactId>restcomm-parent</artifactId>
-		<version>3.0.5</version>
-	</parent>
 
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
@@ -31,7 +25,7 @@
 		<ch-commons-charset.version>7.0.6</ch-commons-charset.version>
 		<ch-commons-gsm.version>7.0.6</ch-commons-gsm.version>
 		<netty.version>4.1.16.Final</netty.version>
-		<logback.version>1.1.3</logback.version>
+		<logback.version>1.2.3</logback.version>
 		<junit.version>4.12</junit.version>
         <slf4j.version>1.7.25</slf4j.version>
         <!-- workaround travis ci maven version requirement -->

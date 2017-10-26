@@ -1,10 +1,14 @@
 Cloudhopper SMPP by Fizzed (forked from Twitter) 
 ================================================
 
-[![Build Status](https://travis-ci.org/RestComm/cloudhopper-smpp.svg?branch=master)](https://travis-ci.org/RestComm/cloudhopper-smpp)
+[![Build Status](https://travis-ci.org/cytechmobile/cloudhopper-smpp.svg?branch=netty4-ext)](https://travis-ci.org/cytechmobile/cloudhopper-smpp)
 
 News
 ------------------------
+
+**Oct 2017**
+
+Since development on netty4 branch is not following up latest releases, this project is forked here with a focus on the netty 4 release. It will be kept in sync with both Fizzed and Restcomm forks.
 
 **Nov 2016**
 
