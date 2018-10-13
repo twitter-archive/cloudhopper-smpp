@@ -18,13 +18,13 @@
 	</scm>
 
 	<properties>
-		<maven.compiler.source>1.6</maven.compiler.source>
-		<maven.compiler.target>1.6</maven.compiler.target>
-		<main.java.package>com.cloudhopper.smpp</main.java.package>
-		<ch-commons-util.version>7.0.6</ch-commons-util.version>
-		<ch-commons-charset.version>7.0.6</ch-commons-charset.version>
-		<ch-commons-gsm.version>7.0.6</ch-commons-gsm.version>
-		<netty.version>4.1.16.Final</netty.version>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<ch-commons-group>com.cloudhopper</ch-commons-group>
+		<ch-commons-util.version>6.0.4</ch-commons-util.version>
+		<ch-commons-charset.version>3.0.2</ch-commons-charset.version>
+		<ch-commons-gsm.version>3.0.0</ch-commons-gsm.version>
+		<netty.version>4.1.30.Final</netty.version>
 		<logback.version>1.2.3</logback.version>
 		<junit.version>4.12</junit.version>
         <slf4j.version>1.7.25</slf4j.version>
@@ -34,12 +34,12 @@
 	<dependencies>
 		<!-- compile scope -->
 		<dependency>
-			<groupId>org.restcomm.smpp</groupId>
+			<groupId>${ch-commons-group}</groupId>
 			<artifactId>ch-commons-util</artifactId>
 			<version>${ch-commons-util.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.restcomm.smpp</groupId>
+			<groupId>${ch-commons-group}</groupId>
 			<artifactId>ch-commons-charset</artifactId>
 			<version>${ch-commons-charset.version}</version>
 		</dependency>
@@ -63,7 +63,7 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.restcomm.smpp</groupId>
+			<groupId>${ch-commons-group}</groupId>
 			<artifactId>ch-commons-gsm</artifactId>
 			<version>${ch-commons-gsm.version}</version>
 			<scope>test</scope>

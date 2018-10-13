@@ -8,7 +8,7 @@ News
 
 **Oct 2017**
 
-Since development on netty4 branch is not following up latest releases, this project is forked here with a focus on the netty 4 release. It will be kept in sync with both Fizzed and Restcomm forks.
+Since development on netty4 branch is not following up latest releases, this project is forked here with a focus on the netty 4 release.
 
 **Nov 2016**
 

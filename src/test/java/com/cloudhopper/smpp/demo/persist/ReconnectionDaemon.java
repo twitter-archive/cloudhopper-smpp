@@ -23,7 +23,7 @@ package com.cloudhopper.smpp.demo.persist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PreDestroy;
+// import javax.annotation.PreDestroy;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -86,7 +86,7 @@ public class ReconnectionDaemon {
 		return Long.parseLong(reconnectionPeriod);
 	}
 
-	@PreDestroy
+	// @PreDestroy
 	public void shutdown() {
 		executor.shutdown();
 		scheduledExecutorService.shutdown();
