@@ -283,12 +283,21 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
 
     @Override
     public void destroy() {
+        this.destroy(-1, -1);
+    }
+
+    public void destroy(long quietPeriodMillis, long timeoutMillis) {
         this.bindTimer.cancel();
         stop();
 
         // Shut down all event loops to terminate all threads.
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
+        if (quietPeriodMillis <= 0 || timeoutMillis <= 0) {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        } else {
+            bossGroup.shutdownGracefully(quietPeriodMillis, timeoutMillis, TimeUnit.MILLISECONDS);
+            workerGroup.shutdownGracefully(quietPeriodMillis, timeoutMillis, TimeUnit.MILLISECONDS);
+        }
 
         try {
             // Wait until all threads are terminated.

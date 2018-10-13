@@ -134,6 +134,10 @@ public class DefaultSmppClient implements SmppClient {
 
     @Override
     public void destroy() {
+        this.destroy(-1, -1);
+    }
+
+    public void destroy(long quitePeriodMillis, long waitPeriodMillis) {
         // close all channels still open within this session "bootstrap"
         this.channels.close().awaitUninterruptibly();
         // clean up all external resources
@@ -149,7 +153,11 @@ public class DefaultSmppClient implements SmppClient {
         } finally {
             //TODO: if DefaultSmppClient(workerGroup) it's may be bad idea!
             // Shut down all event loops to terminate all threads.
-            this.workerGroup.shutdownGracefully();
+            if (quitePeriodMillis <= 0 || waitPeriodMillis <= 0) {
+                this.workerGroup.shutdownGracefully();
+            } else {
+                this.workerGroup.shutdownGracefully(quitePeriodMillis, waitPeriodMillis, TimeUnit.MILLISECONDS);
+            }
 
             try {
                 // Wait until all threads are terminated.
@@ -158,7 +166,6 @@ public class DefaultSmppClient implements SmppClient {
                 logger.warn("Thread interrupted closing executors.", e);
             }
         }
-
     }
 
     protected BaseBind createBindRequest(SmppSessionConfiguration config) throws UnrecoverablePduException {

@@ -260,6 +260,10 @@ public class DefaultSmppSession implements SmppServerSession, SmppSessionChannel
         return this.channel;
     }
 
+    public SmppSessionHandler getSessionHandler() {
+        return this.sessionHandler;
+    }
+
     public SequenceNumber getSequenceNumber() {
         return this.sequenceNumber;
     }
