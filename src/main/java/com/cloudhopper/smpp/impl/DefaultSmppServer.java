@@ -291,7 +291,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         stop();
 
         // Shut down all event loops to terminate all threads.
-        if (quietPeriodMillis <= 0 || timeoutMillis <= 0) {
+        if (quietPeriodMillis < 0 || timeoutMillis < 0) {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         } else {

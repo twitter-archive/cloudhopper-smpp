@@ -153,7 +153,7 @@ public class DefaultSmppClient implements SmppClient {
         } finally {
             //TODO: if DefaultSmppClient(workerGroup) it's may be bad idea!
             // Shut down all event loops to terminate all threads.
-            if (quitePeriodMillis <= 0 || waitPeriodMillis <= 0) {
+            if (quitePeriodMillis < 0 || waitPeriodMillis < 0) {
                 this.workerGroup.shutdownGracefully();
             } else {
                 this.workerGroup.shutdownGracefully(quitePeriodMillis, waitPeriodMillis, TimeUnit.MILLISECONDS);
