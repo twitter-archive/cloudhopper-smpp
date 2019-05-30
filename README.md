@@ -1,12 +1,5 @@
-
-This project has moved to https://github.com/fizzed/cloudhopper-smpp
-
-Twitter still uses the library, but its now maintained by [Fizzed, Inc.](http://fizzed.com)
-
-This repo lives on merely for legacy access.
-=======
-Cloudhopper SMPP by Fizzed (forked from Twitter) 
-================================================
+Cloudhopper SMPP (forked from Twitter)
+======================================
 
 [![Build Status](https://travis-ci.org/cytechmobile/cloudhopper-smpp.svg?branch=netty4-ext)](https://travis-ci.org/cytechmobile/cloudhopper-smpp)
 
