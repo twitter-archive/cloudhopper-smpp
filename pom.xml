@@ -4,7 +4,7 @@
 	<groupId>com.cytechmobile</groupId>
 	<artifactId>ch-smpp</artifactId>
 	<packaging>jar</packaging>
-	<version>6.0.0</version>
+	<version>6.0.1</version>
 	<name>ch-smpp</name>
 	<description>Efficient, scalable, and flexible Java implementation of the Short Messaging Peer to Peer Protocol (SMPP)</description>
 	<url>https://github.com/cytechmobile/cloudhopper-smpp</url>
@@ -24,7 +24,7 @@
 		<ch-commons-util.version>6.0.4</ch-commons-util.version>
 		<ch-commons-charset.version>3.0.2</ch-commons-charset.version>
 		<ch-commons-gsm.version>3.0.0</ch-commons-gsm.version>
-		<netty.version>4.1.30.Final</netty.version>
+		<netty.version>4.1.36.Final</netty.version>
 		<logback.version>1.2.3</logback.version>
 		<junit.version>4.12</junit.version>
         <slf4j.version>1.7.25</slf4j.version>

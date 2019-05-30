@@ -3,6 +3,9 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+## 6.0.1
+ - Updated netty to 4.1.36.Final
+
 ## 6.0.0-netty4-beta-2
  - ch-commons-util version bumped from 6.0.1 to 6.0.2 to fix race condition bug
    in WindowFuture:
