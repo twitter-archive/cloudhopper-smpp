@@ -20,28 +20,24 @@ package com.cloudhopper.smpp.demo;
  * #L%
  */
 
-import com.cloudhopper.smpp.SmppServerConfiguration;
-import com.cloudhopper.smpp.SmppServerHandler;
-import com.cloudhopper.smpp.SmppServerSession;
-import com.cloudhopper.smpp.SmppSession;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
+import com.cloudhopper.smpp.*;
 import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
-import com.cloudhopper.smpp.pdu.BaseSm;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.ssl.SslConfiguration;
 import com.cloudhopper.smpp.type.SmppProcessingException;
+import io.netty.channel.nio.NioEventLoopGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Demonstration of a simple SMPP server using SSL
@@ -54,13 +50,10 @@ public class SslServerMain {
         //
         // setup 3 things required for a server
         //
-        
-        // for monitoring thread use, it's preferable to create your own instance
-        // of an executor and cast it to a ThreadPoolExecutor from Executors.newCachedThreadPool()
-        // this permits exposing things like executor.getActiveCount() via JMX possible
-        // no point renaming the threads in a factory since underlying Netty 
-        // framework does not easily allow you to customize your thread names
-        ThreadPoolExecutor executor = (ThreadPoolExecutor)Executors.newCachedThreadPool();
+
+        // create and assign the NioEventLoopGroup instances to handle event processing,
+        // such as accepting new connections, receiving data, writing data, and so on.
+        NioEventLoopGroup group = new NioEventLoopGroup();
         
         // to enable automatic expiration of requests, a second scheduled executor
         // is required which is what a monitor task will be executed with - this
@@ -86,18 +79,19 @@ public class SslServerMain {
         configuration.setDefaultWindowWaitTimeout(configuration.getDefaultRequestExpiryTimeout());
         configuration.setDefaultSessionCountersEnabled(true);
         configuration.setJmxEnabled(true);
-	//ssl
-	SslConfiguration sslConfig = new SslConfiguration();
-	sslConfig.setKeyStorePath("src/test/resources/keystore");
-	sslConfig.setKeyStorePassword("changeit");
-	sslConfig.setKeyManagerPassword("changeit");
-	sslConfig.setTrustStorePath("src/test/resources/keystore");
-	sslConfig.setTrustStorePassword("changeit");
-	configuration.setUseSsl(true);
-	configuration.setSslConfiguration(sslConfig);
+
+        //ssl
+        SslConfiguration sslConfig = new SslConfiguration();
+        sslConfig.setKeyStorePath("src/test/resources/keystore");
+        sslConfig.setKeyStorePassword("changeit");
+        sslConfig.setKeyManagerPassword("changeit");
+        sslConfig.setTrustStorePath("src/test/resources/keystore");
+        sslConfig.setTrustStorePassword("changeit");
+        configuration.setUseSsl(true);
+        configuration.setSslConfiguration(sslConfig);
 
         // create a server, start it up
-        DefaultSmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler(), executor, monitorExecutor);
+        DefaultSmppServer smppServer = new DefaultSmppServer(configuration, new DefaultSmppServerHandler(), monitorExecutor, group, group);
 
         logger.info("Starting SMPP server...");
         smppServer.start();
@@ -107,9 +101,11 @@ public class SslServerMain {
         System.in.read();
 
         logger.info("Stopping SMPP server...");
-        smppServer.stop();
+        smppServer.destroy();
         logger.info("SMPP server stopped");
-        
+
+	monitorExecutor.shutdown();
+	
         logger.info("Server counters: {}", smppServer.getCounters());
     }
 

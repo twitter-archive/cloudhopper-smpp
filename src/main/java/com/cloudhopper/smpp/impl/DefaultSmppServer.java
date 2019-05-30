@@ -20,17 +20,8 @@ package com.cloudhopper.smpp.impl;
  * #L%
  */
 
-import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.SmppServer;
-import com.cloudhopper.smpp.SmppServerConfiguration;
-import com.cloudhopper.smpp.SmppServerHandler;
-import com.cloudhopper.smpp.SmppSession;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
-import com.cloudhopper.smpp.channel.SmppChannelConstants;
-import com.cloudhopper.smpp.channel.SmppServerConnector;
-import com.cloudhopper.smpp.channel.SmppSessionLogger;
-import com.cloudhopper.smpp.channel.SmppSessionThreadRenamer;
-import com.cloudhopper.smpp.channel.SmppSessionWrapper;
+import com.cloudhopper.smpp.*;
+import com.cloudhopper.smpp.channel.*;
 import com.cloudhopper.smpp.jmx.DefaultSmppServerMXBean;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
@@ -40,27 +31,27 @@ import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppProcessingException;
-import com.cloudhopper.smpp.util.DaemonExecutors;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.oio.OioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.oio.OioServerSocketChannel;
+import io.netty.handler.timeout.WriteTimeoutHandler;
+import io.netty.util.concurrent.GlobalEventExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.util.Timer;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.management.ObjectName;
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelException;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.channel.socket.oio.OioServerSocketChannelFactory;
-import org.jboss.netty.handler.timeout.WriteTimeoutHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of an SmppServer that supports SMPP version 3.3 and 3.4.
@@ -75,12 +66,10 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     private final SmppServerConfiguration configuration;
     private final SmppServerHandler serverHandler;
     private final PduTranscoder transcoder;
-    private ExecutorService bossThreadPool;
-    private ChannelFactory channelFactory;
+    private final EventLoopGroup bossGroup;
+    private final EventLoopGroup workerGroup;
     private ServerBootstrap serverBootstrap;
-    private Channel serverChannel; 
-    // shared instance of a timer for session writeTimeout timing
-    private final org.jboss.netty.util.Timer writeTimeoutTimer;
+    private Channel serverChannel;
     // shared instance of a timer background thread to close unbound channels
     private final Timer bindTimer;
    // shared instance of a session id generator (an atomic long)
@@ -98,22 +87,9 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
      *      and creating/destroying sessions.
      */
     public DefaultSmppServer(SmppServerConfiguration configuration, SmppServerHandler serverHandler) {
-        this(configuration, serverHandler, DaemonExecutors.newCachedDaemonThreadPool());
-    }
-    
-    /**
-     * Creates a new default SmppServer. Window monitoring and automatic
-     * expiration of requests will be disabled with no monitorExecutors.
-     * @param configuration The server configuration to create this server with
-     * @param serverHandler The handler implementation for handling bind requests
-     *      and creating/destroying sessions.
-     * @param executor The executor that IO workers will be executed with. An
-     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than configuration.getMaxConnections() if NIO
-     *      sockets are used.
-     */
-    public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler, ExecutorService executor) {
-        this(configuration, serverHandler, executor, null);
+        this(configuration, serverHandler, null,
+                configuration.isNonBlockingSocketsEnabled() ? new NioEventLoopGroup() : new OioEventLoopGroup(),
+                configuration.isNonBlockingSocketsEnabled() ? new NioEventLoopGroup() : new OioEventLoopGroup());
     }
 
     /**
@@ -121,52 +97,66 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
      * @param configuration The server configuration to create this server with
      * @param serverHandler The handler implementation for handling bind requests
      *      and creating/destroying sessions.
-     * @param executor The executor that IO workers will be executed with. An
-     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than configuration.getMaxConnections() if NIO
-     *      sockets are used.
      * @param monitorExecutor The scheduled executor that all sessions will share
      *      to monitor themselves and expire requests. If null monitoring will
      *      be disabled.
+     * @param bossGroup Specify the EventLoopGroup to accept new connections and
+     *      handle accepted connections. The {@link EventLoopGroup} is used to handle
+     *      all the events and IO for {@link SocketChannel}.
+     * @param workerGroup The {@link EventLoopGroup} is used to handle all the events
+     *      and IO for {@link Channel}.
      */
-    public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler, ExecutorService executor, ScheduledExecutorService monitorExecutor) {
+    public DefaultSmppServer(final SmppServerConfiguration configuration, SmppServerHandler serverHandler,
+                             ScheduledExecutorService monitorExecutor, EventLoopGroup bossGroup,
+                             EventLoopGroup workerGroup) {
         this.configuration = configuration;
         // the same group we'll put every server channel
-        this.channels = new DefaultChannelGroup();
+
+        //NEW
+        //TODO: How do we control the thread pools and executors?
+        //      How do we set the max # of threads in the worker pool?
+        this.channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         this.serverHandler = serverHandler;
-        // we'll put the "boss" worker for a server in its own pool
-        this.bossThreadPool = Executors.newCachedThreadPool();
-        
+
+        // tie the server bootstrap to this server socket channel factory
+        this.serverBootstrap = new ServerBootstrap();
+
         // a factory for creating channels (connections)
         if (configuration.isNonBlockingSocketsEnabled()) {
-            this.channelFactory = new NioServerSocketChannelFactory(this.bossThreadPool, executor, configuration.getMaxConnectionSize());
+            this.serverBootstrap.channel(NioServerSocketChannel.class);
         } else {
-            this.channelFactory = new OioServerSocketChannelFactory(this.bossThreadPool, executor);
+            this.serverBootstrap.channel(OioServerSocketChannel.class);
         }
-        
-        // tie the server bootstrap to this server socket channel factory
-        this.serverBootstrap = new ServerBootstrap(this.channelFactory);
-        
+
+        this.bossGroup = bossGroup;
+        this.workerGroup = workerGroup;
+        this.serverBootstrap.group(this.bossGroup, this.workerGroup);
+
         // set options for the server socket that are useful
-        this.serverBootstrap.setOption("reuseAddress", configuration.isReuseAddress());
+        this.serverBootstrap.option(ChannelOption.SO_REUSEADDR, configuration.isReuseAddress());
         
         // we use the same default pipeline for all new channels - no need for a factory
         this.serverConnector = new SmppServerConnector(channels, this);
-        this.serverBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, this.serverConnector);
-	// a shared instance of a timer for session writeTimeout timing
-	this.writeTimeoutTimer = new org.jboss.netty.util.HashedWheelTimer();
+
+        this.serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline().addLast(SmppChannelConstants.PIPELINE_SERVER_CONNECTOR_NAME, serverConnector);
+            }
+        });
+
         // a shared timer used to make sure new channels are bound within X milliseconds
         this.bindTimer = new Timer(configuration.getName() + "-BindTimer0", true);
         // NOTE: this would permit us to customize the "transcoding" context for a server if needed
         this.transcoder = new DefaultPduTranscoder(new DefaultPduTranscoderContext());
-        this.sessionIdSequence = new AtomicLong(0);        
+        this.sessionIdSequence = new AtomicLong(0);
         this.monitorExecutor = monitorExecutor;
         this.counters = new DefaultSmppServerCounters();
         if (configuration.isJmxEnabled()) {
             registerMBean();
         }
     }
-    
+
     private void registerMBean() {
         if (configuration == null) {
             return;
@@ -174,7 +164,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         if (configuration.isJmxEnabled()) {
             // register the this queue manager as an mbean
             try {
-                ObjectName name = new ObjectName(configuration.getJmxDomain() + ":name=" + configuration.getName());
+                ObjectName name = new ObjectName(configuration.getJmxDomain() + ":name=" + ObjectName.quote(configuration.getName()));
                 ManagementFactory.getPlatformMBeanServer().registerMBean(this, name);
             } catch (Exception e) {
                 // log the error, but don't throw an exception for this datasource
@@ -182,7 +172,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
             }
         }
     }
-    
+
     private void unregisterMBean() {
         if (configuration == null) {
             return;
@@ -190,7 +180,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         if (configuration.isJmxEnabled()) {
             // register the this queue manager as an mbean
             try {
-                ObjectName name = new ObjectName(configuration.getJmxDomain() + ":name=" + configuration.getName());
+                ObjectName name = new ObjectName(configuration.getJmxDomain() + ":name=" + ObjectName.quote(configuration.getName()));
                 ManagementFactory.getPlatformMBeanServer().unregisterMBean(name);
             } catch (Exception e) {
                 // log the error, but don't throw an exception for this datasource
@@ -211,7 +201,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     public SmppServerConfiguration getConfiguration() {
         return this.configuration;
     }
-    
+
     @Override
     public DefaultSmppServerCounters getCounters() {
         return this.counters;
@@ -220,10 +210,12 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     public Timer getBindTimer() {
         return this.bindTimer;
     }
-    
+
     @Override
     public boolean isStarted() {
-        return (this.serverChannel != null && this.serverChannel.isBound());
+        //TODO is isRegistered the same as isBound
+        // return (this.serverChannel != null && this.serverChannel.isBound());
+        return (this.serverChannel != null && this.serverChannel.isRegistered());
     }
 
     @Override
@@ -235,16 +227,36 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
     public boolean isDestroyed() {
         return (this.serverBootstrap == null);
     }
-    
+
     @Override
     public void start() throws SmppChannelException {
         if (isDestroyed()) {
             throw new SmppChannelException("Unable to start: server is destroyed");
         }
         try {
-            serverChannel = this.serverBootstrap.bind(new InetSocketAddress(configuration.getHost(), configuration.getPort()));
+            ChannelFuture f = this.serverBootstrap.bind(new InetSocketAddress(configuration.getHost(), configuration.getPort()));
             logger.info("{} started at {}:{}", configuration.getName(), configuration.getHost(), configuration.getPort());
+            // wait until the connection is made successfully
+            boolean timeout = !f.await(configuration.getBindTimeout());
+	    // From @trustin: You don't really set a timeout for bind operation.  I would do this instead:
+	    //                    this.serverBootstrap.bind(...).sync();
+	    //                ChannelFuture.sync() is a very useful operation.  It waits until the future is
+	    //                fulfilled and then rethrow the exception if the operation has failed.
+	    // Not sure if we can do this, as we actually need to retry on timeout.
+
+            if (timeout)
+                throw new SmppChannelException("Can't bind to port " + configuration.getPort()
+                        + " after " + configuration.getBindTimeout() + " milliseconds");
+
+            if (!f.isSuccess())
+                throw new SmppChannelException("Can't bind to port " + configuration.getPort()
+                        + " future cause: " + f.cause());
+
+            logger.info("{} started on SMPP port [{}]", configuration.getName(), configuration.getPort());
+            serverChannel = f.channel();
         } catch (ChannelException e) {
+            throw new SmppChannelException(e.getMessage(), e);
+        } catch (InterruptedException e) {
             throw new SmppChannelException(e.getMessage(), e);
         }
     }
@@ -258,19 +270,45 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         this.channels.close().awaitUninterruptibly();
         // clean up all external resources
         if (this.serverChannel != null) {
-            this.serverChannel.close().awaitUninterruptibly();
-            this.serverChannel = null;
+            try {
+                /// this.serverChannel.close().awaitUninterruptibly();
+                this.serverChannel.close().sync();
+                this.serverChannel = null;
+            } catch (InterruptedException e) {
+                logger.warn("Thread interrupted closing server channel.", e);
+            }
         }
         logger.info("{} stopped at {}:{}", configuration.getName(), configuration.getHost(), configuration.getPort());
     }
-    
+
     @Override
     public void destroy() {
+        this.destroy(-1, -1);
+    }
+
+    public void destroy(long quietPeriodMillis, long timeoutMillis) {
         this.bindTimer.cancel();
         stop();
-        this.serverBootstrap.releaseExternalResources();
+
+        // Shut down all event loops to terminate all threads.
+        if (quietPeriodMillis < 0 || timeoutMillis < 0) {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        } else {
+            bossGroup.shutdownGracefully(quietPeriodMillis, timeoutMillis, TimeUnit.MILLISECONDS);
+            workerGroup.shutdownGracefully(quietPeriodMillis, timeoutMillis, TimeUnit.MILLISECONDS);
+        }
+
+        try {
+            // Wait until all threads are terminated.
+            bossGroup.terminationFuture().sync();
+            workerGroup.terminationFuture().sync();
+        } catch (InterruptedException e) {
+            logger.warn("Thread interrupted closing executors.", e);
+        }
+
         this.serverBootstrap = null;
-	this.writeTimeoutTimer.stop();
+
         unregisterMBean();
         logger.info("{} destroyed on SMPP port [{}]", configuration.getName(), configuration.getPort());
     }
@@ -305,7 +343,7 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         }
 
         return bindResponse;
-    }    
+    }
 
     protected void bindRequested(Long sessionId, SmppSessionConfiguration config, BaseBind bindRequest) throws SmppProcessingException {
         counters.incrementBindRequestedAndGet();
@@ -324,7 +362,12 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         // back on via the "serverReady()" method call on the session object
 
         // make sure the channel is not being read/processed (until we flag we're ready later on)
-        channel.setReadable(false).awaitUninterruptibly();
+
+        //TODO
+	// @trustin: Channel.config().setAutoRead(false) will suspend read.  To resume, call setAutoRead(true).
+	//           However, I would recommend setting autoRead to false in ChannelInitializer.initChannel()
+	//           so that absolutely nothing is read since the connection is established.
+        channel.config().setAutoRead(false);
 
         // auto negotiate the interface version in use based on the requested interface version
         byte interfaceVersion = this.autoNegotiateInterfaceVersion(config.getInterfaceVersion());
@@ -333,24 +376,24 @@ public class DefaultSmppServer implements SmppServer, DefaultSmppServerMXBean {
         DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.SERVER, config, channel, this, sessionId, preparedBindResponse, interfaceVersion, monitorExecutor);
 
         // replace name of thread used for renaming
-        SmppSessionThreadRenamer threadRenamer = (SmppSessionThreadRenamer)channel.getPipeline().get(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME);
+        SmppSessionThreadRenamer threadRenamer = (SmppSessionThreadRenamer)channel.pipeline().get(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME);
         threadRenamer.setThreadName(config.getName());
 
         // add a logging handler after the thread renamer
         SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
-        channel.getPipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
+        channel.pipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
 
-	// add a writeTimeout handler after the logger
-	if (config.getWriteTimeout() > 0) {
-	    WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(writeTimeoutTimer, config.getWriteTimeout(), TimeUnit.MILLISECONDS);
-	    channel.getPipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, SmppChannelConstants.PIPELINE_SESSION_WRITE_TIMEOUT_NAME, writeTimeoutHandler);
-	}
+        // add a writeTimeout handler after the logger
+        if (config.getWriteTimeout() > 0) {
+            WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(config.getWriteTimeout(), TimeUnit.MILLISECONDS);
+            channel.pipeline().addAfter(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, SmppChannelConstants.PIPELINE_SESSION_WRITE_TIMEOUT_NAME, writeTimeoutHandler);
+        }
 
         // decoder in pipeline is ok (keep it)
 
         // create a new wrapper around a session to pass the pdu up the chain
-        channel.getPipeline().remove(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME);
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
+        channel.pipeline().remove(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME);
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
         
         // check if the # of channels exceeds maxConnections
         if (this.channels.size() > this.configuration.getMaxConnectionSize()) {

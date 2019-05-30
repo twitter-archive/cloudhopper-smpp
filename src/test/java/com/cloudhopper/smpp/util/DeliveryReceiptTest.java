@@ -29,11 +29,12 @@ import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.cloudhopper.smpp.transcoder.PduTranscoderContext;
+import io.netty.buffer.ByteBuf;
 import org.hamcrest.core.StringContains;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,6 +91,61 @@ public class DeliveryReceiptTest {
         Assert.assertEquals(SmppConstants.STATE_DELIVERED, dlr.getState());
         Assert.assertEquals(0, dlr.getErrorCode());
         Assert.assertEquals("Hello", dlr.getText());
+    }
+
+    @Test
+    public void parseShortMessageValidateFields() throws Exception {
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:a02 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:a01 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:a1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:a1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:aDELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+
+        try {
+            DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:2050 text:This is a sample mes", DateTimeZone.UTC);
+            Assert.fail();
+        } catch (DeliveryReceiptException e) {
+            // correct behavior
+        }
+    }
+
+    @Test
+    public void parseShortMessageDoNotValidateFields() throws Exception {
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:a02 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC, false, false));
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:a01 submit date:1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC, false, false));
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:a1005232039 done date:1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC, false, false));
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:a1005242339 stat:DELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC, false, false));
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:aDELIVRD err:012 text:This is a sample mes", DateTimeZone.UTC, false, false));
+        Assert.assertNotNull(DeliveryReceipt.parseShortMessage("id:0123456789 sub:002 dlvrd:001 submit date:1005232039 done date:1005242339 stat:DELIVRD err:2050 text:This is a sample mes", DateTimeZone.UTC, false, false));
     }
 
     @Test
@@ -157,7 +213,7 @@ public class DeliveryReceiptTest {
         PduTranscoderContext context = new DefaultPduTranscoderContext();
         PduTranscoder transcoder = new DefaultPduTranscoder(context);
 
-        ChannelBuffer buffer0 = BufferHelper.createBuffer("000000BA00000005000000000000000200010134343935313336313932300001013430343034000400000000000000006E69643A30303539313133393738207375623A30303120646C7672643A303031207375626D697420646174653A3130303231303137333020646F6E6520646174653A3130303231303137333120737461743A44454C49565244206572723A30303020746578743A4024232125262F3A000E0001010006000101001E000833383630316661000427000102");
+        ByteBuf buffer0 = BufferHelper.createBuffer("000000BA00000005000000000000000200010134343935313336313932300001013430343034000400000000000000006E69643A30303539313133393738207375623A30303120646C7672643A303031207375626D697420646174653A3130303231303137333020646F6E6520646174653A3130303231303137333120737461743A44454C49565244206572723A30303020746578743A4024232125262F3A000E0001010006000101001E000833383630316661000427000102");
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer0);
 
@@ -380,5 +436,6 @@ public class DeliveryReceiptTest {
         // broken null-check caused date format to be applied to null date,
         // which results in the current time being formatted instead of all-zeroes
         Assert.assertThat(dlr.toShortMessage(), new StringContains(DeliveryReceipt.FIELD_DONE_DATE + "0000000000"));
+
     }
 }

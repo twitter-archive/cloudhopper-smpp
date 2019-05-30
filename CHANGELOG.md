@@ -3,6 +3,16 @@ Cloudhopper by Twitter
 
 cloudhopper-smpp
 ----------------
+## 6.0.0-netty4-beta-2
+ - ch-commons-util version bumped from 6.0.1 to 6.0.2 to fix race condition bug
+   in WindowFuture:
+     https://github.com/twitter/cloudhopper-smpp/issues/61
+
+## 6.0.0-netty4-beta-1
+ - Pre-release of port to Netty 4. Includes community contributions and changes based
+   on Trustin's review.
+ - Netty dependency changed to 4.0.25.Final.
+
 
 NOTE: Project moved to https://github.com/fizzed/cloudhopper-smpp
 

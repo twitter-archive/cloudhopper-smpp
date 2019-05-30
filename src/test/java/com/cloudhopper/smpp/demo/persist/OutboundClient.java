@@ -25,6 +25,7 @@ import com.cloudhopper.smpp.impl.DefaultSmppClient;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.type.SmppChannelConnectException;
 import com.cloudhopper.smpp.type.SmppTimeoutException;
+import io.netty.channel.nio.NioEventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,6 @@ public class OutboundClient extends Client {
 	private Logger logger = LoggerFactory.getLogger(OutboundClient.class);
 
 	private final ScheduledThreadPoolExecutor monitorExecutor;
-	private final ThreadPoolExecutor executor;
 	private DefaultSmppClient clientBootstrap;
 	private DefaultSmppSessionHandler sessionHandler;
 
@@ -63,13 +63,11 @@ public class OutboundClient extends Client {
 				return t;
 			}
 		});
-		// for monitoring thread use, it's preferable to create your own instance
-		// of an executor with Executors.newCachedThreadPool() and cast it to ThreadPoolExecutor
-		// this permits exposing thinks like executor.getActiveCount() via JMX possible
-		// no point renaming the threads in a factory since underlying Netty
-		// framework does not easily allow you to customize your thread names
-		executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
+		// create and assign the NioEventLoopGroup instances to handle event processing,
+		// such as accepting new connections, receiving data, writing data, and so on.
+		NioEventLoopGroup group = new NioEventLoopGroup(1);
+		
 		// to enable automatic expiration of requests, a second scheduled executor
 		// is required which is what a monitor task will be executed with - this
 		// is probably a thread pool that can be shared with between all client bootstraps
@@ -95,7 +93,7 @@ public class OutboundClient extends Client {
 		// used for NIO sockets essentially uses this value as the max number of
 		// threads it will ever use, despite the "max pool size", etc. set on
 		// the executor passed in here
-		clientBootstrap = new DefaultSmppClient(executor, 1, monitorExecutor);
+		clientBootstrap = new DefaultSmppClient(group, monitorExecutor);
 	}
 
 	public void initialize(SmppSessionConfiguration config, SmppClientMessageService smppClientMessageService) {
@@ -169,7 +167,6 @@ public class OutboundClient extends Client {
 		// this is required to not causing server to hang from non-daemon threads
 		// this also makes sure all open Channels are closed to I *think*
 		clientBootstrap.destroy();
-		executor.shutdownNow();
 		enquireLinkExecutor.shutdownNow();
 		monitorExecutor.shutdownNow();
 	}

@@ -20,12 +20,12 @@ package com.cloudhopper.smpp.pdu;
  * #L%
  */
 
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.commons.util.StringUtil;
-import com.cloudhopper.smpp.util.ChannelBufferUtil;
+import com.cloudhopper.smpp.util.ByteBufUtil;
+import com.cloudhopper.smpp.type.RecoverablePduException;
+import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.cloudhopper.smpp.util.PduUtil;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * 
@@ -48,10 +48,10 @@ public abstract class BaseSmResp extends PduResponse {
     }
 
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         // the body may or may not contain a messageId -- the helper utility
         // method will take care of returning null if there aren't any readable bytes
-        this.messageId = ChannelBufferUtil.readNullTerminatedString(buffer);
+        this.messageId = ByteBufUtil.readNullTerminatedString(buffer);
     }
 
     @Override
@@ -62,14 +62,14 @@ public abstract class BaseSmResp extends PduResponse {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         // when this PDU was parsed, it's possible it was missing the messageId instead
         // of having a NULL messageId. If that's the case, the commandLength will be just
         // enough for the headers (and theoretically any optional TLVs). Don't try to
         // write the NULL byte for that case.
         // See special note in 4.4.2 of SMPP 3.4 spec
         if (!((buffer.writableBytes() == 0) && (this.messageId == null))) {
-            ChannelBufferUtil.writeNullTerminatedString(buffer, this.messageId);
+            ByteBufUtil.writeNullTerminatedString(buffer, this.messageId);
         }
     }
 

@@ -21,7 +21,7 @@ package com.cloudhopper.smpp;
  */
 
 import com.cloudhopper.smpp.type.SmppChannelException;
-import org.jboss.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.ChannelGroup;
 
 /**
  * Interface representing an SmppServer.

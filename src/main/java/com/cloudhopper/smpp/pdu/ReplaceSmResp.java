@@ -20,11 +20,10 @@ package com.cloudhopper.smpp.pdu;
  * #L%
  */
 
-import org.jboss.netty.buffer.ChannelBuffer;
-
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import io.netty.buffer.ByteBuf;
 
 public class ReplaceSmResp extends PduResponse {
 
@@ -33,7 +32,7 @@ public class ReplaceSmResp extends PduResponse {
     }
     
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         // nothing
     }
 
@@ -43,7 +42,7 @@ public class ReplaceSmResp extends PduResponse {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
         // do nothing
     }
 

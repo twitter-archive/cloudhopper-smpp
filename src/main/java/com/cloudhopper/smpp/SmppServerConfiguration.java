@@ -60,9 +60,9 @@ public class SmppServerConfiguration extends SmppConnectionConfiguration {
     private boolean defaultSessionCountersEnabled = false;
 
     public SmppServerConfiguration() {
-        super("0.0.0.0", 2775, 5000l);
+        super("0.0.0.0", 2775, SmppConstants.DEFAULT_BIND_TIMEOUT);
         this.name = "SmppServer";
-        this.bindTimeout = 5000;
+        this.bindTimeout = SmppConstants.DEFAULT_BIND_TIMEOUT;
         this.systemId = "cloudhopper";
         this.autoNegotiateInterfaceVersion = true;
         this.interfaceVersion = SmppConstants.VERSION_3_4;

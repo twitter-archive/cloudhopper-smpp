@@ -113,8 +113,8 @@ public class SslSessionTest {
         configuration.setType(SmppBindType.TRANSCEIVER);
         configuration.setHost("localhost");
         configuration.setPort(PORT);
-        configuration.setConnectTimeout(200);
-        configuration.setBindTimeout(200);
+        configuration.setConnectTimeout(2000);
+        configuration.setBindTimeout(2000);
         configuration.setSystemId(SYSTEMID);
         configuration.setPassword(PASSWORD);
         configuration.getLoggingOptions().setLogBytes(true);
@@ -238,7 +238,7 @@ public class SslSessionTest {
         try {
             // this should actually work
             SmppSession session0 = client0.bind(sessionConfig0);
-            Thread.sleep(200);
+            Thread.sleep(2000);
 
             Assert.assertEquals(1, serverHandler.sessions.size());
             Assert.assertEquals(1, server0.getChannels().size());
@@ -250,7 +250,7 @@ public class SslSessionTest {
             Assert.assertEquals(SmppSession.Type.CLIENT, serverSession0.getRemoteType());
 
             serverSession0.close();
-	    Thread.sleep(200);
+	        Thread.sleep(2000);
             Assert.assertEquals(0, serverHandler.sessions.size());
             Assert.assertEquals(0, server0.getChannels().size());
             Assert.assertEquals(false, serverSession0.isBound());
@@ -270,7 +270,7 @@ public class SslSessionTest {
 
         try {
             SmppSession session0 = client0.bind(sessionConfig0);
-            Thread.sleep(100);
+            Thread.sleep(1000);
 
             // send encrypted enquire link; receive encrypted response.
             EnquireLinkResp enquireLinkResp = session0.enquireLink(new EnquireLink(), 1000);

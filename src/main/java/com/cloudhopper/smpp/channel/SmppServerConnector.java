@@ -20,29 +20,29 @@ package com.cloudhopper.smpp.channel;
  * #L%
  */
 
-
 import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.impl.UnboundSmppSession;
 import com.cloudhopper.smpp.ssl.SslConfiguration;
 import com.cloudhopper.smpp.ssl.SslContextFactory;
-import javax.net.ssl.SSLEngine;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.handler.ssl.SslHandler;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLEngine;
+
+import static io.netty.channel.ChannelHandler.Sharable;
 
 /**
  * Channel handler for server SMPP sessions.
  * 
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelPipelineCoverage("all")
-public class SmppServerConnector extends SimpleChannelUpstreamHandler {
+
+@Sharable
+public class SmppServerConnector extends LoggingChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(SmppServerConnector.class);
 
     // reference to every channel connected via this server channel
@@ -50,14 +50,18 @@ public class SmppServerConnector extends SimpleChannelUpstreamHandler {
     private DefaultSmppServer server;
 
     public SmppServerConnector(ChannelGroup channels, DefaultSmppServer server) {
+        super(SmppServerConnector.class);
         this.channels = channels;
         this.server = server;
     }
 
+    //TODO is channelActive is the same as channelConnected?
+    // @trustin: Yes for client channels or accepted channels. For server channels, it is same with channelBound.
     @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        logger.trace("channelActive");
         // the channel we are going to handle
-        Channel channel = e.getChannel();
+        Channel channel = ctx.channel();
 
         // always add it to our channel group
         channels.add(channel);
@@ -74,32 +78,39 @@ public class SmppServerConnector extends SimpleChannelUpstreamHandler {
         logger.info("New channel from [{}]", channelName);
         Thread.currentThread().setName(currentThreadName);
 
-	// add SSL handler
+        // add SSL handler
         if (server.getConfiguration().isUseSsl()) {
-	    SslConfiguration sslConfig = server.getConfiguration().getSslConfiguration();
-	    if (sslConfig == null) throw new IllegalStateException("sslConfiguration must be set");
-	    SslContextFactory factory = new SslContextFactory(sslConfig);
-	    SSLEngine sslEngine = factory.newSslEngine();
-	    sslEngine.setUseClientMode(false);
-	    channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
-	}
+            SslConfiguration sslConfig = server.getConfiguration().getSslConfiguration();
+        if (sslConfig == null) throw new IllegalStateException("sslConfiguration must be set");
+            SslContextFactory factory = new SslContextFactory(sslConfig);
+            SSLEngine sslEngine = factory.newSslEngine();
+            sslEngine.setUseClientMode(false);
+            channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
+        }
 
         // add a new instance of a thread renamer
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(threadName));
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(threadName));
         
         // add a new instance of a decoder (that takes care of handling frames)
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_PDU_DECODER_NAME, new SmppSessionPduDecoder(server.getTranscoder()));
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_PDU_DECODER_NAME, new SmppSessionPduDecoder(server.getTranscoder()));
 
         // create a new wrapper around an "unbound" session to pass the pdu up the chain
         UnboundSmppSession session = new UnboundSmppSession(channelName, channel, server);
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
+
+        super.channelActive(ctx);
     }
 
+    //TODO is channelInactive is the same as channelDisconnected?
+    // @trustin: Yes for client channels or accepted channels. For server channels, it is same with channelUnbound.
     @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.trace("channelInactive");
+        logger.info("Disconnected channel from [{}]", ChannelUtil.createChannelName(ctx.channel()));
         // called every time a channel disconnects
-        channels.remove(e.getChannel());
+        channels.remove(ctx.channel());
         this.server.getCounters().incrementChannelDisconnectsAndGet();
-    }
 
+        super.channelInactive(ctx);
+    }
 }

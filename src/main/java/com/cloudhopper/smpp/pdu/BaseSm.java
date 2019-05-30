@@ -21,14 +21,14 @@ package com.cloudhopper.smpp.pdu;
  */
 
 import com.cloudhopper.commons.util.HexUtil;
-import com.cloudhopper.smpp.type.Address;
-import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.commons.util.StringUtil;
+import com.cloudhopper.smpp.type.Address;
+import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
-import com.cloudhopper.smpp.util.ChannelBufferUtil;
+import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import com.cloudhopper.smpp.util.ByteBufUtil;
 import com.cloudhopper.smpp.util.PduUtil;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Base "short message" PDU as a super class for submit_sm, deliver_sm, and
@@ -44,15 +44,15 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
     protected Address sourceAddress;
     protected Address destAddress;
     protected byte esmClass;
-    private byte protocolId;                    // not present in data_sm
-    private byte priority;                      // not present in data_sm
-    private String scheduleDeliveryTime;        // not present in data_sm
-    private String validityPeriod;              // not present in data_sm
+    protected byte protocolId;                    // not present in data_sm
+    protected byte priority;                      // not present in data_sm
+    protected String scheduleDeliveryTime;        // not present in data_sm
+    protected String validityPeriod;              // not present in data_sm
     protected byte registeredDelivery;
-    private byte replaceIfPresent;              // not present in data_sm
+    protected byte replaceIfPresent;              // not present in data_sm
     protected byte dataCoding;
-    private byte defaultMsgId;                  // not present in data_sm, not used in deliver_sm
-    private byte[] shortMessage;                // not present in data_sm         
+    protected byte defaultMsgId;                  // not present in data_sm, not used in deliver_sm
+    protected byte[] shortMessage;                // not present in data_sm         
 
     public BaseSm(int commandId, String name) {
         super(commandId, name);
@@ -170,15 +170,15 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
     }
 
     @Override
-    public void readBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
-        this.serviceType = ChannelBufferUtil.readNullTerminatedString(buffer);
-        this.sourceAddress = ChannelBufferUtil.readAddress(buffer);
-        this.destAddress = ChannelBufferUtil.readAddress(buffer);
+    public void readBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
+        this.serviceType = ByteBufUtil.readNullTerminatedString(buffer);
+        this.sourceAddress = ByteBufUtil.readAddress(buffer);
+        this.destAddress = ByteBufUtil.readAddress(buffer);
         this.esmClass = buffer.readByte();
         this.protocolId = buffer.readByte();
         this.priority = buffer.readByte();
-        this.scheduleDeliveryTime = ChannelBufferUtil.readNullTerminatedString(buffer);
-        this.validityPeriod = ChannelBufferUtil.readNullTerminatedString(buffer);
+        this.scheduleDeliveryTime = ByteBufUtil.readNullTerminatedString(buffer);
+        this.validityPeriod = ByteBufUtil.readNullTerminatedString(buffer);
         this.registeredDelivery = buffer.readByte();
         this.replaceIfPresent = buffer.readByte();
         this.dataCoding = buffer.readByte();
@@ -204,15 +204,15 @@ public abstract class BaseSm<R extends PduResponse> extends PduRequest<R> {
     }
 
     @Override
-    public void writeBody(ChannelBuffer buffer) throws UnrecoverablePduException, RecoverablePduException {
-        ChannelBufferUtil.writeNullTerminatedString(buffer, this.serviceType);
-        ChannelBufferUtil.writeAddress(buffer, this.sourceAddress);
-        ChannelBufferUtil.writeAddress(buffer, this.destAddress);
+    public void writeBody(ByteBuf buffer) throws UnrecoverablePduException, RecoverablePduException {
+        ByteBufUtil.writeNullTerminatedString(buffer, this.serviceType);
+        ByteBufUtil.writeAddress(buffer, this.sourceAddress);
+        ByteBufUtil.writeAddress(buffer, this.destAddress);
         buffer.writeByte(this.esmClass);
         buffer.writeByte(this.protocolId);
         buffer.writeByte(this.priority);
-        ChannelBufferUtil.writeNullTerminatedString(buffer, this.scheduleDeliveryTime);
-        ChannelBufferUtil.writeNullTerminatedString(buffer, this.validityPeriod);
+        ByteBufUtil.writeNullTerminatedString(buffer, this.scheduleDeliveryTime);
+        ByteBufUtil.writeNullTerminatedString(buffer, this.validityPeriod);
         buffer.writeByte(this.registeredDelivery);
         buffer.writeByte(this.replaceIfPresent);
         buffer.writeByte(this.dataCoding);

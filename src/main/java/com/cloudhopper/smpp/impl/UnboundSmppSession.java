@@ -28,12 +28,14 @@ import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.type.LoggingOptions;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppProcessingException;
-import java.util.TimerTask;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.TimerTask;
+
 
 /**
  * Handles new channels connected via the SmppServer that are not yet properly
@@ -144,7 +146,7 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
 
     @Override
     public void fireChannelClosed() {
-        logger.info("Connection closed with [{}]", channelName);
+        logger.trace("Connection closed with [{}]", channelName);
         closeChannelAndCancelTimer();
     }
 
@@ -186,18 +188,19 @@ public class UnboundSmppSession implements SmppSessionChannelListener {
     public void sendResponsePdu(PduResponse pdu) {
         try {
             // encode the pdu into a buffer
-            ChannelBuffer buffer = server.getTranscoder().encode(pdu);
+            ByteBuf buffer = server.getTranscoder().encode(pdu);
 
             // always log the PDU
             logger.info("send PDU: {}", pdu);
 
             // write the pdu out & wait till its written
-            ChannelFuture channelFuture = this.channel.write(buffer).await();
+            ChannelFuture channelFuture = this.channel.writeAndFlush(buffer).await();
 
             // check if the write was a success
             if (!channelFuture.isSuccess()) {
                 // the write failed, make sure to throw an exception
-                throw new SmppChannelException(channelFuture.getCause().getMessage(), channelFuture.getCause());
+		if (channelFuture.cause() != null) throw new SmppChannelException(channelFuture.cause().getMessage(), channelFuture.cause());
+		else throw new SmppChannelException("ChannelFuture failed without cause.");
             }
         } catch (Exception e) {
             logger.error("Fatal exception thrown while attempting to send response PDU: {}", e);

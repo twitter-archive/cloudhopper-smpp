@@ -20,46 +20,36 @@ package com.cloudhopper.smpp.impl;
  * #L%
  */
 
-import com.cloudhopper.smpp.SmppClient;
-import com.cloudhopper.smpp.util.DaemonExecutors;
-import com.cloudhopper.smpp.SmppBindType;
-import com.cloudhopper.smpp.type.SmppChannelException;
-import com.cloudhopper.smpp.SmppSession;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
-import com.cloudhopper.smpp.SmppSessionHandler;
-import com.cloudhopper.smpp.channel.SmppChannelConstants;
-import com.cloudhopper.smpp.type.SmppTimeoutException;
-import com.cloudhopper.smpp.channel.SmppClientConnector;
-import com.cloudhopper.smpp.channel.SmppSessionPduDecoder;
-import com.cloudhopper.smpp.channel.SmppSessionLogger;
-import com.cloudhopper.smpp.channel.SmppSessionWrapper;
-import com.cloudhopper.smpp.channel.SmppSessionThreadRenamer;
-import com.cloudhopper.smpp.pdu.BaseBind;
-import com.cloudhopper.smpp.pdu.BaseBindResp;
-import com.cloudhopper.smpp.pdu.BindReceiver;
-import com.cloudhopper.smpp.pdu.BindTransceiver;
-import com.cloudhopper.smpp.pdu.BindTransmitter;
+import com.cloudhopper.smpp.*;
+import com.cloudhopper.smpp.channel.*;
+import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.ssl.SslConfiguration;
 import com.cloudhopper.smpp.ssl.SslContextFactory;
+import com.cloudhopper.smpp.type.*;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.SmppBindException;
 import com.cloudhopper.smpp.type.SmppChannelConnectException;
 import com.cloudhopper.smpp.type.SmppChannelConnectTimeoutException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ConnectTimeoutException;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLEngine;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.ssl.SslHandler;
-import org.jboss.netty.handler.timeout.WriteTimeoutHandler;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,14 +61,12 @@ import org.slf4j.LoggerFactory;
 public class DefaultSmppClient implements SmppClient {
     private static final Logger logger = LoggerFactory.getLogger(DefaultSmppClient.class);
 
-    private ChannelGroup channels;
-    private SmppClientConnector clientConnector;
-    private ExecutorService executors;
-    private ClientSocketChannelFactory channelFactory;
-    private ClientBootstrap clientBootstrap;
-    private ScheduledExecutorService monitorExecutor;
-    // shared instance of a timer for writeTimeout timing
-    private final org.jboss.netty.util.Timer writeTimeoutTimer;
+    private final ChannelGroup channels;
+    private final SmppClientConnector clientConnector;
+    private Bootstrap clientBootstrap;
+    private final NioEventLoopGroup workerGroup;
+    private final ScheduledExecutorService monitorExecutor;
+    private Channel clientChannel;
 
     /**
      * Creates a new default SmppClient. Window monitoring and automatic
@@ -88,7 +76,10 @@ public class DefaultSmppClient implements SmppClient {
      * An Executors.newCachedDaemonThreadPool will be used for IO worker threads.
      */
     public DefaultSmppClient() {
-        this(DaemonExecutors.newCachedDaemonThreadPool());
+        //this(new NioEventLoopGroup());
+	//@trustin: new NioEventLoopGroup() does not create daemon threads. You have to specify a ThreadFactory do to that. For example:
+	this(new NioEventLoopGroup(0, new DefaultThreadFactory(SmppClient.class, true)));
+	//.. where DefaultThreadFactory is a new utility class in Netty 4.
     }
 
     /**
@@ -96,36 +87,17 @@ public class DefaultSmppClient implements SmppClient {
      * expiration of requests will be disabled with no monitorExecutors.
      * The maximum number of IO worker threads across any client sessions
      * created with this SmppClient will be Runtime.getRuntime().availableProcessors().
-     * @param executor The executor that IO workers will be executed with. An
-     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than expectedSessions if NIO sockets are used.
+     * @param workerGroup The {@link EventLoopGroup} which is used to handle all the events
+     *     for the to-be-creates {@link Channel}. The max threads will never grow more
+     *     than expectedSessions if NIO sockets are used.
      */
-    public DefaultSmppClient(ExecutorService executors) {
-        this(executors, Runtime.getRuntime().availableProcessors());
-    }
-
-    /**
-     * Creates a new default SmppClient. Window monitoring and automatic
-     * expiration of requests will be disabled with no monitorExecutors.
-     * @param executor The executor that IO workers will be executed with. An
-     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than expectedSessions if NIO sockets are used.
-     * @param expectedSessions The max number of concurrent sessions expected
-     *      to be active at any time.  This number controls the max number of worker
-     *      threads that the underlying Netty library will use.  If processing
-     *      occurs in a sessionHandler (a blocking op), be <b>VERY</b> careful
-     *      setting this to the correct number of concurrent sessions you expect.
-     */
-    public DefaultSmppClient(ExecutorService executors, int expectedSessions) {
-        this(executors, expectedSessions, null);
+    public DefaultSmppClient(NioEventLoopGroup workerGroup) {
+        this(workerGroup, null);
     }
     
     /**
      * Creates a new default SmppClient.
-     * @param executor The executor that IO workers will be executed with. An
-     *      Executors.newCachedDaemonThreadPool() is recommended. The max threads
-     *      will never grow more than expectedSessions if NIO sockets are used.
-     * @param expectedSessions The max number of concurrent sessions expected
+     * @param workerGroup The max number of concurrent sessions expected
      *      to be active at any time.  This number controls the max number of worker
      *      threads that the underlying Netty library will use.  If processing
      *      occurs in a sessionHandler (a blocking op), be <b>VERY</b> careful
@@ -134,17 +106,26 @@ public class DefaultSmppClient implements SmppClient {
      *      to monitor themselves and expire requests.  If null monitoring will
      *      be disabled.
      */
-    public DefaultSmppClient(ExecutorService executors, int expectedSessions, ScheduledExecutorService monitorExecutor) {
-        this.channels = new DefaultChannelGroup();
-        this.executors = executors;
-        this.channelFactory = new NioClientSocketChannelFactory(this.executors, this.executors, expectedSessions);
-        this.clientBootstrap = new ClientBootstrap(channelFactory);
+    public DefaultSmppClient(NioEventLoopGroup workerGroup, ScheduledExecutorService monitorExecutor) {
+        //The doc says about GlobalEventExecutor: Please note it is not scalable to schedule large number of tasks to this executor; use a dedicated executor.
+        this.channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+        this.workerGroup = workerGroup;
+        this.clientBootstrap = new Bootstrap();
+        this.clientBootstrap.group(this.workerGroup);
+        this.clientBootstrap.channel(NioSocketChannel.class);
         // we use the same default pipeline for all new channels - no need for a factory
         this.clientConnector = new SmppClientConnector(this.channels);
-        this.clientBootstrap.getPipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, this.clientConnector);
+	//@trustin: You don't need to use a ChannelInitializer in this case, because all it does is to replace itself with the clientConnector.
+	/*
+        this.clientBootstrap.handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline().addLast(SmppChannelConstants.PIPELINE_CLIENT_CONNECTOR_NAME, clientConnector);
+            }
+        });
+	*/
+	this.clientBootstrap.handler(this.clientConnector);
         this.monitorExecutor = monitorExecutor;
-	// a shared instance of a timer for session writeTimeout timing
-	this.writeTimeoutTimer = new org.jboss.netty.util.HashedWheelTimer();
     }
     
     public int getConnectionSize() {
@@ -153,12 +134,38 @@ public class DefaultSmppClient implements SmppClient {
 
     @Override
     public void destroy() {
+        this.destroy(-1, -1);
+    }
+
+    public void destroy(long quitePeriodMillis, long waitPeriodMillis) {
         // close all channels still open within this session "bootstrap"
         this.channels.close().awaitUninterruptibly();
         // clean up all external resources
-        this.clientBootstrap.releaseExternalResources();
-	// stop the writeTimeout timer 
-	this.writeTimeoutTimer.stop();
+        // this.clientBootstrap.releaseExternalResources();
+
+        try {
+            if (clientChannel != null) {
+                clientChannel.closeFuture().sync();
+            }
+            this.clientBootstrap = null;
+        } catch (InterruptedException e) {
+            logger.warn("Thread interrupted closing client channel.", e);
+        } finally {
+            //TODO: if DefaultSmppClient(workerGroup) it's may be bad idea!
+            // Shut down all event loops to terminate all threads.
+            if (quitePeriodMillis < 0 || waitPeriodMillis < 0) {
+                this.workerGroup.shutdownGracefully();
+            } else {
+                this.workerGroup.shutdownGracefully(quitePeriodMillis, waitPeriodMillis, TimeUnit.MILLISECONDS);
+            }
+
+            try {
+                // Wait until all threads are terminated.
+                this.workerGroup.terminationFuture().sync();
+            } catch (InterruptedException e) {
+                logger.warn("Thread interrupted closing executors.", e);
+            }
+        }
     }
 
     protected BaseBind createBindRequest(SmppSessionConfiguration config) throws UnrecoverablePduException {
@@ -198,7 +205,7 @@ public class DefaultSmppClient implements SmppClient {
             // close the session if we weren't able to bind correctly
             if (session != null && !session.isBound()) {
                 // make sure that the resources are always cleaned up
-                try { session.close(); } catch (Exception e) { }
+                try { session.destroy(); } catch (Exception e) { }
             }
         }
         return session;
@@ -221,83 +228,117 @@ public class DefaultSmppClient implements SmppClient {
 
     protected DefaultSmppSession doOpen(SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         // create and connect a channel to the remote host
-        Channel channel = createConnectedChannel(config.getHost(), config.getPort(), config.getConnectTimeout());
+        this.clientChannel = createConnectedChannel(config.getHost(), config.getPort(), config.getConnectTimeout(),
+                config.getClientBindHost(), config.getClientBindPort());
         // tie this new opened channel with a new session
-        return createSession(channel, config, sessionHandler);
+        return createSession(clientChannel, config, sessionHandler);
     }
 
     protected DefaultSmppSession createSession(Channel channel, SmppSessionConfiguration config, SmppSessionHandler sessionHandler) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         DefaultSmppSession session = new DefaultSmppSession(SmppSession.Type.CLIENT, config, channel, sessionHandler, monitorExecutor);
 
-	// add SSL handler 
+	//TODO @trustin: Please consider using the new SSL abstraction introduced in Netty 4.0.19.
+	//               It will also allow you to accelerate SSL performance using OpenSSL.
+	//               It might also be a good idea to set the sensible list of enabled cipher
+	//               suites rather than the JDK default. E.g.:
+	//     "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", // since JDK 8
+	//     "TLS_ECDHE_RSA_WITH_RC4_128_SHA",
+	//     "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+	//     "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+	//     "TLS_RSA_WITH_AES_128_GCM_SHA256", // since JDK 8
+	//     "SSL_RSA_WITH_RC4_128_SHA",
+	//     "SSL_RSA_WITH_RC4_128_MD5",
+	//     "TLS_RSA_WITH_AES_128_CBC_SHA",
+	//     "TLS_RSA_WITH_AES_256_CBC_SHA",
+	//     "SSL_RSA_WITH_DES_CBC_SHA"
+	
+        // add SSL handler
         if (config.isUseSsl()) {
-	    SslConfiguration sslConfig = config.getSslConfiguration();
-	    if (sslConfig == null) throw new IllegalStateException("sslConfiguration must be set");
-	    try {
-		SslContextFactory factory = new SslContextFactory(sslConfig);
-		SSLEngine sslEngine = factory.newSslEngine();
-		sslEngine.setUseClientMode(true);
-		channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
-	    } catch (Exception e) {
-		throw new SmppChannelConnectException("Unable to create SSL session]: " + e.getMessage(), e);
-	    }
-	}
-
+            SslConfiguration sslConfig = config.getSslConfiguration();
+        if (sslConfig == null) throw new IllegalStateException("sslConfiguration must be set");
+            try {
+                SslContextFactory factory = new SslContextFactory(sslConfig);
+                SSLEngine sslEngine = factory.newSslEngine();
+                sslEngine.setUseClientMode(true);
+                channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_SSL_NAME, new SslHandler(sslEngine));
+            } catch (Exception e) {
+                throw new SmppChannelConnectException("Unable to create SSL session]: " + e.getMessage(), e);
+            }
+        }
         // add the thread renamer portion to the pipeline
         if (config.getName() != null) {
-            channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(config.getName()));
+            channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_THREAD_RENAMER_NAME, new SmppSessionThreadRenamer(config.getName()));
         } else {
             logger.warn("Session configuration did not have a name set - skipping threadRenamer in pipeline");
         }
 
         // create the logging handler (for bytes sent/received on wire)
         SmppSessionLogger loggingHandler = new SmppSessionLogger(DefaultSmppSession.class.getCanonicalName(), config.getLoggingOptions());
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_LOGGER_NAME, loggingHandler);
 
-	// add a writeTimeout handler after the logger
-	if (config.getWriteTimeout() > 0) {
-	    WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(writeTimeoutTimer, config.getWriteTimeout(), TimeUnit.MILLISECONDS);
-	    channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRITE_TIMEOUT_NAME, writeTimeoutHandler);
-	}
+        // add a writeTimeout handler after the logger
+        if (config.getWriteTimeout() > 0) {
+            WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(config.getWriteTimeout(), TimeUnit.MILLISECONDS);
+            channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRITE_TIMEOUT_NAME, writeTimeoutHandler);
+        }
 
         // add a new instance of a decoder (that takes care of handling frames)
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_PDU_DECODER_NAME, new SmppSessionPduDecoder(session.getTranscoder()));
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_PDU_DECODER_NAME, new SmppSessionPduDecoder(session.getTranscoder()));
 
         // create a new wrapper around a session to pass the pdu up the chain
-        channel.getPipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
+        channel.pipeline().addLast(SmppChannelConstants.PIPELINE_SESSION_WRAPPER_NAME, new SmppSessionWrapper(session));
 
         return session;
     }
 
     protected Channel createConnectedChannel(String host, int port, long connectTimeoutMillis) throws SmppTimeoutException, SmppChannelException, InterruptedException {
+        return createConnectedChannel(host, port, connectTimeoutMillis, null, 0);
+    }
+
+    protected Channel createConnectedChannel(
+            String host, int port, long connectTimeoutMillis, String clientLocalHost, int clientLocalPort
+    ) throws SmppTimeoutException, SmppChannelException, InterruptedException {
         // a socket address used to "bind" to the remote system
         InetSocketAddress socketAddr = new InetSocketAddress(host, port);
 
-	// set the timeout
-	this.clientBootstrap.setOption("connectTimeoutMillis", connectTimeoutMillis);
+        // set the timeout
+        this.clientBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int)connectTimeoutMillis);
 
+        // a socket address used to "bind" in the local system (e.g. for using specific IP if current host has many)
+        InetSocketAddress localAddr = clientLocalHost == null ? null :
+                new InetSocketAddress(clientLocalHost, clientLocalPort);
         // attempt to connect to the remote system
-        ChannelFuture connectFuture = this.clientBootstrap.connect(socketAddr);
+        ChannelFuture connectFuture = this.clientBootstrap.connect(socketAddr, localAddr);
         
-        // wait until the connection is made successfully
-	// boolean timeout = !connectFuture.await(connectTimeoutMillis);
-	// BAD: using .await(timeout)
-	//      see http://netty.io/3.9/api/org/jboss/netty/channel/ChannelFuture.html
-	connectFuture.awaitUninterruptibly();
-	//assert connectFuture.isDone();
+        /* It turns out that under certain unknown circumstances the connect waits forever: https://github.com/twitter/cloudhopper-smpp/issues/117
+         * That's why the future is canceled 1 second after the specified timeout.
+         * This is a workaround and hopefully not needed after the switch to netty 4.
+         */
+        logger.debug("Waiting for client connection to {} from {}", socketAddr, localAddr);
+        if (!connectFuture.await(connectTimeoutMillis + 1000)) {
+            logger.error("connectFuture did not finish in expected time! Try to cancel the connectFuture");
+            boolean isCanceled = connectFuture.cancel(true);
+            logger.error("connectFuture: isCanceled {} isDone {} isSuccess {}", isCanceled, connectFuture.isDone(), connectFuture.isSuccess());
+            throw new SmppChannelConnectTimeoutException("Could not connect to the server within timeout");
+        }
 
-	if (connectFuture.isCancelled()) {
-	    throw new InterruptedException("connectFuture cancelled by user");
-	} else if (!connectFuture.isSuccess()) {
-	    if (connectFuture.getCause() instanceof org.jboss.netty.channel.ConnectTimeoutException) {
-		throw new SmppChannelConnectTimeoutException("Unable to connect to host [" + host + "] and port [" + port + "] within " + connectTimeoutMillis + " ms", connectFuture.getCause());
-	    } else {
-		throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " + connectFuture.getCause().getMessage(), connectFuture.getCause());
-	    }
-	}
+        if (connectFuture.isCancelled()) {
+            logger.warn("Client connection cancelled.");
+            throw new InterruptedException("connectFuture cancelled by user");
+        } else if (!connectFuture.isSuccess()) {
+            if (connectFuture.cause() instanceof ConnectTimeoutException) {
+                logger.warn("Client did not connect in timeout " + connectTimeoutMillis + " ms", connectFuture.cause());
+                throw new SmppChannelConnectTimeoutException("Unable to connect to host [" + host + "] and port [" + port + "] within " + connectTimeoutMillis + " ms", connectFuture.cause());
+            } else {
+                logger.warn("Client did not connect.", connectFuture.cause());
+                throw new SmppChannelConnectException("Unable to connect to host [" + host + "] and port [" + port + "]: " +
+						      (connectFuture.cause() != null ? connectFuture.cause().getMessage() : "ChannelFuture failed without cause."), connectFuture.cause());
+            }
+        }
 
+        logger.debug("Client connected to {}", socketAddr);
         // if we get here, then we were able to connect and get a channel
-        return connectFuture.getChannel();
+        return connectFuture.channel();
     }
 
 }

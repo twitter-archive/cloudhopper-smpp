@@ -20,11 +20,11 @@ package com.cloudhopper.smpp.channel;
  * #L%
  */
 
+import io.netty.channel.ChannelHandlerAdapter;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandler;
 
-import org.jboss.netty.channel.ChannelEvent;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
-import org.jboss.netty.channel.ChannelUpstreamHandler;
+import static io.netty.channel.ChannelHandler.Sharable;
 
 /**
  * Channel handler responsible for renaming the current thread, passing the
@@ -34,9 +34,8 @@ import org.jboss.netty.channel.ChannelUpstreamHandler;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  */
-@ChannelPipelineCoverage("one")
-public class SmppSessionThreadRenamer implements ChannelUpstreamHandler {
-
+@Sharable
+public class SmppSessionThreadRenamer extends ChannelHandlerAdapter implements ChannelInboundHandler {
     private String threadName;
 
     public SmppSessionThreadRenamer(String threadName) {
@@ -52,11 +51,75 @@ public class SmppSessionThreadRenamer implements ChannelUpstreamHandler {
     }
 
     @Override
-    public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+	String currentThreadName = Thread.currentThread().getName();
+        Thread.currentThread().setName(threadName);
+	ctx.fireChannelRegistered();
+	Thread.currentThread().setName(currentThreadName);
+    }
+
+    @Override
+    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+	String currentThreadName = Thread.currentThread().getName();
+        Thread.currentThread().setName(threadName);
+	ctx.fireChannelUnregistered();
+	Thread.currentThread().setName(currentThreadName);
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+	String currentThreadName = Thread.currentThread().getName();
+        Thread.currentThread().setName(threadName);
+	ctx.fireChannelActive();
+	Thread.currentThread().setName(currentThreadName);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+	String currentThreadName = Thread.currentThread().getName();
+        Thread.currentThread().setName(threadName);
+	ctx.fireChannelInactive();
+	Thread.currentThread().setName(currentThreadName);
+    }
+
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         // always rename the current thread and then rename it back
         String currentThreadName = Thread.currentThread().getName();
         Thread.currentThread().setName(threadName);
-        ctx.sendUpstream(e);
+        ctx.fireChannelRead(msg);
         Thread.currentThread().setName(currentThreadName);
     }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+	String currentThreadName = Thread.currentThread().getName();
+        Thread.currentThread().setName(threadName);
+	ctx.fireChannelReadComplete();
+	Thread.currentThread().setName(currentThreadName);
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+	String currentThreadName = Thread.currentThread().getName();
+        Thread.currentThread().setName(threadName);
+	ctx.fireUserEventTriggered(evt);
+	Thread.currentThread().setName(currentThreadName);
+    }
+
+    @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+	String currentThreadName = Thread.currentThread().getName();
+        Thread.currentThread().setName(threadName);
+	ctx.fireChannelWritabilityChanged();
+	Thread.currentThread().setName(currentThreadName);
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+	String currentThreadName = Thread.currentThread().getName();
+        Thread.currentThread().setName(threadName);
+	ctx.fireExceptionCaught(cause);
+	Thread.currentThread().setName(currentThreadName);
+    }
+
 }

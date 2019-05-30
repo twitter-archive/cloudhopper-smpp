@@ -21,23 +21,21 @@ package com.cloudhopper.smpp.impl;
  */
 
 // third party imports
-import com.cloudhopper.smpp.SmppBindType;
-import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.SmppServerConfiguration;
-import com.cloudhopper.smpp.SmppServerHandler;
-import com.cloudhopper.smpp.SmppServerSession;
-import com.cloudhopper.smpp.SmppSession;
-import com.cloudhopper.smpp.SmppSessionConfiguration;
+
+import com.cloudhopper.smpp.*;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.tlv.Tlv;
 import com.cloudhopper.smpp.type.SmppBindException;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.SmppProcessingException;
-import java.util.HashSet;
-import org.junit.*;
+import com.cloudhopper.smpp.type.SmppTimeoutException;
+import org.junit.Assert;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
 
 // my imports
 
@@ -104,6 +102,7 @@ public class DefaultSmppServerTest {
 
         @Override
         public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
+	    logger.debug("Session created {}", sessionId);
             sessions.add(session);
             // need to do something it now (flag we're ready)
             session.serverReady(sessionHandler);
@@ -111,6 +110,7 @@ public class DefaultSmppServerTest {
 
         @Override
         public void sessionDestroyed(Long sessionId, SmppServerSession session) {
+	    logger.debug("Session destroyed {}", sessionId);
             sessions.remove(session);
         }
     }
@@ -192,6 +192,9 @@ public class DefaultSmppServerTest {
             } catch (SmppBindException e) {
                 Assert.assertEquals(SmppConstants.STATUS_INVPASWD, e.getBindResponse().getCommandStatus());
             }
+
+            // give this a little time to catch up
+            Thread.sleep(100);
 
             Assert.assertEquals(0, serverHandler.sessions.size());
             Assert.assertEquals(0, server0.getChannels().size());
@@ -510,7 +513,7 @@ public class DefaultSmppServerTest {
             // to create beforehand with starvation only Runtime.getRuntime().availableProcessors()
             // worker threads are created by default!!! (yikes)
             int workersToStarveWith = Runtime.getRuntime().availableProcessors();
-            
+
             // initiate bind requests on all sessions we care about -- this should
             // technicaly "starve" the server of worker threads since they'll all
             // be blocked in a Thread.sleep
@@ -522,14 +525,9 @@ public class DefaultSmppServerTest {
                 DefaultSmppSession session0 = client0.doOpen(sessionConfig0, new DefaultSmppSessionHandler());
                 // try to bind and execute a bind request and wait for a bind response
                 BaseBind bindRequest = client0.createBindRequest(sessionConfig0);
-                try {
-                    // just send the request without caring if it succeeds
-                    session0.sendRequestPdu(bindRequest, 2000, false);
-                } catch (SmppChannelException e) {
-                    // correct behavior
-                }
+                session0.sendRequestPdu(bindRequest, 2000, false);
             }
-            
+
             // now try to bind normally -- since all previous workers are "starved"
             // this should fail to bind and the socket closed by the "BindTimer"
             DefaultSmppClient client0 = new DefaultSmppClient();
@@ -540,12 +538,14 @@ public class DefaultSmppServerTest {
             try {
                 client0.bind(sessionConfig0);
                 Assert.fail();
-            } catch (SmppChannelException e) {
+            } catch (SmppTimeoutException e) {
                 // the BindTimer should end up closing the connection since the
                 // worker thread were "starved"
                 logger.debug("Correctly received SmppChannelException during bind");
             }
-            
+            Thread.sleep(10500);
+            Assert.assertEquals(0, server0.getChannels().size());
+            Assert.assertEquals(workersToStarveWith + 1, server0.getCounters().getBindTimeouts());
         } finally {
             server0.destroy();
         }

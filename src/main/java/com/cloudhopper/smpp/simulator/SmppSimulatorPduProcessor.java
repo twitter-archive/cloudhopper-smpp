@@ -21,7 +21,7 @@ package com.cloudhopper.smpp.simulator;
  */
 
 import com.cloudhopper.smpp.pdu.Pdu;
-import org.jboss.netty.channel.Channel;
+import io.netty.channel.Channel;
 
 /**
  *

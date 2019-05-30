@@ -26,7 +26,7 @@ import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.cloudhopper.smpp.transcoder.PduTranscoderContext;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class ParserMain {
     static public void main(String[] args) throws Exception {
         PduTranscoderContext context = new DefaultPduTranscoderContext();
         PduTranscoder transcoder = new DefaultPduTranscoder(context);
-        ChannelBuffer buffer = BufferHelper.createBuffer("000000420000000400000000000000030001003633393238383032000101343439353133363139323035004000000000000000000774657374323232020B00020D05");
+        ByteBuf buffer = BufferHelper.createBuffer("000000420000000400000000000000030001003633393238383032000101343439353133363139323035004000000000000000000774657374323232020B00020D05");
         Pdu pdu = transcoder.decode(buffer);
         logger.debug("{}", pdu);
     }

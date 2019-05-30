@@ -32,15 +32,24 @@ public class SmppConnectionConfiguration {
     private String host;
     private int port;
     private long connectTimeout;
+    private String clientBindHost;
+    private int clientBindPort;
 
     public SmppConnectionConfiguration() {
         this(null, 0, SmppConstants.DEFAULT_CONNECT_TIMEOUT);
     }
 
     public SmppConnectionConfiguration(String host, int port, long connectTimeout) {
+        this(host, port, connectTimeout, null, 0);
+    }
+
+    public SmppConnectionConfiguration(String host, int port, long connectTimeout,
+                                       String clientBindHost, int clientBindPort) {
         this.host = host;
         this.port = port;
         this.connectTimeout = connectTimeout;
+        this.clientBindHost = clientBindHost;
+        this.clientBindPort = clientBindPort;
     }
 
     public void setHost(String value) {
@@ -67,4 +76,19 @@ public class SmppConnectionConfiguration {
         return this.connectTimeout;
     }
 
+    public String getClientBindHost() {
+        return clientBindHost;
+    }
+
+    public void setClientBindHost(String clientBindHost) {
+        this.clientBindHost = clientBindHost;
+    }
+
+    public int getClientBindPort() {
+        return clientBindPort;
+    }
+
+    public void setClientBindPort(int clientBindPort) {
+        this.clientBindPort = clientBindPort;
+    }
 }
